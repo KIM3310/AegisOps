@@ -1,0 +1,21 @@
+{
+  "name": "AegisOps",
+  "description": "AI-driven incident response assistant integrating deeply with Google Workspace. Instantly analyze logs and screenshots to generate SRE post-mortems, root cause analysis, and automated team notifications.",
+  "version": "2.1.0",
+  "author": "Ender",
+  "features": [
+    "Gemini 3 Pro multimodal analysis",
+    "Gemini 3 Pro reasoning engine",
+    "Gemini 2.5 Flash TTS",
+    "Google Search Grounding",
+    "RAG-lite (Knowledge Retrieval)",
+    "Gmail import",
+    "Drive import",
+    "Sheets export",
+    "Docs export",
+    "Slides export",
+    "Calendar integration",
+    "Chat webhook"
+  ],
+  "requestFramePermissions": []
+}
