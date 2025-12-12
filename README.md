@@ -1,19 +1,32 @@
 
 # 🛡️ AegisOps – AI-Powered SRE Incident Doctor
 
-> **Turn chaos into clarity.** AegisOps is an AI-driven incident response assistant that integrates deeply with Google Workspace to automate Site Reliability Engineering (SRE) workflows.
+> **"Turn chaos into clarity."**
+> AegisOps is an autonomous incident response assistant that integrates deeply with Google Workspace to automate Site Reliability Engineering (SRE) workflows using Gemini 3 Pro.
 
-![AegisOps Banner](https://via.placeholder.com/1200x400/09090b/8b5cf6?text=AegisOps:+Gemini+3+Pro+Powered+SRE+Assistant)
+<div align="center">
+
+[![Watch the Demo](https://img.youtube.com/vi/FOcjPcMheIg/maxresdefault.jpg)](https://youtu.be/FOcjPcMheIg)
+
+### 📺 [Watch the Full Demonstration Video](https://youtu.be/FOcjPcMheIg)
+### 🔴 [Try the Live Demo (Google AI Studio)](https://ai.studio/apps/drive/1nInCvCJjSXy0IQGiDeK9gbsjjhhPqtlg?fullscreenApplet=true)
+
+</div>
+
+<br/>
 
 ![License](https://img.shields.io/badge/License-MIT-green.svg) ![React](https://img.shields.io/badge/React-19-blue) ![Gemini](https://img.shields.io/badge/Gemini-3_Pro-purple) ![Status](https://img.shields.io/badge/Status-Production_Ready-success)
 
 ---
 
-## 🚀 Overview
+## 💡 The Problem: "War Room Chaos"
 
-In the heat of a critical incident (SEV1), SREs are overwhelmed by raw logs, scattered dashboards, and the pressure to communicate. **AegisOps** acts as an autonomous "Incident Doctor."
+In the heat of a critical incident (SEV1), SREs face three challenges:
+1.  **Information Overload:** Scanning thousands of log lines and scattered Grafana dashboards.
+2.  **Context Switching:** Jumping between terminals, Slack, and docs slows down mitigation.
+3.  **Communication Overhead:** Stakeholders demand updates while engineers are trying to fix the issue.
 
-By leveraging **Google Gemini 3 Pro**, it ingests logs and screenshots to perform multimodal reasoning, identifying root causes in seconds instead of hours. It then automates the entire administrative tail-end of incident management using Google Workspace.
+**AegisOps solves this by acting as an AI Co-pilot that handles the analysis and administrative toil, letting engineers focus on the fix.**
 
 ---
 
@@ -28,7 +41,7 @@ graph TD
     B -->|Audio Engine| D[Gemini 2.5 Flash]
     
     C -->|Output| E[JSON Incident Report]
-    D -->|Output| F[SRE Audio Briefing (TTS)]
+    D -->|Output| F["SRE Audio Briefing (TTS)"]
     
     E --> G[Google Workspace Integration]
 ```
@@ -60,45 +73,9 @@ AegisOps transforms analysis into action using the **Google Workspace APIs**:
 *   **Google Calendar:** Auto-schedule the Post-Mortem Review meeting.
 *   **Google Chat:** Dispatch formatted summary cards to team channels via Webhook.
 
-### 🔒 Privacy-First Design
-*   **Client-Side Processing:** AegisOps runs entirely in the browser (Single Page Application).
-*   **Zero-Persistence Server:** Your sensitive logs are sent directly to the Gemini API and are **never** stored on any intermediate backend server.
-*   **Local Storage:** Incident history is stored securely in your browser's `LocalStorage`.
-
 ---
 
-## 🔬 Technical Deep Dive
-
-### 1. Prompt Engineering Strategy
-We use a **Chain-of-Thought (CoT)** prompting strategy to force the model to hallucinate less and reason more.
-*   **Persona:** "You are a Principal SRE at Google."
-*   **Steps:** 1. Correlate -> 2. Deduce -> 3. Integrity Check.
-*   **Safety:** The prompt explicitly instructs the AI to report "Investigation Needed" if the data is insufficient, preventing misleading root cause fabrication.
-
-### 2. Robust JSON Extraction
-Large Language Models often output "Chatty" JSON (wrapping it in markdown or adding conversational filler). AegisOps implements a custom **Iterative JSON Parser**:
-*   **Regex Cleaning:** Removes ````json` fences and invisible control characters.
-*   **Structure Repair:** Automatically fixes common LLM syntax errors like trailing commas or unquoted keys.
-*   **Block Search:** Scans the text for balanced `{}` blocks until valid JSON is found.
-
-### 3. Audio Processing
-Browser audio policies are strict. AegisOps handles:
-*   **Raw PCM Decoding:** Converts Gemini's raw audio bytes to `AudioBuffer`.
-*   **Int16 Alignment:** Ensures byte alignment safety to prevent crashes during audio decoding.
-
----
-
-## 🛠️ Tech Stack
-
-*   **AI SDK:** `@google/genai` (v1.33.0)
-*   **Frontend:** React 19, TypeScript, Tailwind CSS
-*   **Icons:** Lucide React
-*   **Auth:** Google Identity Services (OAuth 2.0 Token Model)
-*   **State:** React Hooks (useReducer, Context not required due to flat architecture)
-
----
-
-## 🚀 How to Run
+## 🚀 How to Run locally
 
 ### Prerequisites
 *   Node.js (v18+) or a modern browser environment.
@@ -108,7 +85,7 @@ Browser audio policies are strict. AegisOps handles:
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/aegisops.git
+    git clone https://github.com/KIM3310/aegisops.git
     cd aegisops
     ```
 
@@ -119,7 +96,6 @@ Browser audio policies are strict. AegisOps handles:
     ```
 
 3.  **Run the application:**
-    Use your preferred bundler (Vite, Parcel, Webpack) or simply open `index.html` if using a build-less setup.
     ```bash
     npm install
     npm run dev
@@ -137,6 +113,8 @@ AegisOps includes a robust **Demo Mode**. If you do not provide a Google Client 
 
 **Doeon Kim**
 *AI-Native SRE & Full Stack Engineer*
+
+> **"As someone who has experienced the chaos of 3 AM SEV1 incidents, I built AegisOps to be the calm, rational co-pilot I always wished I had."**
 
 Building resilient systems powered by Generative AI.
 This project was built for the **Google Gemini Developer Competition**.

@@ -257,10 +257,12 @@ export const ReportCard: React.FC<Props> = ({ report }) => {
     setIsLoadingAudio(true);
     try {
       if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        // @ts-ignore: Handle Webkit browsers
+        const AudioCtor = window.AudioContext || window.webkitAudioContext;
+        audioContextRef.current = new AudioCtor();
       }
       
-      // Ensure context is running (needed for some browsers policy)
+      // Critical: Ensure context is running (fixes "The AudioContext was not allowed to start" error)
       if (audioContextRef.current.state === 'suspended') {
         await audioContextRef.current.resume();
       }

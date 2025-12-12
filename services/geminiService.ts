@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, Modality } from '@google/genai';
+import { GoogleGenAI, Modality, HarmCategory, HarmBlockThreshold } from '@google/genai';
 import type { IncidentReport, ReferenceSource } from '../types';
 
 /**
@@ -63,48 +63,37 @@ Before generating the JSON, perform a deep logical deduction:
   "preventionRecommendations": ["Architecture", "Process"]
 }`;
 
+// [Critical] Logs often contain words like 'kill', 'die', 'attack', 'abort'.
+// We must disable safety blocks to ensure technical logs are processed correctly.
+const SAFETY_SETTINGS = [
+  { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+  { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+  { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+  { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+];
+
 /**
  * [Utility] Ultimate JSON Extractor (Iterative & Robust)
  * LLM 응답에서 순수 JSON 문자열만 추출합니다.
  */
 function extractJSON(text: string): string {
-  // Remove markdown fences (case insensitive for 'json')
-  let cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+  if (!text) return "{}";
 
-  // Try to find valid JSON by iterating through potential start positions
-  let startIdx = cleanText.indexOf('{');
-  
-  while (startIdx !== -1) {
-    let braceCount = 0;
-    let inString = false;
-    let escape = false;
-    
-    for (let i = startIdx; i < cleanText.length; i++) {
-      const char = cleanText[i];
-      if (escape) { escape = false; continue; }
-      if (char === '\\') { escape = true; continue; }
-      if (char === '"') { inString = !inString; continue; }
+  // 1. Remove Markdown Fences (```json ... ```)
+  // 정규식으로 ```json, ``` 등을 제거하고 앞뒤 공백 제거
+  let cleanText = text.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
 
-      if (!inString) {
-        if (char === '{') braceCount++;
-        else if (char === '}') {
-          braceCount--;
-          if (braceCount === 0) {
-            // Found a balanced block
-            const candidate = cleanText.substring(startIdx, i + 1);
-            try {
-              JSON.parse(candidate); // Validate parsing
-              return candidate;
-            } catch (e) {
-              // Not valid JSON, try finding next block
-              break; 
-            }
-          }
-        }
-      }
-    }
-    startIdx = cleanText.indexOf('{', startIdx + 1);
+  // 2. Find first '{' and last '}'
+  const startIdx = cleanText.indexOf('{');
+  const endIdx = cleanText.lastIndexOf('}');
+
+  if (startIdx === -1 || endIdx === -1 || startIdx >= endIdx) {
+    // JSON 구조가 아예 없으면 원본 반환 (파싱 에러 유도)
+    return cleanText;
   }
+
+  // 3. Extract purely the JSON block
+  cleanText = cleanText.substring(startIdx, endIdx + 1);
 
   return cleanText;
 }
@@ -161,11 +150,21 @@ export async function analyzeIncident(logs: string, images: string[] = []): Prom
           temperature: strategies[attempt].temp,
           topK: strategies[attempt].topK,
           tools: [{ googleSearch: {} }],
+          safetySettings: SAFETY_SETTINGS, // Apply safety overrides
         },
       });
 
       const text = response.text?.trim();
-      if (!text) throw new Error("Empty response from AI");
+      if (!text) {
+        // [Safety Check] Safety Filter에 걸렸을 경우 text가 비어있을 수 있음
+        if (response.candidates?.[0]?.finishReason) {
+            console.warn("Finish Reason:", response.candidates[0].finishReason);
+            if (response.candidates[0].finishReason !== 'STOP') {
+                throw new Error(`Analysis stopped: ${response.candidates[0].finishReason}`);
+            }
+        }
+        throw new Error("Empty response from AI");
+      }
 
       const jsonStr = extractJSON(text);
       const raw = repairJSON(jsonStr);
@@ -200,12 +199,12 @@ export async function analyzeIncident(logs: string, images: string[] = []): Prom
       console.warn(`Analysis Attempt ${attempt + 1} failed:`, error);
       
       // If it's a safety block error, fail immediately (retrying same prompt won't help)
-      if (error.message?.includes('SAFETY')) {
+      if (error.message?.includes('SAFETY') || error.message?.includes('BLOCKED')) {
          throw new Error("Analysis blocked by Safety Filters. Please redact sensitive PII from logs.");
       }
 
       if (attempt === strategies.length - 1) {
-        throw new Error("Analysis failed after multiple attempts. Please check inputs.");
+        throw new Error(error.message || "Analysis failed after multiple attempts.");
       }
     }
   }
@@ -229,7 +228,10 @@ export async function generateFollowUp(
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: [...chatHistory, { role: 'user', parts: [{ text: question }] }],
-      config: { tools: [{ googleSearch: {} }] }
+      config: { 
+        tools: [{ googleSearch: {} }],
+        safetySettings: SAFETY_SETTINGS 
+      }
     });
     return response.text || "No answer generated.";
   } catch (e) {
@@ -254,6 +256,7 @@ export async function generateTTS(text: string): Promise<string | undefined> {
             prebuiltVoiceConfig: { voiceName: 'Kore' },
           },
         },
+        safetySettings: SAFETY_SETTINGS
       },
     });
     

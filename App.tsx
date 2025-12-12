@@ -236,9 +236,16 @@ export default function App() {
     let progressInterval: ReturnType<typeof setInterval> | null = null;
 
     try {
+      // [API Safeguard] Limit number of images sent to API to prevent 400 Bad Request
+      // Gemini 1.5/2.5 Pro can handle many images, but keeping payload reasonable is safer.
+      const imagesToAnalyze = images.slice(0, 16); 
+      if (images.length > 16) {
+          addToast('info', `Analyzing first 16 images only (API limit safeguard).`);
+      }
+
       // 이미지 전처리: File -> Base64 String
       const base64Images = await Promise.all(
-        images.map(
+        imagesToAnalyze.map(
           (imgItem) =>
             new Promise<string>((resolve, reject) => {
               const reader = new FileReader();
@@ -253,8 +260,8 @@ export default function App() {
       const validImages = base64Images.filter(img => img !== "");
       
       // [Validation] 일부 이미지가 로드 실패한 경우 경고
-      if (validImages.length < images.length) {
-          addToast('error', `${images.length - validImages.length} images failed to upload. Analyzing with remaining files.`);
+      if (validImages.length < imagesToAnalyze.length) {
+          addToast('error', `${imagesToAnalyze.length - validImages.length} images failed to upload. Analyzing with remaining files.`);
       }
 
       // 가짜 진행률 (UX)
