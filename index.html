@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- SEO Meta Tags -->
+  <title>AegisOps - AI Incident Analysis & Post-Mortem Generator</title>
+  <meta name="description" content="AegisOps is an AI-powered SRE assistant that analyzes logs and monitoring screenshots using Gemini 3 Pro. Generate instant post-mortem reports, root cause analysis, and export to Google Workspace." />
+  <meta name="keywords" content="SRE, Incident Analysis, Post-Mortem, DevOps, AI Log Analysis, Gemini 3 Pro, Google Workspace Integration, Site Reliability Engineering, Root Cause Analysis" />
+  <meta name="author" content="AegisOps" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://aegisops.dev/" />
+  <meta property="og:title" content="AegisOps - AI Incident Analysis & Post-Mortem Generator" />
+  <meta property="og:description" content="Analyze logs & screenshots instantly with Gemini 3 Pro. Generate SRE post-mortems and export to Google Docs, Slides, and Sheets." />
+  <meta property="og:image" content="https://img.youtube.com/vi/FOcjPcMheIg/maxresdefault.jpg" />
+  <meta property="og:image:alt" content="AegisOps Demo Thumbnail" />
+  
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="AegisOps - AI Incident Analysis & Post-Mortem Generator" />
+  <meta name="twitter:description" content="Analyze logs & screenshots instantly with Gemini 3 Pro. Generate SRE post-mortems and export to Google Docs, Slides, and Sheets." />
+  <meta name="twitter:image" content="https://img.youtube.com/vi/FOcjPcMheIg/maxresdefault.jpg" />
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: { DEFAULT: '#09090B', card: '#131316', hover: '#1A1A1E' },
+            border: { DEFAULT: '#232329', light: '#2E2E36' },
+            accent: { DEFAULT: '#8B5CF6', hover: '#7C3AED' },
+            text: { DEFAULT: '#ECECF1', muted: '#71717A', dim: '#52525B' },
+            sev1: '#EF4444', sev2: '#F97316', sev3: '#EAB308'
+          },
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          fontSize: { '2xs': '11px' }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { scrollbar-width: thin; scrollbar-color: #232329 #09090B; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #09090B; }
+    ::-webkit-scrollbar-thumb { background: #232329; border-radius: 3px; }
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.560.0"
+  }
+}
+</script>
+
+</head>
+<body class="bg-bg text-text antialiased font-sans">
+  <div id="root"></div>
+  <script type="module" src="./index.tsx"></script>
+</body>
+</html>
