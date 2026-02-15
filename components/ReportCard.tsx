@@ -14,6 +14,7 @@ import { GoogleExport } from './GoogleExport';
 interface Props {
   report: IncidentReport;
   allIncidents?: SavedIncident[];
+  enableGrounding?: boolean;
 }
 
 const sevMap: Record<string, { c: string; bg: string; dot: string }> = {
@@ -193,7 +194,7 @@ const Section: React.FC<SectionProps> = ({ id, title, icon: Icon, count, isOpen,
   </div>
 );
 
-export const ReportCard: React.FC<Props> = ({ report }) => {
+export const ReportCard: React.FC<Props> = ({ report, enableGrounding = false }) => {
   const [exp, setExp] = useState({ timeline: true, causes: true, actions: true, prevention: false, references: true, chat: false });
   const [copied, setCopied] = useState<string | null>(null);
   const [showGoogleExport, setShowGoogleExport] = useState(false);
@@ -332,6 +333,9 @@ export const ReportCard: React.FC<Props> = ({ report }) => {
             <span className={`h-2.5 w-2.5 rounded-full ${s.dot} shadow-[0_0_8px_rgba(0,0,0,0.3)] animate-pulse`} />
             <span className={`text-xs font-bold px-2 py-0.5 rounded border ${s.bg} border-transparent ${s.c}`}>{report.severity}</span>
             <span className="text-xs text-text-dim border-l border-border pl-2.5">{new Date().toLocaleDateString()}</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${enableGrounding ? 'bg-sev3/10 text-sev3 border-sev3/20' : 'bg-bg text-text-dim border-border'}`}>
+              Grounding: {enableGrounding ? 'ON' : 'OFF'}
+            </span>
           </div>
           
           <div className="pr-20">
@@ -479,7 +483,7 @@ export const ReportCard: React.FC<Props> = ({ report }) => {
         )}
 
         <Section id="chat" title="Assistant Chat" icon={MessageSquare} isOpen={exp.chat} onToggle={() => toggleSection('chat')}>
-          <FollowUpChat report={report} />
+          <FollowUpChat report={report} enableGrounding={enableGrounding} />
         </Section>
       </div>
 
