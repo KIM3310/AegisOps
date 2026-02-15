@@ -32,13 +32,7 @@ export const FollowUpChat: React.FC<Props> = ({ report }) => {
     setLoading(true);
 
     try {
-      // Gemini API 포맷으로 히스토리 변환
-      const geminiHistory = currentHistory.map(m => ({
-        role: m.role === 'user' ? 'user' as const : 'model' as const,
-        parts: [{ text: m.content }]
-      }));
-
-      const r = await generateFollowUp(report, geminiHistory, q);
+      const r = await generateFollowUp(report, currentHistory, q);
       setMsgs((p) => [...p, { role: 'assistant', content: r }]);
     } catch {
       setMsgs((p) => [...p, { role: 'assistant', content: 'Error generating response.' }]);

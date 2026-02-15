@@ -1,126 +1,82 @@
+# AegisOps — GCP-based Multimodal SEV1 Incident Copilot (Personal Project)
 
-# 🛡️ AegisOps – AI-Powered SRE Incident Doctor
+In real SEV1s, the bottleneck usually isn’t the lack of telemetry. It’s that evidence is scattered: logs in terminals and alerts, dashboards captured as screenshots, and decisions living in ad-hoc chat messages.
 
-> **"Turn chaos into clarity."**
-> AegisOps is an autonomous incident response assistant that integrates deeply with Google Workspace to automate Site Reliability Engineering (SRE) workflows using Gemini 3 Pro.
+I built **AegisOps** as a repeatable workflow that compresses:
 
-<div align="center">
+`collect → reason → decide → communicate`
 
-[![Watch the Demo](https://img.youtube.com/vi/FOcjPcMheIg/maxresdefault.jpg)](https://youtu.be/FOcjPcMheIg)
+into a single, reviewable incident report.
 
-### 📺 [Watch the Full Demonstration Video](https://youtu.be/FOcjPcMheIg)
-### 🔴 [Try the Live Demo (Google AI Studio)](https://ai.studio/apps/drive/1nInCvCJjSXy0IQGiDeK9gbsjjhhPqtlg?fullscreenApplet=true)
+## Demo / Links
 
-</div>
+- Demo video: https://youtu.be/FOcjPcMheIg
+- Live demo (Google AI Studio): https://ai.studio/apps/drive/1nInCvCJjSXy0IQGiDeK9gbsjjhhPqtlg?fullscreenApplet=true
 
-<br/>
+## What It Does
 
-![License](https://img.shields.io/badge/License-MIT-green.svg) ![React](https://img.shields.io/badge/React-19-blue) ![Gemini](https://img.shields.io/badge/Gemini-3_Pro-purple) ![Status](https://img.shields.io/badge/Status-Production_Ready-success)
+- **Input:** raw text logs + monitoring screenshots
+- **Output:** a structured JSON incident report:
+  - severity, RCA hypotheses, prioritized actions, timeline, prevention recommendations
+  - a short **reasoning trace** (Observations / Hypotheses / Decision Path)
+- **Follow-up Q&A** grounded on the generated report context
+- **Optional:** on-call audio briefing (TTS)
+- **Optional:** export artifacts to Google Workspace (Docs/Slides/Sheets/Calendar, plus Chat webhook)
 
----
+## Architecture
 
-## 💡 The Problem: "War Room Chaos"
-
-In the heat of a critical incident (SEV1), SREs face three challenges:
-1.  **Information Overload:** Scanning thousands of log lines and scattered Grafana dashboards.
-2.  **Context Switching:** Jumping between terminals, Slack, and docs slows down mitigation.
-3.  **Communication Overhead:** Stakeholders demand updates while engineers are trying to fix the issue.
-
-**AegisOps solves this by acting as an AI Co-pilot that handles the analysis and administrative toil, letting engineers focus on the fix.**
-
----
-
-## 🏗️ System Architecture: Dual-Model Strategy
-
-AegisOps employs a specialized **Dual-Model Architecture** to optimize for both deep reasoning and user experience:
+The key design goal is **key hygiene**: the Gemini API key must never be shipped to the browser.
 
 ```mermaid
-graph TD
-    A[User Input: Logs & Screenshots] --> B{AegisOps Core}
-    B -->|Reasoning Engine| C[Gemini 3 Pro]
-    B -->|Audio Engine| D[Gemini 2.5 Flash]
-    
-    C -->|Output| E[JSON Incident Report]
-    D -->|Output| F["SRE Audio Briefing (TTS)"]
-    
-    E --> G[Google Workspace Integration]
+flowchart LR
+  UI[React/Vite UI] -->|/api/*| API[Local API Proxy (Express)]
+  API -->|Gemini| LLM[Gemini Models]
+  UI -->|OAuth token| GWS[Google Workspace APIs]
 ```
 
-### 1. The Brain: `gemini-3-pro-preview`
-*   **Role:** Root Cause Analysis (RCA) & Report Generation.
-*   **Why:** Complex incidents require reasoning across modalities (Time-series graphs + Text logs). Gemini 3 Pro's long context window and superior logical deduction capabilities allow it to correlate a spike in a Grafana chart with a specific error log timestamp.
+- The frontend calls a local API (`/api/analyze`, `/api/followup`, `/api/tts`).
+- The API reads `GEMINI_API_KEY` server-side and calls Gemini.
+- Grounding (`googleSearch` tool) is **OFF by default** and must be explicitly enabled.
 
-### 2. The Voice: `gemini-2.5-flash-preview-tts`
-*   **Role:** Text-to-Speech (TTS) Briefing.
-*   **Why:** During an outage, SREs are often away from their keyboards (war rooms, phone calls). The Flash model provides low-latency, high-fidelity speech synthesis, converting the executive summary into an audio briefing.
-
----
-
-## ✨ Key Features
-
-### 🧠 Advanced AI Analysis
-*   **Multimodal Intelligence:** Simply drag and drop log files (`.log`, `.txt`) and dashboard screenshots (`.png`, `.jpg`) together.
-*   **Reasoning Engine:** Displays the AI's "Chain of Thought," explaining *why* it reached a conclusion (e.g., *"Detected memory spike at 14:05 coinciding with OOM kill log"*).
-*   **Google Search Grounding:** Cross-references obscure error codes with live web data to suggest proven mitigation steps (RAG-lite).
-
-### ☁️ Deep Google Workspace Integration
-AegisOps transforms analysis into action using the **Google Workspace APIs**:
-*   **Gmail:** Search and import alert emails directly from PagerDuty/Datadog.
-*   **Google Drive:** Securely fetch log archives and screenshot assets.
-*   **Google Docs:** Auto-draft a "Gold Standard" Post-Mortem document.
-*   **Google Slides:** Generate an executive summary deck for leadership review.
-*   **Google Sheets:** Sync incident metadata to a central dataset for MTTR tracking.
-*   **Google Calendar:** Auto-schedule the Post-Mortem Review meeting.
-*   **Google Chat:** Dispatch formatted summary cards to team channels via Webhook.
-
----
-
-## 🚀 How to Run locally
+## Run Locally (One Command)
 
 ### Prerequisites
-*   Node.js (v18+) or a modern browser environment.
-*   **Gemini API Key:** Get one at [Google AI Studio](https://aistudio.google.com/).
 
-### Installation
+- Node.js 18+
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/KIM3310/aegisops.git
-    cd aegisops
-    ```
+### Quick Start
 
-2.  **Set Environment Variables:**
-    Create a `.env` file (or set in your IDE):
-    ```env
-    API_KEY=your_gemini_api_key_here
-    # Optional (legacy/alternative names also supported):
-    # GEMINI_API_KEY=your_gemini_api_key_here
-    # VITE_GEMINI_API_KEY=your_gemini_api_key_here
-    # VITE_API_KEY=your_gemini_api_key_here
-    ```
+```bash
+npm install && npm run dev
+```
 
-3.  **Run the application:**
-    ```bash
-    npm install
-    npm run dev
-    ```
+- UI: `http://127.0.0.1:3000`
+- API: `http://127.0.0.1:8787`
 
-### ⚡ Demo Mode (Zero-Config)
-AegisOps includes a robust **Demo Mode**. If you do not provide a Google Client ID for OAuth, the app automatically switches to simulation mode:
-*   Simulates Google Login.
-*   Provides mock data for Gmail and Drive imports.
-*   Allows full exploration of the UI and AI features without a GCP setup.
+### Environment Variables
 
----
+Copy `.env.example` to `.env` and fill what you need.
 
-## 👨‍💻 About the Developer
+```env
+# If missing, the API runs in deterministic demo mode (no external LLM calls).
+GEMINI_API_KEY=
 
-**Doeon Kim**
-*AI-Native SRE & Full Stack Engineer*
+# Optional: enable real Google OAuth for Workspace integration (otherwise the UI uses demo auth).
+VITE_GOOGLE_CLIENT_ID=
+```
 
-> **"As someone who has experienced the chaos of 3 AM SEV1 incidents, I built AegisOps to be the calm, rational co-pilot I always wished I had."**
+## Demo Mode (No Keys Required)
 
-Building resilient systems powered by Generative AI.
-This project was built for the **Google Gemini Developer Competition**.
+If `GEMINI_API_KEY` is not set, the API switches to **demo mode**:
 
-[GitHub](https://github.com/KIM3310) • [LinkedIn](https://www.linkedin.com/in/doeon-kim-4742a2388)
+- analysis returns a deterministic stub report (based on the provided logs)
+- follow-up Q&A returns a deterministic helper response
+- TTS is disabled
+
+This keeps the project easy to review and runnable without external credentials.
+
+## Notes / Limitations
+
+- Workspace export features require OAuth scopes; in demo mode those calls are not executed.
+- This is a portfolio project focused on repeatability, safety-by-default, and operational UX.
+

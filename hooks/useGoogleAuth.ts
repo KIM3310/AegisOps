@@ -20,7 +20,7 @@ import { useState, useCallback, useEffect } from 'react';
  * 편의를 위해 Session Storage에 임시 저장하여 상태를 유지합니다.
  */
 
-const CLIENT_ID = ''; // [Config] GCP Console에서 발급받은 Web Client ID 입력
+const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''; // [Config] GCP Console에서 발급받은 Web Client ID
 
 // 필요한 권한 목록
 const SCOPES = [

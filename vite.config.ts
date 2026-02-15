@@ -1,19 +1,21 @@
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
-    const apiKey = env.API_KEY || env.GEMINI_API_KEY || env.VITE_API_KEY || env.VITE_GEMINI_API_KEY || '';
     return {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        proxy: {
+          // Keep API keys server-side; frontend calls a local API proxy.
+          '/api': 'http://127.0.0.1:8787',
+        },
       },
       plugins: [react()],
-      define: {
-        'process.env.API_KEY': JSON.stringify(apiKey),
-        'process.env.GEMINI_API_KEY': JSON.stringify(apiKey)
+      test: {
+        environment: 'jsdom',
+        include: ['__tests__/**/*.test.ts'],
       },
       resolve: {
         alias: {

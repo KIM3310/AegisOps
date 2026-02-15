@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Shield, History, FileText, Image as ImageIcon, Upload, X, AlertCircle, Loader2, Download, Table2, Zap, Sparkles, RefreshCw, Edit3 } from 'lucide-react';
 import type { IncidentReport, SavedIncident, AnalysisStatus } from './types';
-import { analyzeIncident } from './services/geminiService';
+import { analyzeIncident, fetchHealthz, type HealthzResponse } from './services/geminiService';
 import { StorageService } from './services/StorageService';
 import { ReportCard } from './components/ReportCard';
 import { IncidentHistory } from './components/IncidentHistory';
@@ -15,6 +15,11 @@ import { ToastContainer, ToastMessage } from './components/Toast';
 interface ImageFile {
   file: File;
   preview: string;
+}
+
+interface ApiImageInput {
+  mimeType: string;
+  data: string;
 }
 
 // [Demo Data] A small purple placeholder image (64x64) representing a generic chart for better video visibility
@@ -66,6 +71,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisStartTime, setAnalysisStartTime] = useState<number | null>(null);
+  const [apiHealth, setApiHealth] = useState<HealthzResponse | null>(null);
   
   // Modals & UI State
   const [showHistory, setShowHistory] = useState(false);
@@ -89,6 +95,15 @@ export default function App() {
       imagesRef.current.forEach(img => URL.revokeObjectURL(img.preview));
     };
   }, []); 
+
+  // API health preflight (demo/live mode, limits, models)
+  useEffect(() => {
+    let mounted = true;
+    fetchHealthz()
+      .then((h) => { if (mounted) setApiHealth(h); })
+      .catch(() => { if (mounted) setApiHealth(null); });
+    return () => { mounted = false; };
+  }, []);
 
   const addToast = (type: ToastMessage['type'], message: string) => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -237,28 +252,32 @@ export default function App() {
     let progressInterval: ReturnType<typeof setInterval> | null = null;
 
     try {
-      // [API Safeguard] Limit number of images sent to API to prevent 400 Bad Request
-      // Gemini 1.5/2.5 Pro can handle many images, but keeping payload reasonable is safer.
-      const imagesToAnalyze = images.slice(0, 16); 
-      if (images.length > 16) {
-          addToast('info', `Analyzing first 16 images only (API limit safeguard).`);
+      const maxImages = apiHealth?.limits?.maxImages ?? 16;
+      const imagesToAnalyze = images.slice(0, maxImages);
+      if (images.length > maxImages) {
+        addToast('info', `Analyzing first ${maxImages} images only (payload safeguard).`);
       }
 
-      // 이미지 전처리: File -> Base64 String
+      // 이미지 전처리: File -> { mimeType, base64 }
       const base64Images = await Promise.all(
         imagesToAnalyze.map(
           (imgItem) =>
-            new Promise<string>((resolve, reject) => {
+            new Promise<ApiImageInput>((resolve, reject) => {
               const reader = new FileReader();
               const timeout = setTimeout(() => reject(new Error('Image read timeout')), 5000);
-              reader.onload = () => { clearTimeout(timeout); resolve((reader.result as string).split(',')[1]); };
+              reader.onload = () => { 
+                clearTimeout(timeout);
+                const result = String(reader.result || "");
+                const data = result.includes(",") ? result.split(",")[1] : result;
+                resolve({ mimeType: imgItem.file.type || "image/png", data });
+              };
               reader.onerror = () => { clearTimeout(timeout); reject(new Error("Failed to read image")); };
               reader.readAsDataURL(imgItem.file);
-            }).catch(() => "")
+            }).catch(() => ({ mimeType: imgItem.file.type || "image/png", data: "" }))
         )
       );
 
-      const validImages = base64Images.filter(img => img !== "");
+      const validImages = base64Images.filter(img => img.data !== "");
       
       // [Validation] 일부 이미지가 로드 실패한 경우 경고
       if (validImages.length < imagesToAnalyze.length) {
@@ -365,7 +384,9 @@ export default function App() {
           <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={handleStartNew} role="button">
             <Shield className="w-5 h-5 text-accent fill-accent/10" aria-hidden="true" />
             <span className="text-sm font-semibold tracking-tight">AegisOps</span>
-            <span className="text-[9px] px-1.5 py-0.5 bg-accent/10 text-accent rounded-full font-medium border border-accent/20">Gemini 3 Pro</span>
+            <span className="text-[9px] px-1.5 py-0.5 bg-accent/10 text-accent rounded-full font-medium border border-accent/20">
+              {apiHealth ? (apiHealth.mode === 'demo' ? 'Demo mode' : apiHealth.models.analyze) : 'API offline'}
+            </span>
           </div>
           <div className="flex items-center gap-1.5" role="navigation">
             <button onClick={() => setShowGoogleImport(true)} className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors">
@@ -489,7 +510,7 @@ export default function App() {
                 (logs.trim() || images.length > 0) && status === 'IDLE' ? 'bg-accent hover:bg-accent-hover text-white shadow-[0_0_20px_rgba(139,92,246,0.2)] hover:shadow-[0_0_25px_rgba(139,92,246,0.3)] hover:scale-[1.01]' : 'bg-bg-card text-text-dim border border-border cursor-not-allowed opacity-50'
               }`}
             >
-              {status === 'IDLE' ? <><Zap className="w-4 h-4 fill-white/20" />Run Analysis (Gemini 3 Pro)</> : <><Loader2 className="w-4 h-4 animate-spin" />Processing...</>}
+              {status === 'IDLE' ? <><Zap className="w-4 h-4 fill-white/20" />Run Analysis</> : <><Loader2 className="w-4 h-4 animate-spin" />Processing...</>}
             </button>
             <div className="text-center text-[10px] text-text-dim">
                 Pro tip: Press <kbd className="font-mono bg-bg-card px-1 py-0.5 rounded border border-border">Cmd/Ctrl + Enter</kbd> to run immediately

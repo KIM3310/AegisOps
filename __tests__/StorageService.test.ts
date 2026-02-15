@@ -1,33 +1,6 @@
 import { StorageService } from '../services/StorageService';
 import type { IncidentReport, SavedIncident } from '../types';
-
-// Mock types for Jest
-declare var describe: any;
-declare var it: any;
-declare var expect: any;
-declare var beforeEach: any;
-declare var jest: any;
-
-// LocalStorage Mock 구현
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => {
-      store[key] = value.toString();
-    },
-    clear: () => {
-      store = {};
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    }
-  };
-})();
-
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock
-});
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 describe('StorageService', () => {
   const mockReport: IncidentReport = {
@@ -42,8 +15,8 @@ describe('StorageService', () => {
   };
 
   beforeEach(() => {
-    localStorageMock.clear();
-    jest.clearAllMocks();
+    localStorage.clear();
+    vi.clearAllMocks();
   });
 
   describe('saveIncident', () => {

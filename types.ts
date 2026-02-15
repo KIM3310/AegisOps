@@ -41,7 +41,7 @@ export interface IncidentReport {
   preventionRecommendations?: string[];
   references?: ReferenceSource[];
   // [New] Explainable AI Fields
-  reasoning?: string;       // AI's chain-of-thought explaining the diagnosis
+  reasoning?: string;       // Evidence-based reasoning trace (Observations / Hypotheses / Decision Path)
   confidenceScore?: number; // 0-100 score indicating AI's certainty based on data quality
 }
 

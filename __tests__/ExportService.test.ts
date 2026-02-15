@@ -1,10 +1,6 @@
 import { ExportService } from '../services/ExportService';
 import type { IncidentReport } from '../types';
-
-// Mock types for Jest
-declare var describe: any;
-declare var it: any;
-declare var expect: any;
+import { describe, it, expect } from 'vitest';
 
 describe('ExportService', () => {
   const mockReport: IncidentReport = {
