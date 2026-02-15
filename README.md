@@ -1,5 +1,7 @@
 # AegisOps — GCP-based Multimodal SEV1 Incident Copilot (Personal Project)
 
+![CI](https://github.com/KIM3310/AegisOps-AI-Incident-Doctor-for-SREs-Powered-by-Gemini-3-Pro-Google-Workspace-/actions/workflows/ci.yml/badge.svg)
+
 In real SEV1s, the bottleneck usually isn’t the lack of telemetry. It’s that evidence is scattered: logs in terminals and alerts, dashboards captured as screenshots, and decisions living in ad-hoc chat messages.
 
 I built **AegisOps** as a repeatable workflow that compresses:
@@ -27,6 +29,8 @@ into a single, reviewable incident report.
 
 The key design goal is **key hygiene**: the Gemini API key must never be shipped to the browser.
 
+![AegisOps Architecture](docs/architecture.png)
+
 ```mermaid
 flowchart LR
   UI[React/Vite UI] -->|/api/*| API[Local API Proxy (Express)]
@@ -37,6 +41,13 @@ flowchart LR
 - The frontend calls a local API (`/api/analyze`, `/api/followup`, `/api/tts`).
 - The API reads `GEMINI_API_KEY` server-side and calls Gemini.
 - Grounding (`googleSearch` tool) is **OFF by default** and must be explicitly enabled.
+
+## Sample Inputs (For Reviewers)
+
+You can drag & drop sample inputs from `samples/` into the UI:
+
+- `samples/logs/*.txt`
+- `samples/screenshots/*.png`
 
 ## Run Locally (One Command)
 
@@ -79,4 +90,3 @@ This keeps the project easy to review and runnable without external credentials.
 
 - Workspace export features require OAuth scopes; in demo mode those calls are not executed.
 - This is a portfolio project focused on repeatability, safety-by-default, and operational UX.
-
