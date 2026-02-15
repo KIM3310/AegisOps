@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Shield, History, FileText, Image as ImageIcon, Upload, X, AlertCircle, Loader2, Download, Table2, Zap, Sparkles, RefreshCw, Edit3 } from 'lucide-react';
+import { Shield, History, FileText, Image as ImageIcon, Upload, X, AlertCircle, Loader2, Download, Table2, Zap, Sparkles, RefreshCw, Edit3, Globe } from 'lucide-react';
 import type { IncidentReport, SavedIncident, AnalysisStatus } from './types';
 import { analyzeIncident, fetchHealthz, type HealthzResponse } from './services/geminiService';
 import { StorageService } from './services/StorageService';
@@ -72,6 +72,7 @@ export default function App() {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisStartTime, setAnalysisStartTime] = useState<number | null>(null);
   const [apiHealth, setApiHealth] = useState<HealthzResponse | null>(null);
+  const [enableGrounding, setEnableGrounding] = useState(false);
   
   // Modals & UI State
   const [showHistory, setShowHistory] = useState(false);
@@ -104,6 +105,12 @@ export default function App() {
       .catch(() => { if (mounted) setApiHealth(null); });
     return () => { mounted = false; };
   }, []);
+
+  // Initialize grounding toggle from server defaults (only once).
+  useEffect(() => {
+    if (!apiHealth) return;
+    setEnableGrounding((prev) => prev || apiHealth.defaults?.grounding || false);
+  }, [apiHealth]);
 
   const addToast = (type: ToastMessage['type'], message: string) => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -290,7 +297,10 @@ export default function App() {
       }, 500);
 
       setStatus('ANALYZING');
-      const result = await analyzeIncident(logs, validImages);
+      if (apiHealth?.mode === 'demo' && enableGrounding) {
+        addToast('info', 'Grounding is enabled, but demo mode will not fetch web sources.');
+      }
+      const result = await analyzeIncident(logs, validImages, { enableGrounding });
 
       if (progressInterval) clearInterval(progressInterval);
       setAnalysisProgress(100);
@@ -389,6 +399,25 @@ export default function App() {
             </span>
           </div>
           <div className="flex items-center gap-1.5" role="navigation">
+            <button
+              onClick={() => {
+                setEnableGrounding((p) => {
+                  const next = !p;
+                  if (next) addToast('info', 'Web grounding enabled. Treat results as hints and verify citations.');
+                  else addToast('info', 'Web grounding disabled (default).');
+                  return next;
+                });
+              }}
+              className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors"
+              aria-label="Toggle web grounding"
+              title="When enabled, the model may use public web sources and attach citations."
+            >
+              <Globe className="w-3.5 h-3.5" />
+              Grounding
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${enableGrounding ? 'bg-sev3/10 text-sev3 border-sev3/20' : 'bg-bg-card text-text-dim border-border'}`}>
+                {enableGrounding ? 'ON' : 'OFF'}
+              </span>
+            </button>
             <button onClick={() => setShowGoogleImport(true)} className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors">
               <Download className="w-3.5 h-3.5" />Import
             </button>
@@ -512,6 +541,11 @@ export default function App() {
             >
               {status === 'IDLE' ? <><Zap className="w-4 h-4 fill-white/20" />Run Analysis</> : <><Loader2 className="w-4 h-4 animate-spin" />Processing...</>}
             </button>
+            {enableGrounding && (
+              <div className="text-2xs text-sev3/90 border border-sev3/20 bg-sev3/5 rounded-lg px-3 py-2 leading-relaxed">
+                Web grounding is enabled. Only trust claims that include references, and treat web results as hints (not source of truth).
+              </div>
+            )}
             <div className="text-center text-[10px] text-text-dim">
                 Pro tip: Press <kbd className="font-mono bg-bg-card px-1 py-0.5 rounded border border-border">Cmd/Ctrl + Enter</kbd> to run immediately
             </div>
@@ -524,7 +558,7 @@ export default function App() {
               <div className="flex-1" />
               <button onClick={handleReAnalyze} className="h-8 px-3 text-xs text-text-muted hover:text-text bg-bg-card hover:bg-bg-hover border border-border rounded-full flex items-center gap-1.5 transition-colors shadow-sm"><RefreshCw className="w-3.5 h-3.5" />Re-analyze</button>
             </div>
-            <ReportCard report={report!} allIncidents={savedIncidents} />
+            <ReportCard report={report!} allIncidents={savedIncidents} enableGrounding={enableGrounding} />
           </div>
         )}
       </main>

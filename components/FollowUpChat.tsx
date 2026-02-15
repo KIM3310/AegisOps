@@ -6,6 +6,7 @@ import type { IncidentReport } from '../types';
 
 interface Props {
   report: IncidentReport;
+  enableGrounding?: boolean;
 }
 
 interface Msg {
@@ -15,7 +16,7 @@ interface Msg {
 
 const suggestions = ['How can we prevent recurrence?', 'Suggest monitoring improvements', 'Draft a customer apology', 'Estimate financial impact'];
 
-export const FollowUpChat: React.FC<Props> = ({ report }) => {
+export const FollowUpChat: React.FC<Props> = ({ report, enableGrounding = false }) => {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,7 +33,7 @@ export const FollowUpChat: React.FC<Props> = ({ report }) => {
     setLoading(true);
 
     try {
-      const r = await generateFollowUp(report, currentHistory, q);
+      const r = await generateFollowUp(report, currentHistory, q, { enableGrounding });
       setMsgs((p) => [...p, { role: 'assistant', content: r }]);
     } catch {
       setMsgs((p) => [...p, { role: 'assistant', content: 'Error generating response.' }]);
