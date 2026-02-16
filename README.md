@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/KIM3310/AegisOps-AI-Incident-Doctor-for-SREs-Powered-by-Gemini-3-Pro-Google-Workspace-/actions/workflows/ci.yml/badge.svg)
 
-In real SEV1s, the bottleneck usually isn’t the lack of telemetry. It’s that evidence is scattered: logs in terminals and alerts, dashboards captured as screenshots, and decisions living in ad-hoc chat messages.
+In real SEV1 (Severity 1) incidents, the bottleneck usually isn’t the lack of telemetry. It’s that evidence is scattered: logs in terminals and alerts, dashboards captured as screenshots, and decisions living in ad-hoc chat messages.
 
 I built **AegisOps** as a repeatable workflow that compresses:
 
@@ -19,11 +19,19 @@ into a single, reviewable incident report.
 
 - **Input:** raw text logs + monitoring screenshots
 - **Output:** a structured JSON incident report:
-  - severity, RCA hypotheses, prioritized actions, timeline, prevention recommendations
+  - severity, RCA (root cause analysis) hypotheses, prioritized actions, timeline, prevention recommendations
   - a short **reasoning trace** (Observations / Hypotheses / Decision Path)
 - **Follow-up Q&A** grounded on the generated report context
-- **Optional:** on-call audio briefing (TTS)
+- **Optional:** on-call audio briefing (TTS, text-to-speech)
 - **Optional:** export artifacts to Google Workspace (Docs/Slides/Sheets/Calendar, plus Chat webhook)
+
+## My Scope (Personal Project)
+
+- Built the end-to-end workflow: React/Vite UI + local API proxy (Express) + report schema + follow-up Q&A.
+- Implemented JSON extraction/repair so the UI stays stable even when model output is messy.
+- Added demo-first reproducibility (deterministic demo mode when `GEMINI_API_KEY` is missing).
+- Enforced payload guardrails for multimodal inputs (image limits + partial-failure tolerance).
+- Kept secrets off the client (server-side key handling; no Vite env injection).
 
 ## Architecture
 
@@ -59,6 +67,7 @@ You can drag & drop sample inputs from `samples/` into the UI:
 
 ```bash
 npm install && npm run dev
+# or: make demo-local
 ```
 
 - UI: `http://127.0.0.1:3000`
@@ -90,3 +99,10 @@ This keeps the project easy to review and runnable without external credentials.
 
 - Workspace export features require OAuth scopes; in demo mode those calls are not executed.
 - This is a portfolio project focused on repeatability, safety-by-default, and operational UX.
+
+## Glossary (first-time readers)
+- SEV1: Severity 1 incident (highest urgency)
+- RCA: Root Cause Analysis
+- TTS: Text-to-Speech
+- OAuth: Open Authorization (browser-based consent flow)
+- LLM: Large Language Model
