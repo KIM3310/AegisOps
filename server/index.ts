@@ -21,6 +21,8 @@ type FollowUpBody = {
 
 type TtsBody = { text?: string };
 
+type FollowUpHistoryItem = { role: "user" | "assistant"; content: string };
+
 const cfg = loadConfig();
 
 const app = express();
@@ -79,12 +81,20 @@ app.post("/api/analyze", async (req, res) => {
 app.post("/api/followup", async (req, res) => {
   try {
     const body = (req.body || {}) as FollowUpBody;
-    const question = String(body.question || "").trim();
+    const question = String(body.question || "").trim().slice(0, Math.max(200, cfg.maxLogChars));
     if (!question) return res.status(400).json({ error: { message: "Missing question." } });
 
     const enableGrounding = Boolean(body.options?.enableGrounding ?? cfg.groundingDefault);
     const report = body.report;
-    const history = Array.isArray(body.history) ? body.history : [];
+    const historyRaw = Array.isArray(body.history) ? body.history : [];
+    const history: FollowUpHistoryItem[] = historyRaw
+      .filter((item) => item && (item.role === "user" || item.role === "assistant") && typeof item.content === "string")
+      .slice(-20)
+      .map((item) => ({
+        role: item.role,
+        content: item.content.trim().slice(0, 4_000),
+      }))
+      .filter((item) => item.content.length > 0);
 
     if (cfg.mode === "demo") {
       const answer = demoFollowUpAnswer({ report, question });
@@ -133,4 +143,3 @@ app.listen(cfg.port, () => {
   // eslint-disable-next-line no-console
   console.log(`[api] AegisOps API listening on http://127.0.0.1:${cfg.port} (mode=${cfg.mode})`);
 });
-
