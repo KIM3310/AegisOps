@@ -1,9 +1,15 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Shield, History, FileText, Image as ImageIcon, Upload, X, AlertCircle, Loader2, Download, Table2, Zap, Sparkles, RefreshCw, Edit3, Globe } from 'lucide-react';
+import { Shield, History, FileText, Image as ImageIcon, Upload, X, AlertCircle, Loader2, Download, Table2, Zap, Sparkles, RefreshCw, Edit3, Globe, BrainCircuit } from 'lucide-react';
 import type { IncidentReport, SavedIncident, AnalysisStatus } from './types';
 import { analyzeIncident, fetchHealthz, type HealthzResponse } from './services/geminiService';
 import { StorageService } from './services/StorageService';
+import {
+  buildTeachableMachineLogLines,
+  isTeachableMachineConfigured,
+  predictWithTeachableMachine,
+  type TmImagePrediction,
+} from './services/teachableMachineService';
 import { ReportCard } from './components/ReportCard';
 import { IncidentHistory } from './components/IncidentHistory';
 import { LoadingOverlay } from './components/LoadingOverlay';
@@ -74,6 +80,11 @@ export default function App() {
   const [analysisStartTime, setAnalysisStartTime] = useState<number | null>(null);
   const [apiHealth, setApiHealth] = useState<HealthzResponse | null>(null);
   const [enableGrounding, setEnableGrounding] = useState(false);
+  const tmConfigured = isTeachableMachineConfigured();
+  const [enableTmVision, setEnableTmVision] = useState(tmConfigured);
+  const [tmStatus, setTmStatus] = useState<'IDLE' | 'RUNNING' | 'READY' | 'ERROR'>('IDLE');
+  const [tmError, setTmError] = useState<string | null>(null);
+  const [tmSignals, setTmSignals] = useState<TmImagePrediction[]>([]);
   
   // Modals & UI State
   const [showHistory, setShowHistory] = useState(false);
@@ -229,6 +240,9 @@ export default function App() {
     }
 
     setError(null);
+    setTmSignals([]);
+    setTmStatus('IDLE');
+    setTmError(null);
     addToast('info', `Preset "${preset.name}" loaded with screenshots`);
   };
 
@@ -292,6 +306,39 @@ export default function App() {
           addToast('error', `${imagesToAnalyze.length - validImages.length} images failed to upload. Analyzing with remaining files.`);
       }
 
+      let effectiveLogs = logs;
+      setTmError(null);
+      setTmSignals([]);
+      setTmStatus('IDLE');
+      if (enableTmVision && tmConfigured && imagesToAnalyze.length > 0) {
+        setTmStatus('RUNNING');
+        try {
+          const tmPredictions = await predictWithTeachableMachine(
+            imagesToAnalyze.map((item) => item.file),
+            { topK: 3, minProbability: 0.1 }
+          );
+          setTmSignals(tmPredictions);
+
+          const tmLines = buildTeachableMachineLogLines(tmPredictions, {
+            minProbability: 0.55,
+            maxLines: 12,
+          });
+          if (tmLines.length > 0) {
+            const sectionHeader = `[TM] visual classifier signals (${new Date().toISOString()})`;
+            effectiveLogs = [logs.trim(), sectionHeader, ...tmLines].filter(Boolean).join('\n');
+            addToast('info', `Teachable Machine added ${tmLines.length} visual signals.`);
+          } else {
+            addToast('info', 'Teachable Machine found no high-confidence signals.');
+          }
+          setTmStatus('READY');
+        } catch (tmErr) {
+          setTmStatus('ERROR');
+          const tmMessage = tmErr instanceof Error ? tmErr.message : 'TM inference failed';
+          setTmError(tmMessage);
+          addToast('error', 'Teachable Machine failed. Continuing without visual signals.');
+        }
+      }
+
       // 가짜 진행률 (UX)
       progressInterval = setInterval(() => {
         setAnalysisProgress((prev) => Math.min(prev + Math.random() * 12, 90));
@@ -301,13 +348,13 @@ export default function App() {
       if (apiHealth?.mode === 'demo' && enableGrounding) {
         addToast('info', 'Grounding is enabled, but demo mode will not fetch web sources.');
       }
-      const result = await analyzeIncident(logs, validImages, { enableGrounding });
+      const result = await analyzeIncident(effectiveLogs, validImages, { enableGrounding });
 
       if (progressInterval) clearInterval(progressInterval);
       setAnalysisProgress(100);
 
       const analysisTime = Date.now() - startTime;
-      const saved = StorageService.saveIncident(result, logs, images.length, analysisTime);
+      const saved = StorageService.saveIncident(result, effectiveLogs, images.length, analysisTime);
       setSavedIncidents((prev) => [saved, ...prev]);
 
       setReport(result);
@@ -334,6 +381,9 @@ export default function App() {
     setStatus('IDLE');
     setError(null);
     setAnalysisProgress(0);
+    setTmSignals([]);
+    setTmStatus('IDLE');
+    setTmError(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -417,6 +467,28 @@ export default function App() {
               Grounding
               <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${enableGrounding ? 'bg-sev3/10 text-sev3 border-sev3/20' : 'bg-bg-card text-text-dim border-border'}`}>
                 {enableGrounding ? 'ON' : 'OFF'}
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                if (!tmConfigured) {
+                  addToast('error', 'Set VITE_TM_MODEL_URL to enable Teachable Machine.');
+                  return;
+                }
+                setEnableTmVision((prev) => {
+                  const next = !prev;
+                  addToast('info', next ? 'Teachable Machine visual signals enabled.' : 'Teachable Machine visual signals disabled.');
+                  return next;
+                });
+              }}
+              className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors"
+              aria-label="Toggle teachable machine visual signals"
+              title="Optional local image classification before LLM analysis."
+            >
+              <BrainCircuit className="w-3.5 h-3.5" />
+              TM Vision
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${enableTmVision ? 'bg-sev2/10 text-sev2 border-sev2/20' : 'bg-bg-card text-text-dim border-border'}`}>
+                {enableTmVision ? 'ON' : 'OFF'}
               </span>
             </button>
             <button onClick={() => setShowGoogleImport(true)} className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors">
@@ -545,6 +617,31 @@ export default function App() {
             {enableGrounding && (
               <div className="text-2xs text-sev3/90 border border-sev3/20 bg-sev3/5 rounded-lg px-3 py-2 leading-relaxed">
                 Web grounding is enabled. Only trust claims that include references, and treat web results as hints (not source of truth).
+              </div>
+            )}
+            {tmConfigured && (
+              <div className="text-2xs border border-border bg-bg-card/60 rounded-lg px-3 py-2 leading-relaxed">
+                <div className="font-medium text-text mb-1">
+                  Teachable Machine status: <span className="text-accent">{tmStatus}</span>
+                </div>
+                <div className="text-text-muted">
+                  {enableTmVision
+                    ? 'Image uploads are pre-scored locally and high-confidence labels are appended to analysis context.'
+                    : 'TM Vision is disabled. Enable it from the top bar when model URL is configured.'}
+                </div>
+                {tmError && <div className="text-sev1 mt-1">TM error: {tmError}</div>}
+                {tmSignals.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {tmSignals.slice(0, 3).map((row) => (
+                      <div key={row.fileName} className="text-text-muted">
+                        <span className="text-text">{row.fileName}:</span>{' '}
+                        {row.predictions
+                          .map((p) => `${p.className} ${(p.probability * 100).toFixed(0)}%`)
+                          .join(', ')}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             <div className="text-center text-[10px] text-text-dim">

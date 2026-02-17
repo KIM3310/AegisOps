@@ -92,7 +92,19 @@ VITE_GISCUS_REPO=
 VITE_GISCUS_REPO_ID=
 VITE_GISCUS_CATEGORY=
 VITE_GISCUS_CATEGORY_ID=
+
+# Optional: Teachable Machine image classifier (client-side)
+# Use either base folder URL (.../model/) or direct model.json URL.
+VITE_TM_MODEL_URL=
 ```
+
+### Teachable Machine (Optional)
+
+When `VITE_TM_MODEL_URL` is set, AegisOps can run **local browser-side image classification** before Gemini analysis:
+
+- uploaded screenshots are scored by your Teachable Machine model
+- high-confidence labels are appended to log context as `[TM] ...` lines
+- failures are non-blocking (analysis continues without TM signals)
 
 ## Demo Mode (No Keys Required)
 
