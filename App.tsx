@@ -9,6 +9,7 @@ import { IncidentHistory } from './components/IncidentHistory';
 import { LoadingOverlay } from './components/LoadingOverlay';
 import { GoogleImport } from './components/GoogleImport';
 import { DatasetExport } from './components/DatasetExport';
+import { CommunityHub } from './components/CommunityHub';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
 // [Type Definition] 이미지 파일과 미리보기 URL을 함께 관리하기 위한 인터페이스
@@ -562,6 +563,8 @@ export default function App() {
           </div>
         )}
       </main>
+
+      <CommunityHub />
 
       {showHistory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowHistory(false)}>
