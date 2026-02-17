@@ -83,6 +83,15 @@ GEMINI_API_KEY=
 
 # Optional: enable real Google OAuth for Workspace integration (otherwise the UI uses demo auth).
 VITE_GOOGLE_CLIENT_ID=
+
+# Optional: community integrations
+VITE_FORMSPREE_ENDPOINT=
+VITE_DISQUS_SHORTNAME=
+VITE_DISQUS_IDENTIFIER=aegisops-community
+VITE_GISCUS_REPO=
+VITE_GISCUS_REPO_ID=
+VITE_GISCUS_CATEGORY=
+VITE_GISCUS_CATEGORY_ID=
 ```
 
 ## Demo Mode (No Keys Required)
