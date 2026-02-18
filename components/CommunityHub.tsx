@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, MessageCircle, Send } from 'lucide-react';
+import { AdSenseSlot } from './AdSenseSlot';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -189,6 +190,29 @@ export const CommunityHub: React.FC = () => {
               )}
             </div>
           </div>
+        </div>
+      </div>
+      <div className="mt-4 grid md:grid-cols-2 gap-4">
+        <div className="bg-bg-card border border-border rounded-lg p-4">
+          <h2 className="text-sm font-semibold mb-3">Site Trust Signals</h2>
+          <ul className="text-xs text-text-muted space-y-1.5 leading-relaxed">
+            <li>Clear product scope: incident analysis + post-mortem automation for SRE teams.</li>
+            <li>Contact: maintainer@aegisops.dev</li>
+            <li>Privacy: minimal telemetry, no hidden trackers, explicit third-party embeds.</li>
+            <li>Terms: operational guidance only, final incident decisions stay with operators.</li>
+            <li>
+              Links: <a className="text-accent hover:underline" href="/privacy.html">Privacy</a> ·{" "}
+              <a className="text-accent hover:underline" href="/terms.html">Terms</a> ·{" "}
+              <a className="text-accent hover:underline" href="/contact.html">Contact</a>
+            </li>
+          </ul>
+        </div>
+        <div className="bg-bg-card border border-border rounded-lg p-4">
+          <h2 className="text-sm font-semibold mb-3">Sponsored Slot</h2>
+          <p className="text-xs text-text-muted mb-2">
+            Ads are enabled only after policy pages and navigation completeness checks pass.
+          </p>
+          <AdSenseSlot />
         </div>
       </div>
     </section>
