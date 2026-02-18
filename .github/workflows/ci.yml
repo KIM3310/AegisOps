@@ -35,3 +35,12 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  review-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: AdSense/Cloudflare review gate
+        run: bash tools/release_ops.sh check

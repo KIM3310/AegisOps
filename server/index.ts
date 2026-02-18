@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import { randomUUID } from "node:crypto";
 import express from "express";
 import { loadConfig } from "./lib/config";
 import { demoAnalyzeIncident, demoFollowUpAnswer } from "./lib/demo";
@@ -23,15 +24,61 @@ type TtsBody = { text?: string };
 
 type FollowUpHistoryItem = { role: "user" | "assistant"; content: string };
 
+declare global {
+  namespace Express {
+    interface Request {
+      requestId?: string;
+    }
+  }
+}
+
 const cfg = loadConfig();
+const rateBuckets = new Map<string, { count: number; resetAt: number }>();
 
 const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "25mb" }));
 
-app.get("/api/healthz", (_req, res) => {
+function nextRequestId(): string {
+  return `req-${randomUUID().replace(/-/g, "").slice(0, 12)}`;
+}
+
+function normalizeIp(req: express.Request): string {
+  return String(req.ip || req.socket.remoteAddress || "unknown").replace(/[:.]/g, "_");
+}
+
+function isRateLimited(key: string, limit: number, windowMs: number): boolean {
+  const now = Date.now();
+  const bucket = rateBuckets.get(key);
+  if (!bucket || bucket.resetAt <= now) {
+    rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+    return false;
+  }
+  if (bucket.count >= limit) return true;
+  bucket.count += 1;
+  return false;
+}
+
+function sendError(req: express.Request, res: express.Response, status: number, message: string): express.Response {
+  return res.status(status).json({
+    error: {
+      message,
+      requestId: req.requestId || nextRequestId(),
+    },
+  });
+}
+
+app.use((req, res, next) => {
+  req.requestId = String(req.headers["x-request-id"] || nextRequestId());
+  res.setHeader("x-request-id", req.requestId);
+  res.setHeader("cache-control", "no-store");
+  next();
+});
+
+app.get("/api/healthz", (req, res) => {
   res.json({
     ok: true,
+    requestId: req.requestId,
     mode: cfg.mode,
     limits: { maxImages: cfg.maxImages, maxLogChars: cfg.maxLogChars },
     defaults: { grounding: cfg.groundingDefault },
@@ -41,8 +88,12 @@ app.get("/api/healthz", (_req, res) => {
 
 app.post("/api/analyze", async (req, res) => {
   try {
+    if (isRateLimited(`analyze:${normalizeIp(req)}`, 40, 60_000)) {
+      return sendError(req, res, 429, "Too many analyze requests. Please slow down.");
+    }
+
     const body = (req.body || {}) as AnalyzeBody;
-    const logs = String(body.logs || "");
+    const logs = String(body.logs || "").slice(0, cfg.maxLogChars);
     const enableGrounding = Boolean(body.options?.enableGrounding ?? cfg.groundingDefault);
 
     const imagesRaw = Array.isArray(body.images) ? body.images : [];
@@ -60,7 +111,7 @@ app.post("/api/analyze", async (req, res) => {
     }
 
     if (!cfg.geminiApiKey) {
-      return res.status(500).json({ error: { message: "Server misconfigured: GEMINI_API_KEY missing." } });
+      return sendError(req, res, 500, "Server misconfigured: GEMINI_API_KEY missing.");
     }
 
     const report = await geminiAnalyzeIncident({
@@ -74,15 +125,19 @@ app.post("/api/analyze", async (req, res) => {
     return res.json(report);
   } catch (e: any) {
     const message = e?.message || String(e);
-    return res.status(400).json({ error: { message } });
+    return sendError(req, res, 400, message);
   }
 });
 
 app.post("/api/followup", async (req, res) => {
   try {
+    if (isRateLimited(`followup:${normalizeIp(req)}`, 120, 60_000)) {
+      return sendError(req, res, 429, "Too many follow-up requests. Please slow down.");
+    }
+
     const body = (req.body || {}) as FollowUpBody;
     const question = String(body.question || "").trim().slice(0, Math.max(200, cfg.maxLogChars));
-    if (!question) return res.status(400).json({ error: { message: "Missing question." } });
+    if (!question) return sendError(req, res, 400, "Missing question.");
 
     const enableGrounding = Boolean(body.options?.enableGrounding ?? cfg.groundingDefault);
     const report = body.report;
@@ -102,7 +157,7 @@ app.post("/api/followup", async (req, res) => {
     }
 
     if (!cfg.geminiApiKey) {
-      return res.status(500).json({ error: { message: "Server misconfigured: GEMINI_API_KEY missing." } });
+      return sendError(req, res, 500, "Server misconfigured: GEMINI_API_KEY missing.");
     }
 
     const answer = await geminiFollowUp({
@@ -116,26 +171,30 @@ app.post("/api/followup", async (req, res) => {
     return res.json({ answer });
   } catch (e: any) {
     const message = e?.message || String(e);
-    return res.status(400).json({ error: { message } });
+    return sendError(req, res, 400, message);
   }
 });
 
 app.post("/api/tts", async (req, res) => {
   try {
+    if (isRateLimited(`tts:${normalizeIp(req)}`, 60, 60_000)) {
+      return sendError(req, res, 429, "Too many TTS requests. Please slow down.");
+    }
+
     const body = (req.body || {}) as TtsBody;
     const text = String(body.text || "").trim();
-    if (!text) return res.status(400).json({ error: { message: "Missing text." } });
+    if (!text) return sendError(req, res, 400, "Missing text.");
 
     if (cfg.mode === "demo") return res.json({ audioBase64: undefined });
     if (!cfg.geminiApiKey) {
-      return res.status(500).json({ error: { message: "Server misconfigured: GEMINI_API_KEY missing." } });
+      return sendError(req, res, 500, "Server misconfigured: GEMINI_API_KEY missing.");
     }
 
     const audioBase64 = await geminiTts({ apiKey: cfg.geminiApiKey, model: cfg.modelTts, text });
     return res.json({ audioBase64 });
   } catch (e: any) {
     const message = e?.message || String(e);
-    return res.status(400).json({ error: { message } });
+    return sendError(req, res, 400, message);
   }
 });
 
