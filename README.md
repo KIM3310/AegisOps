@@ -102,7 +102,7 @@ VITE_ADSENSE_SLOT=1234567890
 VITE_TM_MODEL_URL=
 ```
 
-AdSense review helpers are included in `public/ads.txt`, `public/robots.txt`, `public/sitemap.xml`, `public/compliance.html`, and `public/_headers`.
+AdSense review helpers are included in `public/ads.txt`, `public/robots.txt`, `public/sitemap.xml`, `public/about.html`, `public/compliance.html`, and `public/_headers`.
 
 ### Teachable Machine (Optional)
 
