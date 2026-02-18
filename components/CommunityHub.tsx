@@ -201,7 +201,8 @@ export const CommunityHub: React.FC = () => {
             <li>Privacy: minimal telemetry, no hidden trackers, explicit third-party embeds.</li>
             <li>Terms: operational guidance only, final incident decisions stay with operators.</li>
             <li>
-              Links: <a className="text-accent hover:underline" href="/privacy.html">Privacy</a> ·{" "}
+              Links: <a className="text-accent hover:underline" href="/about.html">About</a> ·{" "}
+              <a className="text-accent hover:underline" href="/privacy.html">Privacy</a> ·{" "}
               <a className="text-accent hover:underline" href="/terms.html">Terms</a> ·{" "}
               <a className="text-accent hover:underline" href="/contact.html">Contact</a> ·{" "}
               <a className="text-accent hover:underline" href="/compliance.html">Compliance</a>
