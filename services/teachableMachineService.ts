@@ -14,6 +14,19 @@ type TeachableMachineOptions = {
 };
 
 const TM_BASE_URL_RAW = String(import.meta.env.VITE_TM_MODEL_URL || '').trim();
+const TM_CDN_URL_RAW = String(
+  import.meta.env.VITE_TM_CDN_URL || 'https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js'
+).trim();
+
+type TmImageRuntime = {
+  load: (modelUrl: string, metadataUrl: string) => Promise<{
+    predict: (image: HTMLImageElement) => Promise<any[]>;
+  }>;
+};
+
+type TmWindow = Window & {
+  tmImage?: TmImageRuntime;
+};
 
 function safeBaseUrl(url: string): string {
   return String(url || '').trim().replace(/\/+$/, '');
@@ -72,6 +85,7 @@ export function buildTeachableMachineLogLines(
 }
 
 let modelPromise: Promise<any> | null = null;
+let tmScriptPromise: Promise<TmImageRuntime> | null = null;
 
 function fileToImageElement(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -100,11 +114,48 @@ async function getModel() {
   }
 
   modelPromise = (async () => {
-    const tmImage = await import('@teachablemachine/image');
+    const tmImage = await loadTmImageRuntime();
     return tmImage.load(modelUrl, metadataUrl);
   })();
 
   return modelPromise;
+}
+
+async function loadTmImageRuntime(): Promise<TmImageRuntime> {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    throw new Error('Teachable Machine runtime is only available in browser.');
+  }
+
+  const existing = (window as TmWindow).tmImage;
+  if (existing) {
+    return existing;
+  }
+  if (tmScriptPromise) {
+    return tmScriptPromise;
+  }
+
+  tmScriptPromise = new Promise<TmImageRuntime>((resolve, reject) => {
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = TM_CDN_URL_RAW;
+    script.crossOrigin = 'anonymous';
+
+    script.onload = () => {
+      const runtime = (window as TmWindow).tmImage;
+      if (!runtime?.load) {
+        reject(new Error('Teachable Machine runtime loaded but `window.tmImage` was not found.'));
+        return;
+      }
+      resolve(runtime);
+    };
+    script.onerror = () => {
+      reject(new Error('Failed to load Teachable Machine runtime script.'));
+    };
+
+    document.head.appendChild(script);
+  });
+
+  return tmScriptPromise;
 }
 
 export async function predictWithTeachableMachine(
@@ -145,4 +196,3 @@ export async function predictWithTeachableMachine(
 
   return outputs;
 }
-
