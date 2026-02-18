@@ -93,10 +93,16 @@ VITE_GISCUS_REPO_ID=
 VITE_GISCUS_CATEGORY=
 VITE_GISCUS_CATEGORY_ID=
 
+# Optional: AdSense
+VITE_ADSENSE_CLIENT=ca-pub-xxxxxxxxxxxxxxxx
+VITE_ADSENSE_SLOT=1234567890
+
 # Optional: Teachable Machine image classifier (client-side)
 # Use either base folder URL (.../model/) or direct model.json URL.
 VITE_TM_MODEL_URL=
 ```
+
+AdSense review helpers are included in `public/ads.txt`, `public/robots.txt`, and `public/sitemap.xml`.
 
 ### Teachable Machine (Optional)
 

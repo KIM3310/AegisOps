@@ -1,6 +1,8 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
+  readonly VITE_ADSENSE_CLIENT?: string;
+  readonly VITE_ADSENSE_SLOT?: string;
   readonly VITE_TM_MODEL_URL?: string;
   readonly VITE_FORMSPREE_ENDPOINT?: string;
   readonly VITE_DISQUS_SHORTNAME?: string;
