@@ -1,8 +1,16 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Shield, History, FileText, Image as ImageIcon, Upload, X, AlertCircle, Loader2, Download, Table2, Zap, Sparkles, RefreshCw, Edit3, Globe, BrainCircuit } from 'lucide-react';
+import { Shield, History, FileText, Image as ImageIcon, Upload, X, AlertCircle, Loader2, Download, Table2, Zap, Sparkles, RefreshCw, Edit3, Globe, BrainCircuit, KeyRound } from 'lucide-react';
 import type { IncidentReport, SavedIncident, AnalysisStatus } from './types';
-import { analyzeIncident, fetchHealthz, type HealthzResponse } from './services/geminiService';
+import {
+  analyzeIncident,
+  fetchHealthz,
+  fetchGeminiApiKeyStatus,
+  saveGeminiApiKey,
+  clearGeminiApiKey,
+  type HealthzResponse,
+  type ApiKeySource,
+} from './services/geminiService';
 import { StorageService } from './services/StorageService';
 import {
   buildTeachableMachineLogLines,
@@ -79,6 +87,11 @@ export default function App() {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisStartTime, setAnalysisStartTime] = useState<number | null>(null);
   const [apiHealth, setApiHealth] = useState<HealthzResponse | null>(null);
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [apiKeyMasked, setApiKeyMasked] = useState<string | null>(null);
+  const [apiKeyBusy, setApiKeyBusy] = useState(false);
+  const [apiKeySource, setApiKeySource] = useState<ApiKeySource>('none');
+  const [showApiKeyPanel, setShowApiKeyPanel] = useState(false);
   const [enableGrounding, setEnableGrounding] = useState(false);
   const tmConfigured = isTeachableMachineConfigured();
   const [enableTmVision, setEnableTmVision] = useState(tmConfigured);
@@ -118,6 +131,22 @@ export default function App() {
     return () => { mounted = false; };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    fetchGeminiApiKeyStatus()
+      .then((status) => {
+        if (!mounted) return;
+        setApiKeyMasked(status.masked || null);
+        setApiKeySource(status.source || 'none');
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setApiKeyMasked(null);
+        setApiKeySource('none');
+      });
+    return () => { mounted = false; };
+  }, []);
+
   // Initialize grounding toggle from server defaults (only once).
   useEffect(() => {
     if (!apiHealth) return;
@@ -131,6 +160,47 @@ export default function App() {
 
   const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const handleSaveApiKey = async () => {
+    const candidate = apiKeyInput.trim();
+    if (!candidate) {
+      addToast('error', 'Enter a Gemini API key first.');
+      return;
+    }
+
+    setApiKeyBusy(true);
+    try {
+      const status = await saveGeminiApiKey(candidate);
+      setApiKeyMasked(status.masked || null);
+      setApiKeySource(status.source || 'runtime');
+      setApiKeyInput('');
+      const health = await fetchHealthz().catch(() => null);
+      setApiHealth(health);
+      addToast('success', 'Gemini API key saved to backend runtime.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to save API key.';
+      addToast('error', message);
+    } finally {
+      setApiKeyBusy(false);
+    }
+  };
+
+  const handleClearApiKey = async () => {
+    setApiKeyBusy(true);
+    try {
+      const status = await clearGeminiApiKey();
+      setApiKeyMasked(status.masked || null);
+      setApiKeySource(status.source || 'none');
+      const health = await fetchHealthz().catch(() => null);
+      setApiHealth(health);
+      addToast('info', status.configured ? 'Runtime API key removed. Falling back to server key.' : 'Runtime API key removed. Demo mode active.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to clear API key.';
+      addToast('error', message);
+    } finally {
+      setApiKeyBusy(false);
+    }
   };
 
   // [Helper] 파일 배열을 받아 ImageFile 상태로 변환 및 추가
@@ -491,6 +561,18 @@ export default function App() {
                 {enableTmVision ? 'ON' : 'OFF'}
               </span>
             </button>
+            <button
+              onClick={() => setShowApiKeyPanel((prev) => !prev)}
+              className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors"
+              aria-label="Toggle API key panel"
+              title="Set Gemini API key at runtime without editing .env"
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              API Key
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${apiHealth?.mode === 'live' ? 'bg-sev3/10 text-sev3 border-sev3/20' : 'bg-bg-card text-text-dim border-border'}`}>
+                {apiHealth?.mode === 'live' ? 'LIVE' : 'DEMO'}
+              </span>
+            </button>
             <button onClick={() => setShowGoogleImport(true)} className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors">
               <Download className="w-3.5 h-3.5" />Import
             </button>
@@ -517,6 +599,53 @@ export default function App() {
                 <br className="hidden sm:block"/>AI will deduce root causes and generate a structured post-mortem instantly.
               </p>
             </div>
+
+            {(showApiKeyPanel || apiHealth?.mode !== 'live') && (
+              <div className="rounded-lg border border-border bg-bg-card/90 p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-xs font-semibold flex items-center gap-1.5">
+                      <KeyRound className="w-3.5 h-3.5 text-accent" />
+                      Gemini API Key
+                    </div>
+                    <p className="text-2xs text-text-muted mt-1">
+                      키는 백엔드 런타임 메모리에만 저장되며 서버 재시작 시 초기화됩니다.
+                    </p>
+                  </div>
+                  <span className={`text-[10px] px-2 py-1 rounded-full border ${apiHealth?.mode === 'live' ? 'bg-sev3/10 text-sev3 border-sev3/20' : 'bg-sev1/10 text-sev1 border-sev1/20'}`}>
+                    {apiHealth?.mode === 'live' ? `LIVE (${apiKeySource.toUpperCase()})` : 'DEMO'}
+                  </span>
+                </div>
+                {apiKeyMasked && (
+                  <div className="text-2xs text-text-muted">
+                    Active key: <span className="text-text">{apiKeyMasked}</span>
+                  </div>
+                )}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="password"
+                    value={apiKeyInput}
+                    onChange={(e) => setApiKeyInput(e.target.value)}
+                    placeholder="Enter Gemini API key (e.g. AIza...)"
+                    className="flex-1 h-9 px-3 rounded-md bg-bg border border-border text-xs focus:outline-none focus:ring-1 focus:ring-accent/40"
+                  />
+                  <button
+                    onClick={handleSaveApiKey}
+                    disabled={apiKeyBusy}
+                    className="h-9 px-3 rounded-md bg-accent hover:bg-accent-hover text-white text-xs font-medium disabled:opacity-60"
+                  >
+                    {apiKeyBusy ? 'Saving...' : 'Save Key'}
+                  </button>
+                  <button
+                    onClick={handleClearApiKey}
+                    disabled={apiKeyBusy}
+                    className="h-9 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text disabled:opacity-60"
+                  >
+                    Clear Runtime Key
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-wrap gap-2 mb-4">
               {SAMPLE_PRESETS.map((preset) => (

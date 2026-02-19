@@ -21,6 +21,8 @@ type FollowUpBody = {
 };
 
 type TtsBody = { text?: string };
+type ApiKeyBody = { apiKey?: string };
+type KeySource = "runtime" | "env" | "none";
 
 type FollowUpHistoryItem = { role: "user" | "assistant"; content: string };
 
@@ -34,6 +36,7 @@ declare global {
 
 const cfg = loadConfig();
 const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+const runtimeGeminiApiKey = { value: undefined as string | undefined };
 
 const app = express();
 app.disable("x-powered-by");
@@ -68,6 +71,31 @@ function sendError(req: express.Request, res: express.Response, status: number, 
   });
 }
 
+function isValidGeminiApiKey(value: string): boolean {
+  if (!value) return false;
+  if (value.length < 20 || value.length > 256) return false;
+  return !/\s/.test(value);
+}
+
+function getEffectiveGeminiApiKey(): string | undefined {
+  return runtimeGeminiApiKey.value || cfg.geminiApiKey;
+}
+
+function getMode(): "demo" | "live" {
+  return getEffectiveGeminiApiKey() ? "live" : "demo";
+}
+
+function getKeySource(): KeySource {
+  if (runtimeGeminiApiKey.value) return "runtime";
+  if (cfg.geminiApiKey) return "env";
+  return "none";
+}
+
+function maskApiKey(value: string): string {
+  if (value.length <= 8) return "*".repeat(value.length);
+  return `${value.slice(0, 4)}...${value.slice(-4)}`;
+}
+
 app.use((req, res, next) => {
   req.requestId = String(req.headers["x-request-id"] || nextRequestId());
   res.setHeader("x-request-id", req.requestId);
@@ -76,13 +104,63 @@ app.use((req, res, next) => {
 });
 
 app.get("/api/healthz", (req, res) => {
+  const effectiveKey = getEffectiveGeminiApiKey();
   res.json({
     ok: true,
     requestId: req.requestId,
-    mode: cfg.mode,
+    mode: getMode(),
+    keySource: getKeySource(),
+    keyConfigured: Boolean(effectiveKey),
     limits: { maxImages: cfg.maxImages, maxLogChars: cfg.maxLogChars },
     defaults: { grounding: cfg.groundingDefault },
     models: { analyze: cfg.modelAnalyze, tts: cfg.modelTts },
+  });
+});
+
+app.get("/api/settings/api-key", (req, res) => {
+  const effectiveKey = getEffectiveGeminiApiKey();
+  res.json({
+    ok: true,
+    requestId: req.requestId,
+    mode: getMode(),
+    source: getKeySource(),
+    configured: Boolean(effectiveKey),
+    masked: effectiveKey ? maskApiKey(effectiveKey) : undefined,
+    persisted: false,
+  });
+});
+
+app.put("/api/settings/api-key", (req, res) => {
+  const body = (req.body || {}) as ApiKeyBody;
+  const apiKey = String(body.apiKey || "").trim();
+  if (!apiKey) return sendError(req, res, 400, "Missing apiKey.");
+  if (!isValidGeminiApiKey(apiKey)) {
+    return sendError(req, res, 400, "Invalid apiKey format.");
+  }
+
+  runtimeGeminiApiKey.value = apiKey;
+  return res.json({
+    ok: true,
+    requestId: req.requestId,
+    mode: getMode(),
+    source: getKeySource(),
+    configured: true,
+    masked: maskApiKey(apiKey),
+    persisted: false,
+  });
+});
+
+app.delete("/api/settings/api-key", (req, res) => {
+  runtimeGeminiApiKey.value = undefined;
+  const effectiveKey = getEffectiveGeminiApiKey();
+  return res.json({
+    ok: true,
+    requestId: req.requestId,
+    mode: getMode(),
+    source: getKeySource(),
+    configured: Boolean(effectiveKey),
+    masked: effectiveKey ? maskApiKey(effectiveKey) : undefined,
+    persisted: false,
   });
 });
 
@@ -105,17 +183,19 @@ app.post("/api/analyze", async (req, res) => {
         data: (x.data || "").trim(),
       }));
 
-    if (cfg.mode === "demo") {
+    const mode = getMode();
+    if (mode === "demo") {
       const report = demoAnalyzeIncident({ logs, imageCount: images.length, maxLogChars: cfg.maxLogChars });
       return res.json(report);
     }
 
-    if (!cfg.geminiApiKey) {
+    const effectiveApiKey = getEffectiveGeminiApiKey();
+    if (!effectiveApiKey) {
       return sendError(req, res, 500, "Server misconfigured: GEMINI_API_KEY missing.");
     }
 
     const report = await geminiAnalyzeIncident({
-      apiKey: cfg.geminiApiKey,
+      apiKey: effectiveApiKey,
       model: cfg.modelAnalyze,
       logs,
       images,
@@ -151,17 +231,19 @@ app.post("/api/followup", async (req, res) => {
       }))
       .filter((item) => item.content.length > 0);
 
-    if (cfg.mode === "demo") {
+    const mode = getMode();
+    if (mode === "demo") {
       const answer = demoFollowUpAnswer({ report, question });
       return res.json({ answer });
     }
 
-    if (!cfg.geminiApiKey) {
+    const effectiveApiKey = getEffectiveGeminiApiKey();
+    if (!effectiveApiKey) {
       return sendError(req, res, 500, "Server misconfigured: GEMINI_API_KEY missing.");
     }
 
     const answer = await geminiFollowUp({
-      apiKey: cfg.geminiApiKey,
+      apiKey: effectiveApiKey,
       model: cfg.modelAnalyze,
       report,
       history,
@@ -185,12 +267,15 @@ app.post("/api/tts", async (req, res) => {
     const text = String(body.text || "").trim();
     if (!text) return sendError(req, res, 400, "Missing text.");
 
-    if (cfg.mode === "demo") return res.json({ audioBase64: undefined });
-    if (!cfg.geminiApiKey) {
+    const mode = getMode();
+    if (mode === "demo") return res.json({ audioBase64: undefined });
+
+    const effectiveApiKey = getEffectiveGeminiApiKey();
+    if (!effectiveApiKey) {
       return sendError(req, res, 500, "Server misconfigured: GEMINI_API_KEY missing.");
     }
 
-    const audioBase64 = await geminiTts({ apiKey: cfg.geminiApiKey, model: cfg.modelTts, text });
+    const audioBase64 = await geminiTts({ apiKey: effectiveApiKey, model: cfg.modelTts, text });
     return res.json({ audioBase64 });
   } catch (e: any) {
     const message = e?.message || String(e);
@@ -200,5 +285,5 @@ app.post("/api/tts", async (req, res) => {
 
 app.listen(cfg.port, () => {
   // eslint-disable-next-line no-console
-  console.log(`[api] AegisOps API listening on http://127.0.0.1:${cfg.port} (mode=${cfg.mode})`);
+  console.log(`[api] AegisOps API listening on http://127.0.0.1:${cfg.port} (startupMode=${cfg.mode}, keySource=${getKeySource()})`);
 });
