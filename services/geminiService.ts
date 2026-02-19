@@ -1,13 +1,25 @@
 import type { IncidentReport } from "../types";
 
 export type ApiMode = "demo" | "live";
+export type ApiKeySource = "runtime" | "env" | "none";
 
 export interface HealthzResponse {
   ok: boolean;
   mode: ApiMode;
+  keySource?: ApiKeySource;
+  keyConfigured?: boolean;
   limits: { maxImages: number; maxLogChars: number };
   defaults: { grounding: boolean };
   models: { analyze: string; tts: string };
+}
+
+export interface GeminiApiKeyStatus {
+  ok: boolean;
+  mode: ApiMode;
+  source: ApiKeySource;
+  configured: boolean;
+  masked?: string;
+  persisted: boolean;
 }
 
 type ApiErrorBody = { error?: { message?: string } };
@@ -77,6 +89,23 @@ export async function fetchHealthz(): Promise<HealthzResponse> {
   return apiFetch<HealthzResponse>("/api/healthz");
 }
 
+export async function fetchGeminiApiKeyStatus(): Promise<GeminiApiKeyStatus> {
+  return apiFetch<GeminiApiKeyStatus>("/api/settings/api-key");
+}
+
+export async function saveGeminiApiKey(apiKey: string): Promise<GeminiApiKeyStatus> {
+  return apiFetch<GeminiApiKeyStatus>("/api/settings/api-key", {
+    method: "PUT",
+    body: JSON.stringify({ apiKey }),
+  });
+}
+
+export async function clearGeminiApiKey(): Promise<GeminiApiKeyStatus> {
+  return apiFetch<GeminiApiKeyStatus>("/api/settings/api-key", {
+    method: "DELETE",
+  });
+}
+
 export async function analyzeIncident(
   logs: string,
   images: { mimeType: string; data: string }[] = [],
@@ -109,5 +138,13 @@ export async function generateTTS(text: string): Promise<string | undefined> {
   return r.audioBase64;
 }
 
-export const GeminiService = { fetchHealthz, analyzeIncident, generateFollowUp, generateTTS };
+export const GeminiService = {
+  fetchHealthz,
+  fetchGeminiApiKeyStatus,
+  saveGeminiApiKey,
+  clearGeminiApiKey,
+  analyzeIncident,
+  generateFollowUp,
+  generateTTS,
+};
 export default GeminiService;
