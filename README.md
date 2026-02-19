@@ -102,6 +102,9 @@ VITE_ADSENSE_SLOT=1234567890
 VITE_TM_MODEL_URL=
 ```
 
+You can also provide Gemini key from the UI (`API Key` button in top bar).  
+That runtime key is kept in backend memory only and resets when the API server restarts.
+
 AdSense review helpers are included in `public/ads.txt`, `public/robots.txt`, `public/sitemap.xml`, `public/about.html`, `public/compliance.html`, and `public/_headers`.
 
 ### Teachable Machine (Optional)
