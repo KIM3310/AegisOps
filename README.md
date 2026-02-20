@@ -81,6 +81,18 @@ Copy `.env.example` to `.env` and fill what you need.
 # If missing, the API runs in deterministic demo mode (no external LLM calls).
 GEMINI_API_KEY=
 
+# LLM provider selection:
+# - auto   : Gemini when key exists, otherwise demo mode
+# - demo   : always deterministic demo mode
+# - gemini : Gemini mode (falls back to demo when key is missing)
+# - ollama : local Ollama mode (offline)
+LLM_PROVIDER=auto
+
+# Optional: Ollama local endpoint + models (used when LLM_PROVIDER=ollama)
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL_ANALYZE=llama3.1:8b
+OLLAMA_MODEL_FOLLOWUP=llama3.1:8b
+
 # Optional: protect /api/settings/api-key with an admin token.
 # Send via Authorization: Bearer <token> or x-api-settings-token header.
 API_KEY_SETTINGS_TOKEN=
@@ -161,6 +173,37 @@ If `GEMINI_API_KEY` is not set, the API switches to **demo mode**:
 - TTS is disabled
 
 This keeps the project easy to review and runnable without external credentials.
+
+## Ollama Offline Mode (No Cloud LLM)
+
+Use this when you want offline local inference for portfolio demos.
+
+1. Install and run Ollama locally.
+2. Pull a model:
+
+```bash
+ollama pull llama3.1:8b
+```
+
+3. Set `.env`:
+
+```env
+LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL_ANALYZE=llama3.1:8b
+OLLAMA_MODEL_FOLLOWUP=llama3.1:8b
+```
+
+4. Start app:
+
+```bash
+npm run dev
+```
+
+Notes:
+- In `ollama` mode, Gemini API key runtime settings are disabled.
+- TTS endpoint is treated as unavailable (`audioBase64` is empty).
+- If Ollama is not running/reachable, analyze/follow-up endpoints return `502` with a connection hint.
 
 ## Notes / Limitations
 
