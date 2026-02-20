@@ -7,6 +7,7 @@ import type { IncidentReport } from "../types";
 import { loadConfig } from "./lib/config";
 import { demoAnalyzeIncident, demoFollowUpAnswer } from "./lib/demo";
 import { geminiAnalyzeIncident, geminiFollowUp, geminiTts } from "./lib/gemini";
+import { ollamaAnalyzeIncident, ollamaFollowUp } from "./lib/ollama";
 import { buildAnalyzeCacheKey, createAnalyzeCache } from "./lib/analyzeCache";
 import { normalizeAndValidateImages } from "./lib/validation";
 
@@ -25,7 +26,8 @@ type FollowUpBody = {
 
 type TtsBody = { text?: string };
 type ApiKeyBody = { apiKey?: string };
-type KeySource = "runtime" | "env" | "none";
+type KeySource = "runtime" | "env" | "ollama" | "none";
+type ActiveProvider = "demo" | "gemini" | "ollama";
 
 type FollowUpHistoryItem = { role: "user" | "assistant"; content: string };
 
@@ -154,11 +156,33 @@ function getEffectiveGeminiApiKey(): string | undefined {
   return runtimeGeminiApiKey.value || cfg.geminiApiKey;
 }
 
+function getActiveProvider(): ActiveProvider {
+  if (cfg.llmProvider === "demo") return "demo";
+  if (cfg.llmProvider === "ollama") return "ollama";
+  const hasGeminiKey = Boolean(getEffectiveGeminiApiKey());
+  if (cfg.llmProvider === "gemini") return hasGeminiKey ? "gemini" : "demo";
+  return hasGeminiKey ? "gemini" : "demo";
+}
+
 function getMode(): "demo" | "live" {
-  return getEffectiveGeminiApiKey() ? "live" : "demo";
+  return getActiveProvider() === "demo" ? "demo" : "live";
+}
+
+function getAnalyzeModel(): string {
+  return getActiveProvider() === "ollama" ? cfg.ollamaModelAnalyze : cfg.modelAnalyze;
+}
+
+function getFollowUpModel(): string {
+  return getActiveProvider() === "ollama" ? cfg.ollamaModelFollowUp : cfg.modelAnalyze;
+}
+
+function isBackendConfigured(): boolean {
+  if (getActiveProvider() === "ollama") return true;
+  return Boolean(getEffectiveGeminiApiKey());
 }
 
 function getKeySource(): KeySource {
+  if (getActiveProvider() === "ollama") return "ollama";
   if (runtimeGeminiApiKey.value) return "runtime";
   if (cfg.geminiApiKey) return "env";
   return "none";
@@ -203,6 +227,9 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 app.use("/api/settings/api-key", (req, res, next) => {
+  if (cfg.llmProvider === "ollama" && req.method !== "GET") {
+    return sendError(req, res, 409, "API key settings are disabled while LLM_PROVIDER=ollama.");
+  }
   if (!cfg.allowRemoteApiKeySettings && !isLocalRequest(req)) {
     return sendError(req, res, 403, "API key settings are restricted to local requests.");
   }
@@ -213,16 +240,17 @@ app.use("/api/settings/api-key", (req, res, next) => {
 });
 
 app.get("/api/healthz", (req, res) => {
-  const effectiveKey = getEffectiveGeminiApiKey();
+  const provider = getActiveProvider();
   res.json({
     ok: true,
     requestId: req.requestId,
     startedAt,
     serverTime: new Date().toISOString(),
     uptimeSec: Math.floor(process.uptime()),
+    provider,
     mode: getMode(),
     keySource: getKeySource(),
-    keyConfigured: Boolean(effectiveKey),
+    keyConfigured: isBackendConfigured(),
     limits: {
       requestBodyLimitMb: cfg.requestBodyLimitMb,
       maxImages: cfg.maxImages,
@@ -237,7 +265,10 @@ app.get("/api/healthz", (req, res) => {
       analyzeCacheMaxEntries: cfg.analyzeCacheMaxEntries,
     },
     defaults: { grounding: cfg.groundingDefault },
-    models: { analyze: cfg.modelAnalyze, tts: cfg.modelTts },
+    models: {
+      analyze: getAnalyzeModel(),
+      tts: provider === "ollama" ? "unsupported" : cfg.modelTts,
+    },
     caches: {
       analyze: {
         enabled: analyzeCache.enabled(),
@@ -249,19 +280,25 @@ app.get("/api/healthz", (req, res) => {
 });
 
 app.get("/api/settings/api-key", (req, res) => {
+  const provider = getActiveProvider();
   const effectiveKey = getEffectiveGeminiApiKey();
+  const source = getKeySource();
   res.json({
     ok: true,
     requestId: req.requestId,
     mode: getMode(),
-    source: getKeySource(),
-    configured: Boolean(effectiveKey),
-    masked: effectiveKey ? maskApiKey(effectiveKey) : undefined,
+    source,
+    configured: source === "ollama" ? true : Boolean(effectiveKey),
+    masked: source === "runtime" || source === "env" ? (effectiveKey ? maskApiKey(effectiveKey) : undefined) : undefined,
+    provider,
     persisted: false,
   });
 });
 
 app.put("/api/settings/api-key", (req, res) => {
+  if (cfg.llmProvider === "ollama") {
+    return sendError(req, res, 409, "Runtime Gemini API key is unavailable while LLM_PROVIDER=ollama.");
+  }
   const body = (req.body || {}) as ApiKeyBody;
   const apiKey = String(body.apiKey || "").trim();
   if (!apiKey) return sendError(req, res, 400, "Missing apiKey.");
@@ -282,6 +319,9 @@ app.put("/api/settings/api-key", (req, res) => {
 });
 
 app.delete("/api/settings/api-key", (req, res) => {
+  if (cfg.llmProvider === "ollama") {
+    return sendError(req, res, 409, "Runtime Gemini API key is unavailable while LLM_PROVIDER=ollama.");
+  }
   runtimeGeminiApiKey.value = undefined;
   const effectiveKey = getEffectiveGeminiApiKey();
   return res.json({
@@ -311,19 +351,16 @@ app.post("/api/analyze", async (req, res) => {
       maxImageBytes: cfg.maxImageBytes,
     });
 
-    const mode = getMode();
-    if (mode === "demo") {
+    const provider = getActiveProvider();
+    if (provider === "demo") {
       const report = demoAnalyzeIncident({ logs, imageCount: images.length, maxLogChars: cfg.maxLogChars });
       return res.json(report);
     }
 
-    const effectiveApiKey = getEffectiveGeminiApiKey();
-    if (!effectiveApiKey) {
-      return sendError(req, res, 500, "Server misconfigured: GEMINI_API_KEY missing.");
-    }
+    const modelAnalyze = getAnalyzeModel();
 
     const cacheKey = buildAnalyzeCacheKey({
-      model: cfg.modelAnalyze,
+      model: `${provider}:${modelAnalyze}`,
       logs,
       images,
       enableGrounding,
@@ -339,17 +376,35 @@ app.post("/api/analyze", async (req, res) => {
       return res.json(shared);
     }
 
-    const work = geminiAnalyzeIncident({
-      apiKey: effectiveApiKey,
-      model: cfg.modelAnalyze,
-      logs,
-      images,
-      enableGrounding,
-      maxLogChars: cfg.maxLogChars,
-      timeoutMs: cfg.geminiTimeoutMs,
-      retryMaxAttempts: cfg.geminiRetryMaxAttempts,
-      retryBaseDelayMs: cfg.geminiRetryBaseDelayMs,
-    });
+    const work =
+      provider === "ollama"
+        ? ollamaAnalyzeIncident({
+            baseUrl: cfg.ollamaBaseUrl,
+            model: modelAnalyze,
+            logs,
+            images,
+            maxLogChars: cfg.maxLogChars,
+            timeoutMs: cfg.geminiTimeoutMs,
+            retryMaxAttempts: cfg.geminiRetryMaxAttempts,
+            retryBaseDelayMs: cfg.geminiRetryBaseDelayMs,
+          })
+        : (() => {
+            const effectiveApiKey = getEffectiveGeminiApiKey();
+            if (!effectiveApiKey) {
+              throw new Error("Server misconfigured: GEMINI_API_KEY missing.");
+            }
+            return geminiAnalyzeIncident({
+              apiKey: effectiveApiKey,
+              model: modelAnalyze,
+              logs,
+              images,
+              enableGrounding,
+              maxLogChars: cfg.maxLogChars,
+              timeoutMs: cfg.geminiTimeoutMs,
+              retryMaxAttempts: cfg.geminiRetryMaxAttempts,
+              retryBaseDelayMs: cfg.geminiRetryBaseDelayMs,
+            });
+          })();
     analyzeInFlight.set(cacheKey, work);
 
     try {
@@ -387,28 +442,41 @@ app.post("/api/followup", async (req, res) => {
       }))
       .filter((item) => item.content.length > 0);
 
-    const mode = getMode();
-    if (mode === "demo") {
+    const provider = getActiveProvider();
+    if (provider === "demo") {
       const answer = demoFollowUpAnswer({ report, question });
       return res.json({ answer });
     }
 
-    const effectiveApiKey = getEffectiveGeminiApiKey();
-    if (!effectiveApiKey) {
-      return sendError(req, res, 500, "Server misconfigured: GEMINI_API_KEY missing.");
-    }
-
-    const answer = await geminiFollowUp({
-      apiKey: effectiveApiKey,
-      model: cfg.modelAnalyze,
-      report,
-      history,
-      question,
-      enableGrounding,
-      timeoutMs: cfg.geminiTimeoutMs,
-      retryMaxAttempts: cfg.geminiRetryMaxAttempts,
-      retryBaseDelayMs: cfg.geminiRetryBaseDelayMs,
-    });
+    const answer =
+      provider === "ollama"
+        ? await ollamaFollowUp({
+            baseUrl: cfg.ollamaBaseUrl,
+            model: getFollowUpModel(),
+            report,
+            history,
+            question,
+            timeoutMs: cfg.geminiTimeoutMs,
+            retryMaxAttempts: cfg.geminiRetryMaxAttempts,
+            retryBaseDelayMs: cfg.geminiRetryBaseDelayMs,
+          })
+        : await (async () => {
+            const effectiveApiKey = getEffectiveGeminiApiKey();
+            if (!effectiveApiKey) {
+              throw new Error("Server misconfigured: GEMINI_API_KEY missing.");
+            }
+            return geminiFollowUp({
+              apiKey: effectiveApiKey,
+              model: getFollowUpModel(),
+              report,
+              history,
+              question,
+              enableGrounding,
+              timeoutMs: cfg.geminiTimeoutMs,
+              retryMaxAttempts: cfg.geminiRetryMaxAttempts,
+              retryBaseDelayMs: cfg.geminiRetryBaseDelayMs,
+            });
+          })();
     return res.json({ answer });
   } catch (e: any) {
     const message = e?.message || String(e);
@@ -426,8 +494,8 @@ app.post("/api/tts", async (req, res) => {
     const text = String(body.text || "").trim().slice(0, cfg.maxTtsChars);
     if (!text) return sendError(req, res, 400, "Missing text.");
 
-    const mode = getMode();
-    if (mode === "demo") return res.json({ audioBase64: undefined });
+    const provider = getActiveProvider();
+    if (provider === "demo" || provider === "ollama") return res.json({ audioBase64: undefined });
 
     const effectiveApiKey = getEffectiveGeminiApiKey();
     if (!effectiveApiKey) {
@@ -462,7 +530,7 @@ if (typeof maintenanceTimer.unref === "function") {
 const server = app.listen(cfg.port, cfg.host, () => {
   // eslint-disable-next-line no-console
   console.log(
-    `[api] AegisOps API listening on http://${cfg.host}:${cfg.port} (startupMode=${cfg.mode}, keySource=${getKeySource()})`
+    `[api] AegisOps API listening on http://${cfg.host}:${cfg.port} (startupMode=${cfg.mode}, provider=${cfg.llmProvider}, activeProvider=${getActiveProvider()}, keySource=${getKeySource()})`
   );
 });
 

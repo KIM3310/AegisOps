@@ -14,6 +14,7 @@ afterEach(() => {
 describe("loadConfig", () => {
   it("uses safe defaults when env is unset", () => {
     setEnv({
+      LLM_PROVIDER: undefined,
       GEMINI_API_KEY: undefined,
       PORT: undefined,
       HOST: undefined,
@@ -30,11 +31,16 @@ describe("loadConfig", () => {
       ANALYZE_CACHE_MAX_ENTRIES: undefined,
       GROUNDING_DEFAULT: undefined,
       TRUST_PROXY: undefined,
+      OLLAMA_BASE_URL: undefined,
+      OLLAMA_MODEL_ANALYZE: undefined,
+      OLLAMA_MODEL_FOLLOWUP: undefined,
+      OLLAMA_MODEL: undefined,
     });
 
     const cfg = loadConfig();
 
     expect(cfg.mode).toBe("demo");
+    expect(cfg.llmProvider).toBe("auto");
     expect(cfg.host).toBe("127.0.0.1");
     expect(cfg.port).toBe(8787);
     expect(cfg.geminiTimeoutMs).toBe(45_000);
@@ -50,10 +56,14 @@ describe("loadConfig", () => {
     expect(cfg.analyzeCacheTtlSec).toBe(300);
     expect(cfg.analyzeCacheMaxEntries).toBe(200);
     expect(cfg.groundingDefault).toBe(false);
+    expect(cfg.ollamaBaseUrl).toBe("http://127.0.0.1:11434");
+    expect(cfg.ollamaModelAnalyze).toBe("llama3.1:8b");
+    expect(cfg.ollamaModelFollowUp).toBe("llama3.1:8b");
   });
 
   it("clamps numeric env values to safe bounds", () => {
     setEnv({
+      LLM_PROVIDER: "gemini",
       PORT: "-1",
       HOST: "0.0.0.0",
       GEMINI_TIMEOUT_MS: "999999",
@@ -75,6 +85,7 @@ describe("loadConfig", () => {
     const cfg = loadConfig();
 
     expect(cfg.mode).toBe("live");
+    expect(cfg.llmProvider).toBe("gemini");
     expect(cfg.host).toBe("0.0.0.0");
     expect(cfg.port).toBe(1);
     expect(cfg.geminiTimeoutMs).toBe(180_000);
@@ -90,5 +101,24 @@ describe("loadConfig", () => {
     expect(cfg.analyzeCacheTtlSec).toBe(0);
     expect(cfg.analyzeCacheMaxEntries).toBe(5_000);
     expect(cfg.groundingDefault).toBe(true);
+  });
+
+  it("supports ollama mode without Gemini API key", () => {
+    setEnv({
+      LLM_PROVIDER: "ollama",
+      GEMINI_API_KEY: undefined,
+      OLLAMA_BASE_URL: "http://127.0.0.1:11434/",
+      OLLAMA_MODEL: "llama3.2",
+      OLLAMA_MODEL_ANALYZE: undefined,
+      OLLAMA_MODEL_FOLLOWUP: undefined,
+    });
+
+    const cfg = loadConfig();
+
+    expect(cfg.mode).toBe("live");
+    expect(cfg.llmProvider).toBe("ollama");
+    expect(cfg.ollamaBaseUrl).toBe("http://127.0.0.1:11434");
+    expect(cfg.ollamaModelAnalyze).toBe("llama3.2");
+    expect(cfg.ollamaModelFollowUp).toBe("llama3.2");
   });
 });

@@ -94,6 +94,7 @@ export default function App() {
   const [showApiKeyPanel, setShowApiKeyPanel] = useState(false);
   const [enableGrounding, setEnableGrounding] = useState(false);
   const tmConfigured = isTeachableMachineConfigured();
+  const isOllamaMode = apiHealth?.provider === 'ollama';
   const [enableTmVision, setEnableTmVision] = useState(tmConfigured);
   const [tmStatus, setTmStatus] = useState<'IDLE' | 'RUNNING' | 'READY' | 'ERROR'>('IDLE');
   const [tmError, setTmError] = useState<string | null>(null);
@@ -561,18 +562,20 @@ export default function App() {
                 {enableTmVision ? 'ON' : 'OFF'}
               </span>
             </button>
-            <button
-              onClick={() => setShowApiKeyPanel((prev) => !prev)}
-              className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors"
-              aria-label="Toggle API key panel"
-              title="Set Gemini API key at runtime without editing .env"
-            >
-              <KeyRound className="w-3.5 h-3.5" />
-              API Key
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${apiHealth?.mode === 'live' ? 'bg-sev3/10 text-sev3 border-sev3/20' : 'bg-bg-card text-text-dim border-border'}`}>
-                {apiHealth?.mode === 'live' ? 'LIVE' : 'DEMO'}
-              </span>
-            </button>
+            {!isOllamaMode && (
+              <button
+                onClick={() => setShowApiKeyPanel((prev) => !prev)}
+                className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors"
+                aria-label="Toggle API key panel"
+                title="Set Gemini API key at runtime without editing .env"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                API Key
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${apiHealth?.mode === 'live' ? 'bg-sev3/10 text-sev3 border-sev3/20' : 'bg-bg-card text-text-dim border-border'}`}>
+                  {apiHealth?.mode === 'live' ? 'LIVE' : 'DEMO'}
+                </span>
+              </button>
+            )}
             <button onClick={() => setShowGoogleImport(true)} className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors">
               <Download className="w-3.5 h-3.5" />Import
             </button>
@@ -600,7 +603,19 @@ export default function App() {
               </p>
             </div>
 
-            {(showApiKeyPanel || apiHealth?.mode !== 'live') && (
+            {isOllamaMode && (
+              <div className="rounded-lg border border-border bg-bg-card/90 p-4 space-y-2">
+                <div className="text-xs font-semibold flex items-center gap-1.5">
+                  <BrainCircuit className="w-3.5 h-3.5 text-accent" />
+                  Ollama Local Mode
+                </div>
+                <p className="text-2xs text-text-muted">
+                  로컬 Ollama 모델로 동작 중입니다. 외부 API 키 없이 오프라인 데모가 가능합니다.
+                </p>
+              </div>
+            )}
+
+            {!isOllamaMode && (showApiKeyPanel || apiHealth?.mode !== 'live') && (
               <div className="rounded-lg border border-border bg-bg-card/90 p-4 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>

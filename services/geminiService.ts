@@ -1,13 +1,15 @@
 import type { IncidentReport } from "../types";
 
 export type ApiMode = "demo" | "live";
-export type ApiKeySource = "runtime" | "env" | "none";
+export type ApiProvider = "demo" | "gemini" | "ollama";
+export type ApiKeySource = "runtime" | "env" | "ollama" | "none";
 
 export interface HealthzResponse {
   ok: boolean;
   startedAt?: string;
   serverTime?: string;
   uptimeSec?: number;
+  provider?: ApiProvider;
   mode: ApiMode;
   keySource?: ApiKeySource;
   keyConfigured?: boolean;
@@ -38,6 +40,7 @@ export interface HealthzResponse {
 export interface GeminiApiKeyStatus {
   ok: boolean;
   mode: ApiMode;
+  provider?: ApiProvider;
   source: ApiKeySource;
   configured: boolean;
   masked?: string;
