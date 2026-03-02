@@ -44,9 +44,11 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 
 export function downloadFile(content: string, filename: string, mimeType: string): void {
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([content], { type: mimeType }));
+  const objectUrl = URL.createObjectURL(new Blob([content], { type: mimeType }));
+  a.href = objectUrl;
   a.download = filename;
   a.click();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
 }
 
 export const ExportService = { exportReport, copyToClipboard, downloadFile };

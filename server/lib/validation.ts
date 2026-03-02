@@ -46,6 +46,7 @@ export function normalizeAndValidateImages(
 ): NormalizedImageInput[] {
   const maxImages = Math.max(0, Number(options.maxImages || 0));
   const maxImageBytes = Math.max(1, Number(options.maxImageBytes || 1));
+  if (maxImages === 0) return [];
   const source = Array.isArray(imagesRaw) ? imagesRaw : [];
   const out: NormalizedImageInput[] = [];
 
@@ -75,4 +76,3 @@ export function normalizeAndValidateImages(
 
   return out;
 }
-

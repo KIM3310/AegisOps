@@ -56,5 +56,15 @@ describe("server validation helpers", () => {
     );
     expect(images).toHaveLength(1);
   });
-});
 
+  it("returns no images when maxImages is zero", () => {
+    const images = normalizeAndValidateImages(
+      [
+        { mimeType: "image/png", data: "aGVsbG8=" },
+        { mimeType: "image/png", data: "d29ybGQ=" },
+      ],
+      { maxImages: 0, maxImageBytes: 1024 }
+    );
+    expect(images).toHaveLength(0);
+  });
+});

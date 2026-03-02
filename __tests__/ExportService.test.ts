@@ -1,6 +1,6 @@
 import { ExportService } from '../services/ExportService';
 import type { IncidentReport } from '../types';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 describe('ExportService', () => {
   const mockReport: IncidentReport = {
@@ -57,6 +57,45 @@ describe('ExportService', () => {
       expect(result.content).toContain('h1. Test Incident');
       expect(result.content).toContain('||Severity|SEV1||');
       expect(result.content).toContain('|HIGH|Fix it|DevOps|');
+    });
+  });
+
+  describe('downloadFile', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      if (typeof URL.createObjectURL !== 'function') {
+        Object.defineProperty(URL, 'createObjectURL', {
+          writable: true,
+          value: () => 'blob:mock-url',
+        });
+      }
+      if (typeof URL.revokeObjectURL !== 'function') {
+        Object.defineProperty(URL, 'revokeObjectURL', {
+          writable: true,
+          value: () => {},
+        });
+      }
+    });
+
+    afterEach(() => {
+      vi.runOnlyPendingTimers();
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    });
+
+    it('should revoke generated object URL after triggering download', () => {
+      const createObjectUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+      const revokeObjectUrlSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+      const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+      ExportService.downloadFile('report body', 'incident.txt', 'text/plain');
+
+      expect(createObjectUrlSpy).toHaveBeenCalledTimes(1);
+      expect(clickSpy).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrlSpy).not.toHaveBeenCalled();
+
+      vi.runAllTimers();
+      expect(revokeObjectUrlSpy).toHaveBeenCalledWith('blob:mock-url');
     });
   });
 });
