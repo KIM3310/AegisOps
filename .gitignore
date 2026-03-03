@@ -25,6 +25,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Debug artifacts
-.venv_*/
+.codex_runs/
