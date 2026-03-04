@@ -216,3 +216,19 @@ Notes:
 - TTS: Text-to-Speech
 - OAuth: Open Authorization (browser-based consent flow)
 - LLM: Large Language Model
+
+<!-- codex:local-verification:start -->
+## Local Verification
+```bash
+npm install
+npm run typecheck
+npm run test
+npm run build
+```
+
+## Repository Hygiene
+- Keep runtime artifacts out of commits (`.codex_runs/`, cache folders, temporary venvs).
+- Prefer running verification commands above before opening a PR.
+
+_Last updated: 2026-03-04_
+<!-- codex:local-verification:end -->
