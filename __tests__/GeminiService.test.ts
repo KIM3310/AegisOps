@@ -18,6 +18,7 @@ describe("geminiService apiFetch", () => {
           defaults: { grounding: false },
           models: { analyze: "x", tts: "y" },
           links: { apiKey: "/api/settings/api-key" },
+          diagnostics: { nextAction: "configure Gemini API key or switch to Ollama for live incident analysis." },
           capabilities: ["incident-analysis"],
         }),
         { status: 200, headers: { "Content-Type": "application/json" } }
@@ -29,6 +30,7 @@ describe("geminiService apiFetch", () => {
     expect(payload.service).toBe("aegisops-api");
     expect(payload.mode).toBe("demo");
     expect(payload.links?.apiKey).toBe("/api/settings/api-key");
+    expect(payload.diagnostics?.nextAction).toContain("configure Gemini API key");
   });
 
   it("includes request_id from response headers in API errors", async () => {

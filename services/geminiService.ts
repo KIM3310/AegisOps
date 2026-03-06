@@ -36,6 +36,11 @@ export interface HealthzResponse {
       inFlight?: number;
     };
   };
+  diagnostics?: {
+    providerConfigured?: boolean;
+    cachePressure?: "stable" | "elevated";
+    nextAction?: string;
+  };
   capabilities?: string[];
   links?: {
     apiKey?: string;

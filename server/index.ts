@@ -241,6 +241,8 @@ app.use("/api/settings/api-key", (req, res, next) => {
 
 app.get("/api/healthz", (req, res) => {
   const provider = getActiveProvider();
+  const providerConfigured = isBackendConfigured();
+  const cacheEntries = analyzeCache.size();
   res.json({
     ok: true,
     service: "aegisops-api",
@@ -251,7 +253,7 @@ app.get("/api/healthz", (req, res) => {
     provider,
     mode: getMode(),
     keySource: getKeySource(),
-    keyConfigured: isBackendConfigured(),
+    keyConfigured: providerConfigured,
     limits: {
       requestBodyLimitMb: cfg.requestBodyLimitMb,
       maxImages: cfg.maxImages,
@@ -273,9 +275,17 @@ app.get("/api/healthz", (req, res) => {
     caches: {
       analyze: {
         enabled: analyzeCache.enabled(),
-        entries: analyzeCache.size(),
+        entries: cacheEntries,
         inFlight: analyzeInFlight.size,
       },
+    },
+    diagnostics: {
+      providerConfigured,
+      cachePressure: cacheEntries >= Math.floor(cfg.analyzeCacheMaxEntries * 0.8) ? "elevated" : "stable",
+      nextAction:
+        provider === "demo"
+          ? "configure Gemini API key or switch to Ollama for live incident analysis."
+          : "runtime healthy",
     },
     capabilities: [
       "incident-analysis",
