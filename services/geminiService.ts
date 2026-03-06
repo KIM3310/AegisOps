@@ -6,6 +6,7 @@ export type ApiKeySource = "runtime" | "env" | "ollama" | "none";
 
 export interface HealthzResponse {
   ok: boolean;
+  service?: string;
   startedAt?: string;
   serverTime?: string;
   uptimeSec?: number;
@@ -34,6 +35,13 @@ export interface HealthzResponse {
       entries?: number;
       inFlight?: number;
     };
+  };
+  capabilities?: string[];
+  links?: {
+    apiKey?: string;
+    analyze?: string;
+    followup?: string;
+    tts?: string;
   };
 }
 
