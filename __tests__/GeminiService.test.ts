@@ -12,10 +12,13 @@ describe("geminiService apiFetch", () => {
       new Response(
         JSON.stringify({
           ok: true,
+          service: "aegisops-api",
           mode: "demo",
           limits: { maxImages: 8, maxLogChars: 1000 },
           defaults: { grounding: false },
           models: { analyze: "x", tts: "y" },
+          links: { apiKey: "/api/settings/api-key" },
+          capabilities: ["incident-analysis"],
         }),
         { status: 200, headers: { "Content-Type": "application/json" } }
       )
@@ -23,7 +26,9 @@ describe("geminiService apiFetch", () => {
 
     const payload = await fetchHealthz();
     expect(payload.ok).toBe(true);
+    expect(payload.service).toBe("aegisops-api");
     expect(payload.mode).toBe("demo");
+    expect(payload.links?.apiKey).toBe("/api/settings/api-key");
   });
 
   it("includes request_id from response headers in API errors", async () => {

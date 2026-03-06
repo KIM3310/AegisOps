@@ -243,6 +243,7 @@ app.get("/api/healthz", (req, res) => {
   const provider = getActiveProvider();
   res.json({
     ok: true,
+    service: "aegisops-api",
     requestId: req.requestId,
     startedAt,
     serverTime: new Date().toISOString(),
@@ -275,6 +276,18 @@ app.get("/api/healthz", (req, res) => {
         entries: analyzeCache.size(),
         inFlight: analyzeInFlight.size,
       },
+    },
+    capabilities: [
+      "incident-analysis",
+      "follow-up-qna",
+      "tts-briefing",
+      "runtime-api-key-override",
+    ],
+    links: {
+      apiKey: "/api/settings/api-key",
+      analyze: "/api/analyze",
+      followup: "/api/followup",
+      tts: "/api/tts",
     },
   });
 });
