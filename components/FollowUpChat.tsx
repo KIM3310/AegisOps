@@ -60,7 +60,7 @@ export const FollowUpChat: React.FC<Props> = ({ report, enableGrounding = false 
         <div className="space-y-2 mb-3 max-h-48 overflow-y-auto" role="log" aria-live="polite" aria-label="Chat history">
           {msgs.map((m, i) => (
             <div key={i} className={`text-xs p-2 rounded ${m.role === 'user' ? 'bg-accent/10 ml-8' : 'bg-bg mr-8 text-text-muted'}`}>
-              <span className="sr-only">{m.role === 'user' ? 'You: ' : 'AI: '}</span>
+              <span className="sr-only">{m.role === 'user' ? 'You: ' : 'Assistant: '}</span>
               {m.content}
             </div>
           ))}
