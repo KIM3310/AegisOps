@@ -2,24 +2,21 @@
 import type { IncidentReport, SavedIncident, DashboardStats, IncidentSeverity } from '../types';
 
 const STORAGE_KEY = 'aegisops_incidents';
-
-/**
- * ==============================================================================
- * STORAGE SERVICE (Debugged & Enhanced)
- * ==============================================================================
- * 브라우저의 LocalStorage를 간이 데이터베이스로 사용합니다.
- * 
- * [Key Improvements]
- * 1. UUID Generation: `crypto.randomUUID()`를 사용하여 ID 충돌 가능성 제거.
- * 2. Fallback ID: 구형 브라우저를 위한 Math.random() 백업.
- * 3. Quota Handling: 용량 초과 시 자동 정리(Eviction) 로직.
- */
+const MAX_STORED_INCIDENTS = 100;
+const QUOTA_RECOVERY_INCIDENTS = 30;
 
 function generateUUID(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  return `inc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `inc_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+}
+
+function isQuotaExceeded(error: unknown): boolean {
+  return (
+    error instanceof DOMException &&
+    (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
+  );
 }
 
 export function saveIncident(report: IncidentReport, inputLogs: string, imageCount: number, analysisTimeMs?: number): SavedIncident {
@@ -34,27 +31,20 @@ export function saveIncident(report: IncidentReport, inputLogs: string, imageCou
 
   try {
     const incidents = getIncidents();
-    // 최신 100개 유지 (LocalStorage 5MB 제한 고려)
-    const updatedIncidents = [newIncident, ...incidents].slice(0, 100);
+    const updatedIncidents = [newIncident, ...incidents].slice(0, MAX_STORED_INCIDENTS);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedIncidents));
   } catch (e) {
-    // [Defensive] 저장 공간 부족 시, 가장 오래된 항목을 더 삭제하고 재시도
     console.error("Failed to save incident to localStorage:", e);
-    
-    // 할당량 초과 에러인 경우 (브라우저마다 이름이 다를 수 있음)
-    if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
-        try {
-            // 복구 시도: 기존 데이터의 절반만 유지하고 재시도
-            const incidents = getIncidents();
-            // 최신 30개만 남기고 정리
-            const reduced = [newIncident, ...incidents.slice(0, 30)]; 
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(reduced));
-            console.log("Storage quota exceeded. Older incidents were evicted to make space.");
-        } catch (retryError) {
-            console.error("Critical: Could not save incident even after cleanup.", retryError);
-            // 사용자에게 알리기 위해 에러를 throw 할 수도 있지만, 
-            // 분석 결과(report) 자체는 이미 생성되었으므로 UI 흐름을 끊지 않기 위해 조용히 실패 처리
-        }
+
+    if (isQuotaExceeded(e)) {
+      try {
+        const incidents = getIncidents();
+        const reduced = [newIncident, ...incidents.slice(0, QUOTA_RECOVERY_INCIDENTS)];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(reduced));
+        console.warn("Storage quota exceeded. Older incidents were evicted to make space.");
+      } catch (retryError) {
+        console.error("Could not save incident after storage cleanup.", retryError);
+      }
     }
   }
   
@@ -67,11 +57,9 @@ export function getIncidents(): SavedIncident[] {
     if (!item) return [];
     
     const parsed = JSON.parse(item);
-    // [Defensive] 데이터가 배열인지 확인
     if (!Array.isArray(parsed)) {
-        console.warn("Storage corrupted: expected array, got", typeof parsed);
-        // 복구 불가능하면 초기화하는 것이 나을 수 있음
-        return [];
+      console.warn("Storage corrupted: expected array, got", typeof parsed);
+      return [];
     }
     return parsed;
   } catch (e) {
@@ -92,13 +80,11 @@ export function deleteIncident(id: string): void {
 
 export function findSimilarIncidents(report: IncidentReport, limit = 3): SavedIncident[] {
   try {
-    // tags가 undefined일 경우를 대비해 기본값 [] 사용
     const currentTags = report.tags || [];
     const tagsSet = new Set(currentTags.map((t) => t.toLowerCase()));
     
     return getIncidents()
       .map((inc) => {
-        // 저장된 리포트 구조가 깨져있을 수 있으므로 Optional Chaining 사용
         const incTags = inc.report?.tags || [];
         const matchCount = incTags.filter((t) => tagsSet.has(t.toLowerCase())).length;
         const severityMatch = inc.report?.severity === report.severity ? 0.5 : 0;

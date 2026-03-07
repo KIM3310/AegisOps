@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Shield, History, FileText, Image as ImageIcon, Upload, X, AlertCircle, Loader2, Download, Table2, Zap, Sparkles, RefreshCw, Edit3, Globe, BrainCircuit, KeyRound } from 'lucide-react';
-import type { IncidentReport, SavedIncident, AnalysisStatus } from './types';
+import type { IncidentReport, SavedIncident, AnalysisStatus, ReplayEvalOverview } from './types';
 import {
   analyzeIncident,
   fetchHealthz,
+  fetchReplayEvalOverview,
   fetchGeminiApiKeyStatus,
   saveGeminiApiKey,
   clearGeminiApiKey,
@@ -24,9 +25,9 @@ import { LoadingOverlay } from './components/LoadingOverlay';
 import { GoogleImport } from './components/GoogleImport';
 import { DatasetExport } from './components/DatasetExport';
 import { CommunityHub } from './components/CommunityHub';
+import { ReplayEvalCard } from './components/ReplayEvalCard';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
-// [Type Definition] 이미지 파일과 미리보기 URL을 함께 관리하기 위한 인터페이스
 interface ImageFile {
   file: File;
   preview: string;
@@ -37,8 +38,6 @@ interface ApiImageInput {
   data: string;
 }
 
-// [Demo Data] A small purple placeholder image (64x64) representing a generic chart for better video visibility
-// Previously: 1x1 transparent pixel (invisible in demo)
 const DEMO_IMG_BASE64 = "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAALUlEQVR42u3RAQ0AAAgDIJ/6N5WCB9R0oJ1O1+l0nU7X6XSdTtfpdJ1O1+l0XfsAE12D4Z5+1R4AAAAASUVORK5CYII=";
 
 const SAMPLE_PRESETS = [
@@ -72,21 +71,18 @@ const SAMPLE_PRESETS = [
 ];
 
 export default function App() {
-  // [State Management]
   const [logs, setLogs] = useState('');
-  
-  // [Fix & Optimization] File 객체와 Preview URL 관리
   const [images, setImages] = useState<ImageFile[]>([]);
-  
-  // [Optimization] Lazy Initialization: 렌더링 시점에 바로 데이터를 읽어와 깜빡임 방지
   const [savedIncidents, setSavedIncidents] = useState<SavedIncident[]>(() => StorageService.getIncidents());
 
   const [report, setReport] = useState<IncidentReport | null>(null);
   const [status, setStatus] = useState<AnalysisStatus>('IDLE');
   const [error, setError] = useState<string | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [analysisStartTime, setAnalysisStartTime] = useState<number | null>(null);
   const [apiHealth, setApiHealth] = useState<HealthzResponse | null>(null);
+  const [replayOverview, setReplayOverview] = useState<ReplayEvalOverview | null>(null);
+  const [replayEvalError, setReplayEvalError] = useState<string | null>(null);
+  const [replayEvalLoading, setReplayEvalLoading] = useState(true);
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [apiKeyMasked, setApiKeyMasked] = useState<string | null>(null);
   const [apiKeyBusy, setApiKeyBusy] = useState(false);
@@ -107,23 +103,18 @@ export default function App() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
-  // [Ref-based Cleanup] 컴포넌트가 언마운트될 때 최신 images 상태를 참조하기 위해 ref 사용
   const imagesRef = useRef(images);
   
-  // 상태가 변경될 때마다 ref 업데이트 (렌더링 사이클에 영향 주지 않음)
   useEffect(() => {
     imagesRef.current = images;
   }, [images]);
 
-  // [Effect] 메모리 누수 방지: 컴포넌트가 완전히 사라질 때만 실행
   useEffect(() => {
     return () => {
-      // ref를 통해 최신 이미지 목록에 접근하여 cleanup
       imagesRef.current.forEach(img => URL.revokeObjectURL(img.preview));
     };
   }, []); 
 
-  // API health preflight (demo/live mode, limits, models)
   useEffect(() => {
     let mounted = true;
     fetchHealthz()
@@ -131,6 +122,24 @@ export default function App() {
       .catch(() => { if (mounted) setApiHealth(null); });
     return () => { mounted = false; };
   }, []);
+
+  const loadReplayOverview = useCallback(async () => {
+    setReplayEvalLoading(true);
+    setReplayEvalError(null);
+    try {
+      const overview = await fetchReplayEvalOverview();
+      setReplayOverview(overview);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load replay evals.';
+      setReplayEvalError(message);
+    } finally {
+      setReplayEvalLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadReplayOverview();
+  }, [loadReplayOverview]);
 
   useEffect(() => {
     let mounted = true;
@@ -148,14 +157,20 @@ export default function App() {
     return () => { mounted = false; };
   }, []);
 
-  // Initialize grounding toggle from server defaults (only once).
   useEffect(() => {
     if (!apiHealth) return;
     setEnableGrounding((prev) => prev || apiHealth.defaults?.grounding || false);
   }, [apiHealth]);
 
+  const nextToastId = () => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return Math.random().toString(36).slice(2, 11);
+  };
+
   const addToast = (type: ToastMessage['type'], message: string) => {
-    const id = Math.random().toString(36).substr(2, 9);
+    const id = nextToastId();
     setToasts((prev) => [...prev, { id, type, message }]);
   };
 
@@ -204,7 +219,6 @@ export default function App() {
     }
   };
 
-  // [Helper] 파일 배열을 받아 ImageFile 상태로 변환 및 추가
   const processAndAddImages = (files: File[]) => {
     const newImages = files.map(file => ({
       file,
@@ -240,13 +254,11 @@ export default function App() {
         }
       });
 
-      // 1. 이미지 처리
       if (imageFiles.length > 0) {
         const imgCount = processAndAddImages(imageFiles);
         addToast('info', `${imgCount} screenshots added`);
       }
 
-      // 2. 텍스트 파일 처리 (순차적/비동기 읽기 이슈 해결)
       if (textFiles.length > 0) {
         try {
           const contents = await Promise.all(
@@ -274,25 +286,22 @@ export default function App() {
       const count = processAndAddImages(Array.from(e.target.files));
       addToast('info', `${count} screenshots added`);
     }
-    // [Fix] 동일한 파일을 다시 선택할 수 있도록 value 초기화
     e.target.value = '';
   };
 
   const removeImage = (index: number) => {
     setImages((prev) => {
       const target = prev[index];
-      if (target) URL.revokeObjectURL(target.preview); // 개별 삭제 시 메모리 즉시 해제
+      if (target) URL.revokeObjectURL(target.preview);
       return prev.filter((_, i) => i !== index);
     });
   };
 
-  const loadPreset = async (preset: (typeof SAMPLE_PRESETS)[0]) => {
-    // 1. Logs
+  const loadPreset = (preset: (typeof SAMPLE_PRESETS)[0]) => {
     setLogs(preset.logs);
+    images.forEach(img => URL.revokeObjectURL(img.preview));
 
-    // 2. Demo Image (If preset has image)
     if (preset.hasImage) {
-        // Create a dummy file object from base64 to simulate a screenshot
         const byteCharacters = atob(DEMO_IMG_BASE64);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
@@ -302,8 +311,6 @@ export default function App() {
         const blob = new Blob([byteArray], {type: 'image/png'});
         const file = new File([blob], "monitoring_dashboard.png", { type: 'image/png' });
         
-        // Clear existing and add new
-        images.forEach(img => URL.revokeObjectURL(img.preview));
         const newImages = [{ file, preview: URL.createObjectURL(file) }];
         setImages(newImages);
     } else {
@@ -318,7 +325,6 @@ export default function App() {
   };
 
   const handleImportLogs = (importedLogs: string) => {
-    // [Fix] Import 시에도 줄바꿈 정책 통일
     setLogs((prev) => (prev ? `${prev}\n\n${importedLogs}` : importedLogs));
     addToast('success', 'Logs imported successfully');
   };
@@ -338,7 +344,6 @@ export default function App() {
     setStatus('UPLOADING');
     setError(null);
     setAnalysisProgress(0);
-    setAnalysisStartTime(startTime);
     setReport(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -351,7 +356,6 @@ export default function App() {
         addToast('info', `Analyzing first ${maxImages} images only (payload safeguard).`);
       }
 
-      // 이미지 전처리: File -> { mimeType, base64 }
       const base64Images = await Promise.all(
         imagesToAnalyze.map(
           (imgItem) =>
@@ -371,8 +375,7 @@ export default function App() {
       );
 
       const validImages = base64Images.filter(img => img.data !== "");
-      
-      // [Validation] 일부 이미지가 로드 실패한 경우 경고
+
       if (validImages.length < imagesToAnalyze.length) {
           addToast('error', `${imagesToAnalyze.length - validImages.length} images failed to upload. Analyzing with remaining files.`);
       }
@@ -410,7 +413,6 @@ export default function App() {
         }
       }
 
-      // 가짜 진행률 (UX)
       progressInterval = setInterval(() => {
         setAnalysisProgress((prev) => Math.min(prev + Math.random() * 12, 90));
       }, 500);
@@ -443,7 +445,6 @@ export default function App() {
   };
 
   const handleStartNew = () => {
-    // [Cleanup] 기존 이미지 URL 전체 해제
     images.forEach(img => URL.revokeObjectURL(img.preview));
     
     setLogs('');
@@ -473,9 +474,16 @@ export default function App() {
 
   const handleLoadIncident = (incident: SavedIncident) => {
     if (incident && incident.report) {
+        images.forEach(img => URL.revokeObjectURL(img.preview));
+        setImages([]);
         setReport(incident.report);
         setLogs(incident.inputLogs || '');
         setStatus('COMPLETE');
+        setError(null);
+        setAnalysisProgress(0);
+        setTmSignals([]);
+        setTmStatus('IDLE');
+        setTmError(null);
         setShowHistory(false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
         addToast('info', 'Incident loaded from history');
@@ -488,7 +496,6 @@ export default function App() {
     addToast('info', 'Incident deleted');
   };
 
-  // Keyboard Shortcut: Cmd+Enter or Ctrl+Enter to analyze
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
@@ -599,9 +606,16 @@ export default function App() {
               </h1>
               <p className="text-sm text-text-muted max-w-xl">
                 Paste system logs or drag & drop monitoring screenshots. 
-                <br className="hidden sm:block"/>AI will deduce root causes and generate a structured post-mortem instantly.
+                <br className="hidden sm:block"/>Generate a structured incident summary with severity, timeline, and next actions.
               </p>
             </div>
+
+            <ReplayEvalCard
+              overview={replayOverview}
+              loading={replayEvalLoading}
+              error={replayEvalError}
+              onRefresh={loadReplayOverview}
+            />
 
             {isOllamaMode && (
               <div className="rounded-lg border border-border bg-bg-card/90 p-4 space-y-2">
@@ -716,7 +730,6 @@ export default function App() {
                     <div className="flex-1 p-2 bg-bg border border-border rounded-md mb-2 overflow-y-auto grid grid-cols-3 gap-2 content-start">
                       {images.map((imgItem, idx) => (
                         <div key={idx} className="relative group/img aspect-square rounded overflow-hidden border border-border bg-black">
-                          {/* [Fix] 저장된 preview URL 사용 */}
                           <img src={imgItem.preview} alt="" className="w-full h-full object-cover opacity-80 group-hover/img:opacity-100 transition-opacity" />
                           <button onClick={() => removeImage(idx)} className="absolute top-1 right-1 w-5 h-5 bg-black/60 hover:bg-red-500/90 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-all">
                             <X className="w-3 h-3" />
@@ -789,7 +802,7 @@ export default function App() {
               </div>
             )}
             <div className="text-center text-[10px] text-text-dim">
-                Pro tip: Press <kbd className="font-mono bg-bg-card px-1 py-0.5 rounded border border-border">Cmd/Ctrl + Enter</kbd> to run immediately
+                Shortcut: <kbd className="font-mono bg-bg-card px-1 py-0.5 rounded border border-border">Cmd/Ctrl + Enter</kbd>
             </div>
           </div>
         ) : (
@@ -800,7 +813,7 @@ export default function App() {
               <div className="flex-1" />
               <button onClick={handleReAnalyze} className="h-8 px-3 text-xs text-text-muted hover:text-text bg-bg-card hover:bg-bg-hover border border-border rounded-full flex items-center gap-1.5 transition-colors shadow-sm"><RefreshCw className="w-3.5 h-3.5" />Re-analyze</button>
             </div>
-            <ReportCard report={report!} allIncidents={savedIncidents} enableGrounding={enableGrounding} />
+            <ReportCard report={report!} enableGrounding={enableGrounding} />
           </div>
         )}
       </main>

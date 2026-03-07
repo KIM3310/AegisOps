@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { AlertTriangle, Clock, Users, Target, CheckCircle2, ChevronDown, Copy, Download, FileJson, FileText, Hash, Code, Lightbulb, MessageSquare, Share2, Link as LinkIcon, Check, Brain, Gauge, ExternalLink, Volume2, StopCircle, Loader2 } from 'lucide-react';
-import type { IncidentReport, SavedIncident, ExportFormat } from '../types';
+import type { IncidentReport, ExportFormat } from '../types';
 import { ExportService } from '../services/ExportService';
 import { StorageService } from '../services/StorageService';
 import { GeminiService } from '../services/geminiService';
@@ -13,9 +13,12 @@ import { GoogleExport } from './GoogleExport';
 
 interface Props {
   report: IncidentReport;
-  allIncidents?: SavedIncident[];
   enableGrounding?: boolean;
 }
+
+type AudioContextCtor = {
+  new (): AudioContext;
+};
 
 const sevMap: Record<string, { c: string; bg: string; dot: string }> = {
   SEV1: { c: 'text-sev1', bg: 'bg-sev1/10', dot: 'bg-sev1' },
@@ -24,9 +27,6 @@ const sevMap: Record<string, { c: string; bg: string; dot: string }> = {
   UNKNOWN: { c: 'text-text-muted', bg: 'bg-bg-card', dot: 'bg-text-dim' },
 };
 
-/**
- * Helper: Decode Base64 Raw PCM (Int16) to AudioBuffer
- */
 const decodeAudioData = async (
   base64Data: string, 
   ctx: AudioContext
@@ -57,15 +57,6 @@ const decodeAudioData = async (
   return buffer;
 };
 
-/**
- * [Component] MarkdownText
- * Enhanced to support:
- * 1. Code Blocks (```)
- * 2. Inline Code (`)
- * 3. Bold (**)
- * 4. Markdown Links [text](url)
- * 5. Raw URLs (https://...)
- */
 const MarkdownText: React.FC<{ text: string; className?: string }> = ({ text, className = '' }) => {
   if (!text) return null;
 
@@ -258,12 +249,13 @@ export const ReportCard: React.FC<Props> = ({ report, enableGrounding = false })
     setIsLoadingAudio(true);
     try {
       if (!audioContextRef.current) {
-        // @ts-ignore: Handle Webkit browsers
-        const AudioCtor = window.AudioContext || window.webkitAudioContext;
+        const AudioCtor =
+          window.AudioContext || (window as Window & { webkitAudioContext?: AudioContextCtor }).webkitAudioContext;
+        if (!AudioCtor) {
+          throw new Error('Web Audio API is unavailable in this browser.');
+        }
         audioContextRef.current = new AudioCtor();
       }
-      
-      // Critical: Ensure context is running (fixes "The AudioContext was not allowed to start" error)
       if (audioContextRef.current.state === 'suspended') {
         await audioContextRef.current.resume();
       }
@@ -298,7 +290,6 @@ export const ReportCard: React.FC<Props> = ({ report, enableGrounding = false })
   return (
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      {/* 1. Reasoning Block */}
       {report.reasoning && (
         <div className="bg-gradient-to-br from-bg-card to-bg border border-accent/20 rounded-xl p-6 shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-50">
@@ -306,8 +297,8 @@ export const ReportCard: React.FC<Props> = ({ report, enableGrounding = false })
           </div>
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-3">
-              <Brain className="w-4 h-4 text-accent animate-pulse" />
-              <span className="text-xs font-bold text-accent tracking-wider uppercase">AI Reasoning Engine</span>
+              <Brain className="w-4 h-4 text-accent" />
+              <span className="text-xs font-bold text-accent tracking-wider uppercase">Reasoning Trace</span>
             </div>
             <div className="text-sm text-text-muted leading-relaxed italic border-l-2 border-accent/50 pl-4 py-1 bg-black/10 rounded-r-md">
               <MarkdownText text={report.reasoning} />
@@ -316,7 +307,6 @@ export const ReportCard: React.FC<Props> = ({ report, enableGrounding = false })
         </div>
       )}
 
-      {/* 2. Main Header Card */}
       <div className="bg-bg-card border border-border rounded-xl p-6 shadow-sm relative overflow-hidden group hover:border-border-light transition-colors">
         {confidence > 0 && (
           <div className="absolute top-5 right-5 flex items-center gap-2 bg-bg/50 backdrop-blur px-3 py-1.5 rounded-full border border-border shadow-sm">
@@ -346,7 +336,6 @@ export const ReportCard: React.FC<Props> = ({ report, enableGrounding = false })
                   <MarkdownText text={report.summary} />
                 </div>
                 
-                {/* TTS Button */}
                 <button
                     onClick={playSummary}
                     disabled={isLoadingAudio}

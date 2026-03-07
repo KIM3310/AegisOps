@@ -1,6 +1,7 @@
-[Personal Project] AegisOps — GCP-based Multimodal SEV1 Incident Copilot
+AegisOps — GCP-based Multimodal SEV1 Incident Copilot
 
-In real SEV1 (Severity 1) incidents, the bottleneck usually isn’t missing telemetry. It’s scattered evidence: logs in terminals/alerts, dashboards captured as screenshots, and decisions buried in ad-hoc messages. I built AegisOps to compress “collect → reason → decide → communicate” into a single, reviewable workflow.
+In real SEV1 incidents, the hard part is often turning scattered evidence from logs, screenshots, and alerts into a report
+someone else can review quickly. AegisOps compresses “collect → reason → decide → communicate” into a single workflow.
 
 What it does
 - Input: raw logs + monitoring screenshots
@@ -12,7 +13,7 @@ What it does
 
 Engineering decisions / troubleshooting I worked through
 - Key hygiene: Gemini calls run behind a local API proxy so `GEMINI_API_KEY` never ships to the browser (no Vite env injection).
-- Demo-first reproducibility: if `GEMINI_API_KEY` is missing, the API runs deterministic demo mode so reviewers can try the full UI flow without credentials.
+- Fallback mode: if `GEMINI_API_KEY` is missing, the API runs in demo mode so the full UI flow still works without credentials.
 - Output reliability: JSON extraction/repair + schema defaults so the UI stays stable even when model output is messy.
 - Payload stability: enforced MAX_IMAGES and continued analysis even if some screenshots fail to read.
 - Grounding safety: web grounding is OFF by default; when enabled, citations are surfaced and meant to be verified.
@@ -25,4 +26,3 @@ https://youtu.be/FOcjPcMheIg
 
 Live demo (Google AI Studio)
 https://ai.studio/apps/drive/1nInCvCJjSXy0IQGiDeK9gbsjjhhPqtlg?fullscreenApplet=true
-

@@ -19,8 +19,6 @@ export async function searchAlertEmails(accessToken: string, options: { maxResul
       label: 'Gmail search messages',
       url: `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=${maxResults}`,
     });
-    
-    // [Defensive] messages 필드가 없거나 null일 수 있음
     const messageList = data.messages || [];
 
     const messages = await Promise.all(
@@ -40,7 +38,7 @@ export async function searchAlertEmails(accessToken: string, options: { maxResul
             from: get('From') || 'Unknown',
             date: get('Date'),
             snippet: msg.snippet || '',
-            body: msg.snippet || '', // 실제 바디 디코딩은 복잡하므로 스니펫 사용 (간소화)
+            body: msg.snippet || '',
           };
         } catch (innerError) {
           console.warn(`Failed to fetch email details for ${m.id}`, innerError);
@@ -48,13 +46,10 @@ export async function searchAlertEmails(accessToken: string, options: { maxResul
         }
       })
     );
-
-    // null 필터링 (실패한 요청 제외)
     return { messages: messages.filter((m): m is GmailMessage => m !== null) };
 
   } catch (error) {
     console.error("Gmail Search Error:", error);
-    // UI가 깨지지 않도록 빈 배열 반환
     return { messages: [] };
   }
 }

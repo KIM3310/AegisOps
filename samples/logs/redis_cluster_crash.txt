@@ -1,0 +1,10 @@
+[2025-01-15T09:15:00Z] WARN: Redis node redis-master-01 memory usage: 92%
+[2025-01-15T09:17:00Z] WARN: Memory usage critical: 98%
+[2025-01-15T09:18:00Z] ERROR: Redis node redis-master-01 OOM killed by kernel
+[2025-01-15T09:18:05Z] ALERT: Cluster state changed to FAIL - quorum lost
+[2025-01-15T09:18:10Z] ERROR: Cache miss rate: 100%
+[2025-01-15T09:18:15Z] ERROR: Database connection pool exhausted
+[2025-01-15T09:18:30Z] INFO: Automatic failover initiated
+[2025-01-15T09:20:00Z] INFO: redis-replica-02 promoted to master
+[2025-01-15T09:22:00Z] INFO: Cluster failover complete
+[2025-01-15T09:25:00Z] INFO: Cache hit rate recovered: 94%

@@ -2,6 +2,8 @@
 
 These files are intentionally small and synthetic so anyone can try the UI without credentials.
 
+The first two scenarios are also used in `evals/incidentReplays.ts`.
+
 ## How To Use
 
 1. Start the app:
@@ -31,4 +33,3 @@ after scaling.
 
 This scenario includes memory pressure and an OOM kill on the master, triggering a cache miss storm and downstream
 saturation.
-

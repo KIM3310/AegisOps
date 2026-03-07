@@ -1,0 +1,9 @@
+[2025-01-15T14:30:00Z] INFO: LLM API response time: 150ms
+[2025-01-15T14:30:15Z] WARN: Response time increased: 850ms - approaching SLO threshold
+[2025-01-15T14:30:30Z] ERROR: Response time: 3500ms - SLO BREACH DETECTED
+[2025-01-15T14:30:45Z] ALERT: Circuit breaker OPEN for llm-service
+[2025-01-15T14:31:00Z] ERROR: Request queue depth: 5000 (limit: 1000)
+[2025-01-15T14:31:15Z] WARN: Memory pressure detected on inference nodes
+[2025-01-15T14:31:30Z] INFO: Auto-scaling triggered: 10 -> 25 replicas
+[2025-01-15T14:33:00Z] INFO: New replicas online, load balancing active
+[2025-01-15T14:35:00Z] INFO: Circuit breaker CLOSED, latency recovered: 200ms

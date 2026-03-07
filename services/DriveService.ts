@@ -24,7 +24,6 @@ export async function searchIncidentFiles(accessToken: string, options: { query?
     const q = options.query
       ? `name contains '${escapeDriveQueryLiteral(options.query)}'`
       : `name contains 'incident' or name contains 'log' or name contains 'grafana'`;
-    // trashed=false 필터 추가
     const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)} and trashed=false&fields=files(id,name,mimeType,size)`;
 
     const data = await googleApiJson<any>({
@@ -34,7 +33,6 @@ export async function searchIncidentFiles(accessToken: string, options: { query?
     });
     const allFiles = data.files || [];
 
-    // [Defensive] 필터링 로직 안전하게 처리
     const validFiles = allFiles.filter((f: any) => 
       (f.mimeType?.startsWith('image/') || f.name?.endsWith('.log') || f.name?.endsWith('.txt'))
     );

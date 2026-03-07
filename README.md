@@ -1,10 +1,11 @@
-# AegisOps — GCP-based Multimodal SEV1 Incident Copilot (Personal Project)
+# AegisOps — GCP-based Multimodal SEV1 Incident Copilot
 
 ![CI](https://github.com/KIM3310/AegisOps-AI-Incident-Doctor-for-SREs-Powered-by-Gemini-3-Pro-Google-Workspace-/actions/workflows/ci.yml/badge.svg)
 
-In real SEV1 (Severity 1) incidents, the bottleneck usually isn’t the lack of telemetry. It’s that evidence is scattered: logs in terminals and alerts, dashboards captured as screenshots, and decisions living in ad-hoc chat messages.
+In real SEV1 incidents, the hard part is rarely missing telemetry. The harder part is turning scattered evidence from logs,
+screenshots, and alerts into a report that someone else can review quickly.
 
-I built **AegisOps** as a repeatable workflow that compresses:
+**AegisOps** compresses:
 
 `collect → reason → decide → communicate`
 
@@ -21,17 +22,32 @@ into a single, reviewable incident report.
 - **Output:** a structured JSON incident report:
   - severity, RCA (root cause analysis) hypotheses, prioritized actions, timeline, prevention recommendations
   - a short **reasoning trace** (Observations / Hypotheses / Decision Path)
+- **Included incident replay suite:** rubric-based checks for severity, tags, title quality, actionability, timeline
+  coverage, reasoning structure, and confidence bands
 - **Follow-up Q&A** grounded on the generated report context
 - **Optional:** on-call audio briefing (TTS, text-to-speech)
 - **Optional:** export artifacts to Google Workspace (Docs/Slides/Sheets/Calendar, plus Chat webhook)
 
-## My Scope (Personal Project)
+## Scope
 
 - Built the end-to-end workflow: React/Vite UI + local API proxy (Express) + report schema + follow-up Q&A.
 - Implemented JSON extraction/repair so the UI stays stable even when model output is messy.
-- Added demo-first reproducibility (deterministic demo mode when `GEMINI_API_KEY` is missing).
+- Added a fallback demo mode when `GEMINI_API_KEY` is missing.
 - Enforced payload guardrails for multimodal inputs (image limits + partial-failure tolerance).
 - Kept secrets off the client (server-side key handling; no Vite env injection).
+- Exposed replay results through `GET /api/evals/replays` and `npm run eval:replays`.
+
+## Incident Replay Evals
+
+This repo includes a small replay harness for incident analysis quality:
+
+- suite source: `evals/incidentReplays.ts`
+- scoring logic: `server/lib/replayEvals.ts`
+- reviewer script: `npm run eval:replays`
+- API summary: `GET /api/evals/replays`
+
+The current suite covers 4 scenarios / 32 rubric checks. For the scoring rubric and case design, see
+`docs/INCIDENT_REPLAY_EVALS.md`.
 
 ## Architecture
 
@@ -50,7 +66,7 @@ flowchart LR
 - The API reads `GEMINI_API_KEY` server-side and calls Gemini.
 - Grounding (`googleSearch` tool) is **OFF by default** and must be explicitly enabled.
 
-## Sample Inputs (For Reviewers)
+## Sample Inputs
 
 You can drag & drop sample inputs from `samples/` into the UI:
 
@@ -78,12 +94,12 @@ npm install && npm run dev
 Copy `.env.example` to `.env` and fill what you need.
 
 ```env
-# If missing, the API runs in deterministic demo mode (no external LLM calls).
+# If missing, the API runs in demo mode (no external LLM calls).
 GEMINI_API_KEY=
 
 # LLM provider selection:
 # - auto   : Gemini when key exists, otherwise demo mode
-# - demo   : always deterministic demo mode
+# - demo   : always use demo mode
 # - gemini : Gemini mode (falls back to demo when key is missing)
 # - ollama : local Ollama mode (offline)
 LLM_PROVIDER=auto
@@ -168,15 +184,17 @@ When `VITE_TM_MODEL_URL` is set, AegisOps can run **local browser-side image cla
 
 If `GEMINI_API_KEY` is not set, the API switches to **demo mode**:
 
-- analysis returns a deterministic stub report (based on the provided logs)
-- follow-up Q&A returns a deterministic helper response
+- analysis returns a fixed stub report based on the provided logs
+- follow-up Q&A returns a fixed helper response
 - TTS is disabled
 
-This keeps the project easy to review and runnable without external credentials.
+This keeps the project runnable without external credentials.
+
+The replay suite also runs in demo mode, so the current score can be reproduced locally.
 
 ## Ollama Offline Mode (No Cloud LLM)
 
-Use this when you want offline local inference for portfolio demos.
+Use this when you want offline local inference.
 
 1. Install and run Ollama locally.
 2. Pull a model:
@@ -208,7 +226,7 @@ Notes:
 ## Notes / Limitations
 
 - Workspace export features require OAuth scopes; in demo mode those calls are not executed.
-- This is a portfolio project focused on repeatability, safety-by-default, and operational UX.
+- This project is focused on repeatable local review, safety-by-default, and operational UX.
 
 ## Glossary (first-time readers)
 - SEV1: Severity 1 incident (highest urgency)
@@ -223,6 +241,7 @@ Notes:
 npm install
 npm run typecheck
 npm run test
+npm run eval:replays
 npm run build
 ```
 
