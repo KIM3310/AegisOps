@@ -85,3 +85,84 @@ export interface GoogleSheetInfo {
   name: string;
   url: string;
 }
+
+export type ReplayEvalCheckCategory =
+  | 'severity_match'
+  | 'title_keywords'
+  | 'tag_coverage'
+  | 'timeline_coverage'
+  | 'root_cause_coverage'
+  | 'actionability'
+  | 'reasoning_trace'
+  | 'confidence_range';
+
+export interface ReplayEvalCheck {
+  id: string;
+  category: ReplayEvalCheckCategory;
+  label: string;
+  passed: boolean;
+  detail: string;
+}
+
+export interface ReplayEvalCaseObserved {
+  title: string;
+  severity: IncidentSeverity;
+  tags: string[];
+  confidenceScore: number;
+  timelineEvents: number;
+  actionItems: number;
+}
+
+export interface ReplayEvalCaseResult {
+  id: string;
+  title: string;
+  status: 'pass' | 'fail';
+  passRate: number;
+  observed: ReplayEvalCaseObserved;
+  failedChecks: ReplayEvalCheck[];
+}
+
+export interface ReplayEvalSummary {
+  totalCases: number;
+  totalChecks: number;
+  passedChecks: number;
+  passRate: number;
+  casesPassingAll: number;
+  severityAccuracy: number;
+}
+
+export interface ReplayEvalBucket {
+  category: ReplayEvalCheckCategory;
+  failures: number;
+  caseIds: string[];
+  labels: string[];
+}
+
+export interface ReplayEvalOverview {
+  ok: boolean;
+  suiteId: string;
+  generatedAt: string;
+  summary: ReplayEvalSummary;
+  buckets: ReplayEvalBucket[];
+  cases: ReplayEvalCaseResult[];
+}
+
+export interface IncidentReplayExpectation {
+  severity: IncidentSeverity;
+  titleIncludes?: string[];
+  tagsInclude?: string[];
+  rootCauseIncludes?: string[];
+  actionItemsInclude?: string[];
+  reasoningSections?: string[];
+  minTimelineEvents?: number;
+  confidenceRange?: { min: number; max: number };
+}
+
+export interface IncidentReplayCase {
+  id: string;
+  title: string;
+  description: string;
+  logs: string;
+  imageCount: number;
+  expected: IncidentReplayExpectation;
+}

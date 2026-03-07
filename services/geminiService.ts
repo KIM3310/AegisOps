@@ -1,4 +1,4 @@
-import type { IncidentReport } from "../types";
+import type { IncidentReport, ReplayEvalOverview } from "../types";
 
 export type ApiMode = "demo" | "live";
 export type ApiProvider = "demo" | "gemini" | "ollama";
@@ -53,6 +53,7 @@ export interface HealthzResponse {
     analyze?: string;
     followup?: string;
     tts?: string;
+    replayEvals?: string;
   };
 }
 
@@ -133,6 +134,10 @@ export async function fetchHealthz(): Promise<HealthzResponse> {
   return apiFetch<HealthzResponse>("/api/healthz");
 }
 
+export async function fetchReplayEvalOverview(): Promise<ReplayEvalOverview> {
+  return apiFetch<ReplayEvalOverview>("/api/evals/replays");
+}
+
 export async function fetchGeminiApiKeyStatus(): Promise<GeminiApiKeyStatus> {
   return apiFetch<GeminiApiKeyStatus>("/api/settings/api-key");
 }
@@ -184,6 +189,7 @@ export async function generateTTS(text: string): Promise<string | undefined> {
 
 export const GeminiService = {
   fetchHealthz,
+  fetchReplayEvalOverview,
   fetchGeminiApiKeyStatus,
   saveGeminiApiKey,
   clearGeminiApiKey,
