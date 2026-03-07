@@ -30,7 +30,7 @@ export const GoogleImport: React.FC<Props> = ({ onImportLogs, onImportImages, on
     setSearching(true);
 
     if (isDemoMode) {
-      await new Promise((r) => setTimeout(r, 600)); // Simulate latency
+      await new Promise((r) => setTimeout(r, 600));
       setEmails([
         { id: '1', subject: '[ALERT] High CPU on prod-api-01', from: 'alerts@datadog.com', date: '2025-01-15', snippet: 'CPU usage exceeded 90% threshold...', body: '[ERROR] CPU 95%\n[WARN] Memory 82%' },
         { id: '2', subject: '[PagerDuty] Incident #4521 Triggered', from: 'noreply@pagerduty.com', date: '2025-01-15', snippet: 'Redis cluster unreachable...', body: '[CRITICAL] Redis connection timeout\n[ERROR] Cache miss rate 100%' },
@@ -52,7 +52,7 @@ export const GoogleImport: React.FC<Props> = ({ onImportLogs, onImportImages, on
     setSearching(true);
 
     if (isDemoMode) {
-      await new Promise((r) => setTimeout(r, 600)); // Simulate latency
+      await new Promise((r) => setTimeout(r, 600));
       setFiles([
         { id: '1', name: 'grafana-cpu-spike.png', mimeType: 'image/png', size: 245000 },
         { id: '2', name: 'incident-2025-01-15.log', mimeType: 'text/plain', size: 12400 },
@@ -98,11 +98,17 @@ export const GoogleImport: React.FC<Props> = ({ onImportLogs, onImportImages, on
       const imgFiles = selected.filter((f) => f.mimeType.startsWith('image/'));
 
       if (logFiles.length) {
-        onImportLogs(logFiles.map((f) => `=== ${f.name} ===\n[Demo Mode: Content for ${f.name}]\n[2025-01-15 10:00:00] ERROR: Simulated log entry`).join('\n\n'));
+        onImportLogs(
+          logFiles
+            .map(
+              (f) =>
+                `=== ${f.name} ===\n[2025-01-15 10:00:00] ERROR: checkout latency exceeded SLO\n[2025-01-15 10:00:06] WARN: queue depth rising on prod-api-01\n[2025-01-15 10:00:14] INFO: generated from Workspace sandbox import`
+            )
+            .join('\n\n')
+        );
       }
       
       if (imgFiles.length) {
-        // [Demo Mode] Use visual purple box placeholder instead of red pixel for better video demo
         const placeholderBase64 = "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAALUlEQVR42u3RAQ0AAAgDIJ/6N5WCB9R0oJ1O1+l0nU7X6XSdTtfpdJ1O1+l0XfsAE12D4Z5+1R4AAAAASUVORK5CYII=";
         const byteCharacters = atob(placeholderBase64);
         const byteNumbers = new Array(byteCharacters.length);
@@ -116,7 +122,6 @@ export const GoogleImport: React.FC<Props> = ({ onImportLogs, onImportImages, on
         onImportImages(demoImages);
       }
     } else {
-      // [Updated Logic] Use the new DownloadedFile structure
       const downloadedItems = await DriveService.downloadMultipleFiles(accessToken, files.filter((f) => selFiles.has(f.id)));
       
       const logItems = downloadedItems.filter(i => i.type === 'log');
@@ -164,7 +169,7 @@ export const GoogleImport: React.FC<Props> = ({ onImportLogs, onImportImages, on
           <>
             <div className="px-3 py-1.5 bg-bg text-2xs text-text-dim border-b border-border flex items-center gap-2">
               <span>{user?.email}</span>
-              {isDemoMode && <span className="px-1.5 py-0.5 bg-sev2/20 text-sev2 rounded text-2xs">Demo</span>}
+              {isDemoMode && <span className="px-1.5 py-0.5 bg-sev2/20 text-sev2 rounded text-2xs">Sandbox</span>}
             </div>
 
             <div className="flex border-b border-border" role="tablist">

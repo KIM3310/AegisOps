@@ -40,9 +40,8 @@ export interface IncidentReport {
   lessonsLearned?: string;
   preventionRecommendations?: string[];
   references?: ReferenceSource[];
-  // [New] Explainable AI Fields
-  reasoning?: string;       // Evidence-based reasoning trace (Observations / Hypotheses / Decision Path)
-  confidenceScore?: number; // 0-100 score indicating AI's certainty based on data quality
+  reasoning?: string;
+  confidenceScore?: number;
 }
 
 export interface SavedIncident {

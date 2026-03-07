@@ -130,7 +130,7 @@ export const GoogleExport: React.FC<Props> = ({ report, onClose }) => {
           <div className="p-3 space-y-2">
             {isDemoMode && (
               <div className="px-2 py-1.5 bg-sev2/10 border border-sev2/20 rounded text-2xs text-sev2 mb-3" role="status">
-                Demo mode - simulated exports
+                Workspace sandbox export preview
               </div>
             )}
 
