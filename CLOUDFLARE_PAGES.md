@@ -3,6 +3,7 @@
 - Root directory: `.`
 - Build command: `npm ci && npm run build`
 - Output directory: `dist`
+- `wrangler.toml` is checked in for the Pages project name and output directory.
 
 Notes:
 - The Pages build is intentionally zero-cost and static-only.
