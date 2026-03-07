@@ -14,7 +14,8 @@ into a single, reviewable incident report.
 ## Demo / Links
 
 - Demo video: https://youtu.be/FOcjPcMheIg
-- Live demo (Google AI Studio): https://ai.studio/apps/drive/1nInCvCJjSXy0IQGiDeK9gbsjjhhPqtlg?fullscreenApplet=true
+- Cloudflare Pages demo: https://aegisops-ai-incident-doctor.pages.dev
+- Google AI Studio demo: https://ai.studio/apps/drive/1nInCvCJjSXy0IQGiDeK9gbsjjhhPqtlg?fullscreenApplet=true
 
 ## What It Does
 
@@ -191,6 +192,12 @@ If `GEMINI_API_KEY` is not set, the API switches to **demo mode**:
 This keeps the project runnable without external credentials.
 
 The replay suite also runs in demo mode, so the current score can be reproduced locally.
+
+The Cloudflare Pages deployment also stays usable without a backend. If `/api/*` is unavailable, the frontend falls back to:
+
+- deterministic local incident analysis in the browser
+- local replay-suite scoring
+- demo follow-up answers and Workspace export stubs
 
 ## Ollama Offline Mode (No Cloud LLM)
 
