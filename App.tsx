@@ -540,6 +540,10 @@ export default function App() {
           <div className="flex items-center gap-1.5" role="navigation">
             <button
               onClick={() => {
+                if (isStaticDemo) {
+                  addToast('info', 'Web grounding needs the local API or live backend. The Pages demo uses recorded local analysis only.');
+                  return;
+                }
                 setEnableGrounding((p) => {
                   const next = !p;
                   if (next) addToast('info', 'Web grounding enabled. Treat results as hints and verify citations.');
@@ -547,9 +551,14 @@ export default function App() {
                   return next;
                 });
               }}
-              className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors"
+              disabled={isStaticDemo}
+              className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors disabled:opacity-60 disabled:hover:text-text-muted disabled:hover:bg-transparent"
               aria-label="Toggle web grounding"
-              title="When enabled, the model may use public web sources and attach citations."
+              title={
+                isStaticDemo
+                  ? 'Grounding requires the local API or a live backend.'
+                  : 'When enabled, the model may use public web sources and attach citations.'
+              }
             >
               <Globe className="w-3.5 h-3.5" />
               Grounding
