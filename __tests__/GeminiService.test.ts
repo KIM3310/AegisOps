@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { analyzeIncident, fetchHealthz } from "../services/geminiService";
+import { analyzeIncident, fetchHealthz, fetchReplayEvalOverview } from "../services/geminiService";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -68,5 +68,32 @@ describe("geminiService apiFetch", () => {
     const pending = expect(fetchHealthz()).rejects.toThrow("Request timed out");
     await vi.advanceTimersByTimeAsync(31_000);
     await pending;
+  });
+
+  it("loads replay eval telemetry", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          suiteId: "incident-replay-v1",
+          generatedAt: "2026-03-07T00:00:00.000Z",
+          summary: {
+            totalCases: 4,
+            totalChecks: 32,
+            passedChecks: 32,
+            passRate: 100,
+            casesPassingAll: 4,
+            severityAccuracy: 100,
+          },
+          buckets: [],
+          cases: [],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+
+    const payload = await fetchReplayEvalOverview();
+    expect(payload.summary.totalChecks).toBe(32);
+    expect(payload.summary.passRate).toBe(100);
   });
 });

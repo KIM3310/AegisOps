@@ -1,7 +1,8 @@
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config({ quiet: true });
 
 import { randomUUID } from "node:crypto";
+import { pathToFileURL } from "node:url";
 import express from "express";
 import type { IncidentReport } from "../types";
 import { loadConfig } from "./lib/config";
@@ -9,6 +10,7 @@ import { demoAnalyzeIncident, demoFollowUpAnswer } from "./lib/demo";
 import { geminiAnalyzeIncident, geminiFollowUp, geminiTts } from "./lib/gemini";
 import { ollamaAnalyzeIncident, ollamaFollowUp } from "./lib/ollama";
 import { buildAnalyzeCacheKey, createAnalyzeCache } from "./lib/analyzeCache";
+import { buildIncidentReplayEvalOverview } from "./lib/replayEvals";
 import { normalizeAndValidateImages } from "./lib/validation";
 
 type AnalyzeBody = {
@@ -298,14 +300,20 @@ app.get("/api/healthz", (req, res) => {
       "follow-up-qna",
       "tts-briefing",
       "runtime-api-key-override",
+      "incident-replay-evals",
     ],
     links: {
       apiKey: "/api/settings/api-key",
       analyze: "/api/analyze",
       followup: "/api/followup",
       tts: "/api/tts",
+      replayEvals: "/api/evals/replays",
     },
   });
+});
+
+app.get("/api/evals/replays", (req, res) => {
+  res.json(buildIncidentReplayEvalOverview(cfg.maxLogChars));
 });
 
 app.get("/api/settings/api-key", (req, res) => {
@@ -556,16 +564,27 @@ if (typeof maintenanceTimer.unref === "function") {
   maintenanceTimer.unref();
 }
 
-const server = app.listen(cfg.port, cfg.host, () => {
-  // eslint-disable-next-line no-console
-  console.log(
-    `[api] AegisOps API listening on http://${cfg.host}:${cfg.port} (startupMode=${cfg.mode}, provider=${cfg.llmProvider}, activeProvider=${getActiveProvider()}, keySource=${getKeySource()})`
-  );
-});
+export { app };
+
+let server: ReturnType<typeof app.listen> | undefined;
+
+export function startServer() {
+  if (server) return server;
+  server = app.listen(cfg.port, cfg.host, () => {
+    // eslint-disable-next-line no-console
+    console.log(
+      `[api] AegisOps API listening on http://${cfg.host}:${cfg.port} (startupMode=${cfg.mode}, provider=${cfg.llmProvider}, activeProvider=${getActiveProvider()}, keySource=${getKeySource()})`
+    );
+  });
+  return server;
+}
 
 function shutdown(signal: string): void {
   // eslint-disable-next-line no-console
   console.log(`[api] Received ${signal}. Shutting down gracefully...`);
+  if (!server) {
+    process.exit(0);
+  }
   server.close((err) => {
     if (err) {
       // eslint-disable-next-line no-console
@@ -576,5 +595,14 @@ function shutdown(signal: string): void {
   });
 }
 
-process.on("SIGINT", () => shutdown("SIGINT"));
-process.on("SIGTERM", () => shutdown("SIGTERM"));
+function isMainModule(): boolean {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  return import.meta.url === pathToFileURL(entry).href;
+}
+
+if (isMainModule()) {
+  startServer();
+  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+}
