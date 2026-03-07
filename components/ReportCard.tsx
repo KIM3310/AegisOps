@@ -14,6 +14,7 @@ import { GoogleExport } from './GoogleExport';
 interface Props {
   report: IncidentReport;
   enableGrounding?: boolean;
+  ttsAvailable?: boolean;
 }
 
 type AudioContextCtor = {
@@ -185,7 +186,7 @@ const Section: React.FC<SectionProps> = ({ id, title, icon: Icon, count, isOpen,
   </div>
 );
 
-export const ReportCard: React.FC<Props> = ({ report, enableGrounding = false }) => {
+export const ReportCard: React.FC<Props> = ({ report, enableGrounding = false, ttsAvailable = false }) => {
   const [exp, setExp] = useState({ timeline: true, causes: true, actions: true, prevention: false, references: true, chat: false });
   const [copied, setCopied] = useState<string | null>(null);
   const [showGoogleExport, setShowGoogleExport] = useState(false);
@@ -241,6 +242,7 @@ export const ReportCard: React.FC<Props> = ({ report, enableGrounding = false })
   };
 
   const playSummary = async () => {
+    if (!ttsAvailable) return;
     if (isPlaying) {
       stopAudio();
       return;
@@ -338,7 +340,7 @@ export const ReportCard: React.FC<Props> = ({ report, enableGrounding = false })
                 
                 <button
                     onClick={playSummary}
-                    disabled={isLoadingAudio}
+                    disabled={isLoadingAudio || !ttsAvailable}
                     className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-bg hover:bg-bg-hover border border-border rounded-full text-xs font-medium text-text-muted transition-colors hover:text-accent disabled:opacity-50"
                 >
                     {isLoadingAudio ? (
@@ -348,7 +350,7 @@ export const ReportCard: React.FC<Props> = ({ report, enableGrounding = false })
                     ) : (
                         <Volume2 className="w-3.5 h-3.5" />
                     )}
-                    {isLoadingAudio ? 'Generating Audio...' : isPlaying ? 'Stop Reading' : 'Read Summary'}
+                    {isLoadingAudio ? 'Generating Audio...' : isPlaying ? 'Stop Reading' : ttsAvailable ? 'Read Summary' : 'Audio needs live Gemini'}
                 </button>
             </div>
           </div>

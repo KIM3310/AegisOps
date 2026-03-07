@@ -91,6 +91,8 @@ export default function App() {
   const [enableGrounding, setEnableGrounding] = useState(false);
   const tmConfigured = isTeachableMachineConfigured();
   const isOllamaMode = apiHealth?.provider === 'ollama';
+  const isStaticDemo = apiHealth?.deployment === 'static-demo';
+  const ttsAvailable = apiHealth?.mode === 'live' && apiHealth?.provider === 'gemini';
   const [enableTmVision, setEnableTmVision] = useState(tmConfigured);
   const [tmStatus, setTmStatus] = useState<'IDLE' | 'RUNNING' | 'READY' | 'ERROR'>('IDLE');
   const [tmError, setTmError] = useState<string | null>(null);
@@ -184,6 +186,10 @@ export default function App() {
       addToast('error', 'Enter a Gemini API key first.');
       return;
     }
+    if (isStaticDemo) {
+      addToast('error', 'Runtime API key controls are unavailable in the static demo. Run the local API to use BYOK.');
+      return;
+    }
 
     setApiKeyBusy(true);
     try {
@@ -203,6 +209,10 @@ export default function App() {
   };
 
   const handleClearApiKey = async () => {
+    if (isStaticDemo) {
+      addToast('error', 'Runtime API key controls are unavailable in the static demo. Run the local API to use BYOK.');
+      return;
+    }
     setApiKeyBusy(true);
     try {
       const status = await clearGeminiApiKey();
@@ -524,7 +534,7 @@ export default function App() {
             <Shield className="w-5 h-5 text-accent fill-accent/10" aria-hidden="true" />
             <span className="text-sm font-semibold tracking-tight">AegisOps</span>
             <span className="text-[9px] px-1.5 py-0.5 bg-accent/10 text-accent rounded-full font-medium border border-accent/20">
-              {apiHealth ? (apiHealth.mode === 'demo' ? 'Demo mode' : apiHealth.models.analyze) : 'API offline'}
+              {apiHealth ? (isStaticDemo ? 'Static demo' : apiHealth.mode === 'demo' ? 'Demo mode' : apiHealth.models.analyze) : 'Loading'}
             </span>
           </div>
           <div className="flex items-center gap-1.5" role="navigation">
@@ -569,7 +579,7 @@ export default function App() {
                 {enableTmVision ? 'ON' : 'OFF'}
               </span>
             </button>
-            {!isOllamaMode && (
+            {!isOllamaMode && !isStaticDemo && (
               <button
                 onClick={() => setShowApiKeyPanel((prev) => !prev)}
                 className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors"
@@ -617,6 +627,18 @@ export default function App() {
               onRefresh={loadReplayOverview}
             />
 
+            {isStaticDemo && (
+              <div className="rounded-lg border border-border bg-bg-card/90 p-4 space-y-2">
+                <div className="text-xs font-semibold flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-accent" />
+                  Static demo deployment
+                </div>
+                <p className="text-2xs text-text-muted">
+                  This Pages build runs the replay suite and deterministic local incident review in the browser. Start the local Express API to use Gemini BYOK, runtime key controls, and backend routes.
+                </p>
+              </div>
+            )}
+
             {isOllamaMode && (
               <div className="rounded-lg border border-border bg-bg-card/90 p-4 space-y-2">
                 <div className="text-xs font-semibold flex items-center gap-1.5">
@@ -629,7 +651,7 @@ export default function App() {
               </div>
             )}
 
-            {!isOllamaMode && (showApiKeyPanel || apiHealth?.mode !== 'live') && (
+            {!isOllamaMode && !isStaticDemo && (showApiKeyPanel || apiHealth?.mode !== 'live') && (
               <div className="rounded-lg border border-border bg-bg-card/90 p-4 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
@@ -813,7 +835,7 @@ export default function App() {
               <div className="flex-1" />
               <button onClick={handleReAnalyze} className="h-8 px-3 text-xs text-text-muted hover:text-text bg-bg-card hover:bg-bg-hover border border-border rounded-full flex items-center gap-1.5 transition-colors shadow-sm"><RefreshCw className="w-3.5 h-3.5" />Re-analyze</button>
             </div>
-            <ReportCard report={report!} enableGrounding={enableGrounding} />
+            <ReportCard report={report!} enableGrounding={enableGrounding} ttsAvailable={ttsAvailable} />
           </div>
         )}
       </main>

@@ -70,6 +70,41 @@ describe("geminiService apiFetch", () => {
     await pending;
   });
 
+  it("falls back to a static demo health payload when /api resolves to HTML", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("<!doctype html><html><body>app shell</body></html>", {
+        status: 200,
+        headers: { "Content-Type": "text/html" },
+      })
+    );
+
+    const payload = await fetchHealthz();
+    expect(payload.ok).toBe(true);
+    expect(payload.mode).toBe("demo");
+    expect(payload.deployment).toBe("static-demo");
+    expect(payload.service).toBe("aegisops-static-demo");
+  });
+
+  it("falls back to deterministic local incident analysis when the API is missing", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("<!doctype html><html><body>app shell</body></html>", {
+        status: 200,
+        headers: { "Content-Type": "text/html" },
+      })
+    );
+
+    const payload = await analyzeIncident(
+      `[2025-01-15T14:30:00Z] WARN: Response time increased: 850ms - approaching SLO threshold
+[2025-01-15T14:30:30Z] ERROR: Response time: 3500ms - SLO BREACH DETECTED
+[2025-01-15T14:31:00Z] ERROR: Request queue depth: 5000 (limit: 1000)`,
+      []
+    );
+
+    expect(payload.severity).toBe("SEV1");
+    expect(payload.timeline.length).toBeGreaterThan(0);
+    expect(payload.reasoning).toContain("Observations");
+  });
+
   it("loads replay eval telemetry", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
@@ -95,5 +130,19 @@ describe("geminiService apiFetch", () => {
     const payload = await fetchReplayEvalOverview();
     expect(payload.summary.totalChecks).toBe(32);
     expect(payload.summary.passRate).toBe(100);
+  });
+
+  it("falls back to local replay telemetry when the backend is absent", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("<!doctype html><html><body>app shell</body></html>", {
+        status: 200,
+        headers: { "Content-Type": "text/html" },
+      })
+    );
+
+    const payload = await fetchReplayEvalOverview();
+    expect(payload.summary.totalChecks).toBe(32);
+    expect(payload.summary.passRate).toBe(100);
+    expect(payload.cases).toHaveLength(4);
   });
 });
