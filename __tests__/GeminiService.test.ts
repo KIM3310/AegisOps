@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { analyzeIncident, fetchHealthz, fetchReplayEvalOverview, fetchReportSchema, fetchServiceMeta } from "../services/geminiService";
+import { analyzeIncident, fetchHealthz, fetchReplayEvalOverview, fetchReportSchema, fetchReviewPack, fetchServiceMeta } from "../services/geminiService";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -18,7 +18,7 @@ describe("geminiService apiFetch", () => {
           limits: { maxImages: 8, maxLogChars: 1000 },
           defaults: { grounding: false },
           models: { analyze: "x", tts: "y" },
-          links: { apiKey: "/api/settings/api-key" },
+          links: { apiKey: "/api/settings/api-key", reviewPack: "/api/review-pack" },
           diagnostics: { nextAction: "configure Gemini API key or switch to Ollama for live incident analysis." },
           ops_contract: { schema: "ops-envelope-v1", version: 1, required_fields: ["service", "status", "diagnostics.nextAction"] },
           capabilities: ["incident-analysis"],
@@ -32,6 +32,7 @@ describe("geminiService apiFetch", () => {
     expect(payload.service).toBe("aegisops-api");
     expect(payload.mode).toBe("demo");
     expect(payload.links?.apiKey).toBe("/api/settings/api-key");
+    expect(payload.links?.reviewPack).toBe("/api/review-pack");
     expect(payload.diagnostics?.nextAction).toContain("configure Gemini API key");
     expect(payload.ops_contract?.schema).toBe("ops-envelope-v1");
   });
@@ -166,6 +167,7 @@ describe("geminiService apiFetch", () => {
           },
           links: {
             healthz: "/api/healthz",
+            reviewPack: "/api/review-pack",
             replayEvals: "/api/evals/replays",
             reportSchema: "/api/schema/report",
             readme: "https://github.com/KIM3310/AegisOps",
@@ -181,6 +183,49 @@ describe("geminiService apiFetch", () => {
     expect(payload.product.name).toBe("AegisOps");
     expect(payload.replaySuite.totalChecks).toBe(32);
     expect(payload.reportContract.schemaId).toBe("incident-report-v1");
+  });
+
+  it("loads review pack telemetry", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          service: "aegisops-review-pack",
+          version: 1,
+          deployment: "backend",
+          reviewPackId: "aegisops-review-pack-v1",
+          headline: "Review the runtime, replay, and export posture before trusting the copilot.",
+          operatorJourney: [
+            { stage: "Collect", summary: "Gather logs and screenshots.", surface: "React/Vite UI + /api/analyze" },
+          ],
+          trustBoundary: ["Keys stay server-side."],
+          reviewSequence: ["Check replay score."],
+          proofBundle: {
+            replayPassRate: 100,
+            severityAccuracy: 100,
+            totalChecks: 32,
+            runtimeModes: ["Static demo", "Gemini live"],
+            exportFormats: ["json", "markdown"],
+            requiredFields: ["title", "summary"],
+          },
+          links: {
+            healthz: "/api/healthz",
+            reviewPack: "/api/review-pack",
+            replayEvals: "/api/evals/replays",
+            reportSchema: "/api/schema/report",
+            readme: "https://github.com/KIM3310/AegisOps",
+            demo: "https://aegisops-ai-incident-doctor.pages.dev",
+            video: "https://youtu.be/FOcjPcMheIg",
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+
+    const payload = await fetchReviewPack();
+    expect(payload.reviewPackId).toBe("aegisops-review-pack-v1");
+    expect(payload.links.reviewPack).toBe("/api/review-pack");
+    expect(payload.proofBundle.totalChecks).toBe(32);
   });
 
   it("loads report schema guidance", async () => {
@@ -251,5 +296,19 @@ describe("geminiService apiFetch", () => {
     const payload = await fetchReportSchema();
     expect(payload.schemaId).toBe("incident-report-v1");
     expect(payload.requiredFields).toContain("timeline");
+  });
+
+  it("falls back to static review pack when the backend is absent", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("<!doctype html><html><body>app shell</body></html>", {
+        status: 200,
+        headers: { "Content-Type": "text/html" },
+      })
+    );
+
+    const payload = await fetchReviewPack();
+    expect(payload.deployment).toBe("static-demo");
+    expect(payload.reviewPackId).toBe("aegisops-review-pack-v1");
+    expect(payload.links.reviewPack).toBe("/api/review-pack");
   });
 });

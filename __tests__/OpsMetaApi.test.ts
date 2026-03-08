@@ -37,7 +37,21 @@ describe("service meta endpoints", () => {
     expect(body.workflow).toEqual(["collect", "reason", "decide", "communicate"]);
     expect(body.replaySuite.totalChecks).toBe(32);
     expect(body.reportContract.schemaId).toBe("incident-report-v1");
+    expect(body.links.reviewPack).toBe("/api/review-pack");
     expect(body.links.reportSchema).toBe("/api/schema/report");
+  });
+
+  it("returns a review pack that compresses flow, trust boundary, and proof links", async () => {
+    const res = await fetch(`${baseUrl}/api/review-pack`);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.reviewPackId).toBe("aegisops-review-pack-v1");
+    expect(body.operatorJourney).toHaveLength(4);
+    expect(body.trustBoundary.length).toBeGreaterThan(0);
+    expect(body.proofBundle.totalChecks).toBe(32);
+    expect(body.links.reviewPack).toBe("/api/review-pack");
   });
 
   it("returns report schema guidance for operator-facing incident reports", async () => {

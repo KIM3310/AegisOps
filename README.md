@@ -25,6 +25,15 @@ Companion repo:
 - Cloudflare Pages demo: https://aegisops-ai-incident-doctor.pages.dev
 - Google AI Studio demo: https://ai.studio/apps/drive/1nInCvCJjSXy0IQGiDeK9gbsjjhhPqtlg?fullscreenApplet=true
 
+## Review Pack At A Glance
+
+- Reviewer API surface: `GET /api/healthz`, `GET /api/meta`, `GET /api/review-pack`, `GET /api/schema/report`
+- Incident quality proof: replay suite with 4 scenarios / 32 rubric checks
+- Runtime posture: static demo, demo backend, Gemini live, Ollama local
+- Export posture: JSON, Markdown, Slack, Jira, plus optional Workspace flows
+
+![AegisOps Review Pack](docs/review-pack.svg)
+
 ## What It Does
 
 - **Input:** raw text logs + monitoring screenshots
@@ -61,12 +70,14 @@ The current suite covers 4 scenarios / 32 rubric checks. For the scoring rubric 
 
 ## Service-Grade Surfaces
 
-AegisOps now exposes three explicit review surfaces for operators and reviewers:
+AegisOps now exposes four explicit review surfaces for operators and reviewers:
 
 - `GET /api/healthz`
   - current deployment mode, provider, limits, cache posture, and next action
 - `GET /api/meta`
   - product workflow, runtime modes, replay summary, operator checklist, and report contract summary
+- `GET /api/review-pack`
+  - operator journey, trust boundary, replay proof bundle, export posture, and reviewer links
 - `GET /api/schema/report`
   - required incident-report fields, export formats, field guidance, and input guardrails
 
