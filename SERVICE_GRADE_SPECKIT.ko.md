@@ -28,6 +28,7 @@ AegisOps는 기능 자체는 이미 강하다.
 핵심 목표:
 
 - 명시적 service meta surface 추가
+- 명시적 review pack surface 추가
 - 명시적 report schema surface 추가
 - pre-analysis 단계에서 operator readiness를 바로 보여주는 UI 추가
 - 위 표면을 테스트와 README에서 추적 가능하게 만들기
@@ -40,10 +41,12 @@ AegisOps는 기능 자체는 이미 강하다.
 
 - backend:
   - `/api/meta`
+  - `/api/review-pack`
   - `/api/schema/report`
   - health envelope links 확장
 - frontend:
   - operator readiness card
+  - executive review pack card
   - static/demo/live posture 노출 강화
   - report contract 요약 노출
 - tests:
@@ -69,9 +72,9 @@ AegisOps는 기능 자체는 이미 강하다.
 
 ### E (Execution)
 
-1. service meta / report schema를 서버에서 생성
+1. service meta / review pack / report schema를 서버에서 생성
 2. frontend static fallback에도 같은 shape 제공
-3. operator readiness card를 입력 화면 상단에 배치
+3. operator readiness + executive review pack card를 입력 화면 상단에 배치
 4. 테스트 추가
 5. README에 새 API surface와 의도 반영
 
@@ -80,9 +83,10 @@ AegisOps는 기능 자체는 이미 강하다.
 PASS 기준:
 
 - `/api/meta`가 현재 운영 모드, workflow, replay summary, report contract를 반환
+- `/api/review-pack`이 operator journey, trust boundary, review sequence, proof bundle을 반환
 - `/api/schema/report`가 required sections와 field guidance를 반환
-- backend가 없을 때 frontend가 deterministic static fallback meta/schema를 제공
-- 입력 전 화면에서 현재 모드, replay quality, input limits, report contract를 확인 가능
+- backend가 없을 때 frontend가 deterministic static fallback meta/review-pack/schema를 제공
+- 입력 전 화면에서 현재 모드, replay quality, input limits, report contract, review sequence를 확인 가능
 - 테스트/빌드 통과
 
 ### K (Keep)

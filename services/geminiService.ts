@@ -1,6 +1,6 @@
 import type { IncidentReport, ReplayEvalOverview } from "../types";
 import { buildIncidentReplayEvalOverview } from "../server/lib/replayEvals";
-import { buildAegisOpsServiceMeta, buildIncidentReportSchema } from "../server/lib/serviceMeta";
+import { buildAegisOpsReviewPack, buildAegisOpsServiceMeta, buildIncidentReportSchema } from "../server/lib/serviceMeta";
 import { demoAnalyzeIncident, demoFollowUpAnswer } from "../server/lib/demo";
 
 export type ApiMode = "demo" | "live";
@@ -58,6 +58,7 @@ export interface HealthzResponse {
     analyze?: string;
     followup?: string;
     tts?: string;
+    reviewPack?: string;
     replayEvals?: string;
     meta?: string;
     reportSchema?: string;
@@ -110,6 +111,40 @@ export interface ServiceMetaResponse {
   };
   links: {
     healthz: string;
+    reviewPack: string;
+    replayEvals: string;
+    reportSchema: string;
+    readme: string;
+    demo: string;
+    video: string;
+  };
+}
+
+export interface ReviewPackResponse {
+  ok: boolean;
+  service: string;
+  version: number;
+  deployment: DeploymentTarget;
+  reviewPackId: string;
+  headline: string;
+  operatorJourney: Array<{
+    stage: string;
+    summary: string;
+    surface: string;
+  }>;
+  trustBoundary: string[];
+  reviewSequence: string[];
+  proofBundle: {
+    replayPassRate: number;
+    severityAccuracy: number;
+    totalChecks: number;
+    runtimeModes: string[];
+    exportFormats: string[];
+    requiredFields: string[];
+  };
+  links: {
+    healthz: string;
+    reviewPack: string;
     replayEvals: string;
     reportSchema: string;
     readme: string;
@@ -177,6 +212,8 @@ function buildStaticDemoHealthz(): HealthzResponse {
     },
     capabilities: ["incident-analysis", "followup", "replay-evals", "service-meta", "report-schema", "workspace-demo"],
     links: {
+      reviewPack: "/api/review-pack",
+      replayEvals: "/api/evals/replays",
       meta: "/api/meta",
       reportSchema: "/api/schema/report",
     },
@@ -205,6 +242,18 @@ function buildStaticDemoServiceMeta(): ServiceMetaResponse {
     analyzeModel: "Recorded demo",
     ttsModel: "Unavailable",
   }) as ServiceMetaResponse;
+}
+
+function buildStaticDemoReviewPack(): ReviewPackResponse {
+  return buildAegisOpsReviewPack({
+    deployment: "static-demo",
+    maxImages: 16,
+    maxLogChars: STATIC_DEMO_MAX_LOG_CHARS,
+    maxQuestionChars: 4_000,
+    maxTtsChars: 0,
+    analyzeModel: "Recorded demo",
+    ttsModel: "Unavailable",
+  }) as ReviewPackResponse;
 }
 
 function buildStaticDemoReportSchema(): ReportSchemaResponse {
@@ -364,6 +413,21 @@ export async function fetchServiceMeta(): Promise<ServiceMetaResponse> {
   } catch (error) {
     if (isApiUnavailableError(error)) {
       return buildStaticDemoServiceMeta();
+    }
+    throw error;
+  }
+}
+
+export async function fetchReviewPack(): Promise<ReviewPackResponse> {
+  try {
+    const response = await apiFetch<ReviewPackResponse>("/api/review-pack");
+    return {
+      ...response,
+      deployment: response.deployment || "backend",
+    };
+  } catch (error) {
+    if (isApiUnavailableError(error)) {
+      return buildStaticDemoReviewPack();
     }
     throw error;
   }

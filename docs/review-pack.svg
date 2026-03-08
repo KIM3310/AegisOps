@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" fill="none">
+  <rect width="960" height="540" fill="#0B1321"/>
+  <rect x="24" y="24" width="912" height="492" rx="24" fill="#111827" stroke="#334155"/>
+  <text x="48" y="64" fill="#E5E7EB" font-family="Arial, sans-serif" font-size="26" font-weight="700">AegisOps Review Pack</text>
+  <text x="48" y="92" fill="#93C5FD" font-family="Arial, sans-serif" font-size="14">collect -&gt; reason -&gt; review -&gt; communicate</text>
+
+  <rect x="48" y="126" width="192" height="116" rx="16" fill="#172033" stroke="#3B82F6"/>
+  <text x="66" y="154" fill="#BFDBFE" font-family="Arial, sans-serif" font-size="12" letter-spacing="1.4">COLLECT</text>
+  <text x="66" y="182" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="20" font-weight="700">Logs + Screenshots</text>
+  <text x="66" y="208" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="13">One guarded intake surface.</text>
+  <text x="66" y="228" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="13">Payload limits stay explicit.</text>
+
+  <rect x="272" y="126" width="192" height="116" rx="16" fill="#172033" stroke="#3B82F6"/>
+  <text x="290" y="154" fill="#BFDBFE" font-family="Arial, sans-serif" font-size="12" letter-spacing="1.4">REASON</text>
+  <text x="290" y="182" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="20" font-weight="700">Gemini / Ollama / Demo</text>
+  <text x="290" y="208" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="13">Same incident-report contract.</text>
+  <text x="290" y="228" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="13">Secrets stay server-side.</text>
+
+  <rect x="496" y="126" width="192" height="116" rx="16" fill="#172033" stroke="#3B82F6"/>
+  <text x="514" y="154" fill="#BFDBFE" font-family="Arial, sans-serif" font-size="12" letter-spacing="1.4">REVIEW</text>
+  <text x="514" y="182" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="20" font-weight="700">Replay + Schema</text>
+  <text x="514" y="208" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="13">32 rubric checks.</text>
+  <text x="514" y="228" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="13">Reasoning stays inspectable.</text>
+
+  <rect x="720" y="126" width="192" height="116" rx="16" fill="#172033" stroke="#3B82F6"/>
+  <text x="738" y="154" fill="#BFDBFE" font-family="Arial, sans-serif" font-size="12" letter-spacing="1.4">COMMUNICATE</text>
+  <text x="738" y="182" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="20" font-weight="700">Export + Handoff</text>
+  <text x="738" y="208" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="13">JSON, Markdown, Slack, Jira.</text>
+  <text x="738" y="228" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="13">Optional Workspace flows.</text>
+
+  <path d="M240 184H268" stroke="#60A5FA" stroke-width="3" stroke-linecap="round"/>
+  <path d="M464 184H492" stroke="#60A5FA" stroke-width="3" stroke-linecap="round"/>
+  <path d="M688 184H716" stroke="#60A5FA" stroke-width="3" stroke-linecap="round"/>
+  <path d="M258 176L270 184L258 192" stroke="#60A5FA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M482 176L494 184L482 192" stroke="#60A5FA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M706 176L718 184L706 192" stroke="#60A5FA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="48" y="286" width="398" height="186" rx="16" fill="#0F172A" stroke="#475569"/>
+  <text x="68" y="316" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="18" font-weight="700">Trust Boundary</text>
+  <text x="68" y="346" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="14">- API keys never ship to the browser.</text>
+  <text x="68" y="372" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="14">- Static demo keeps reviewability when backend controls are absent.</text>
+  <text x="68" y="398" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="14">- Grounding and references remain advisory, not automatic truth.</text>
+  <text x="68" y="438" fill="#93C5FD" font-family="Arial, sans-serif" font-size="13">Reviewer APIs</text>
+  <text x="68" y="462" fill="#E5E7EB" font-family="Arial, sans-serif" font-size="14">/api/healthz   /api/meta   /api/review-pack   /api/schema/report</text>
+
+  <rect x="478" y="286" width="434" height="186" rx="16" fill="#0F172A" stroke="#475569"/>
+  <text x="498" y="316" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="18" font-weight="700">Proof Bundle</text>
+  <text x="498" y="346" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="14">Replay telemetry: 4 scenarios / 32 rubric checks</text>
+  <text x="498" y="372" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="14">Runtime modes: Static demo, Demo backend, Gemini live, Ollama local</text>
+  <text x="498" y="398" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="14">Export posture: JSON, Markdown, Slack, Jira, Workspace demo</text>
+  <text x="498" y="438" fill="#93C5FD" font-family="Arial, sans-serif" font-size="13">Review Sequence</text>
+  <text x="498" y="462" fill="#E5E7EB" font-family="Arial, sans-serif" font-size="14">1. Check runtime mode  2. Inspect replay + schema  3. Review report before handoff</text>
+</svg>

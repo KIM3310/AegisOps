@@ -7,12 +7,14 @@ import {
   fetchHealthz,
   fetchReplayEvalOverview,
   fetchGeminiApiKeyStatus,
+  fetchReviewPack,
   fetchServiceMeta,
   fetchReportSchema,
   saveGeminiApiKey,
   clearGeminiApiKey,
   type HealthzResponse,
   type ApiKeySource,
+  type ReviewPackResponse,
   type ServiceMetaResponse,
   type ReportSchemaResponse,
 } from './services/geminiService';
@@ -31,6 +33,7 @@ import { DatasetExport } from './components/DatasetExport';
 import { CommunityHub } from './components/CommunityHub';
 import { ReplayEvalCard } from './components/ReplayEvalCard';
 import { OperatorReadinessCard } from './components/OperatorReadinessCard';
+import { ReviewPackCard } from './components/ReviewPackCard';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
 interface ImageFile {
@@ -85,6 +88,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [apiHealth, setApiHealth] = useState<HealthzResponse | null>(null);
+  const [reviewPack, setReviewPack] = useState<ReviewPackResponse | null>(null);
   const [serviceMeta, setServiceMeta] = useState<ServiceMetaResponse | null>(null);
   const [reportSchema, setReportSchema] = useState<ReportSchemaResponse | null>(null);
   const [replayOverview, setReplayOverview] = useState<ReplayEvalOverview | null>(null);
@@ -132,6 +136,9 @@ export default function App() {
     fetchServiceMeta()
       .then((meta) => { if (mounted) setServiceMeta(meta); })
       .catch(() => { if (mounted) setServiceMeta(null); });
+    fetchReviewPack()
+      .then((pack) => { if (mounted) setReviewPack(pack); })
+      .catch(() => { if (mounted) setReviewPack(null); });
     fetchReportSchema()
       .then((schema) => { if (mounted) setReportSchema(schema); })
       .catch(() => { if (mounted) setReportSchema(null); });
@@ -648,6 +655,8 @@ export default function App() {
               error={replayEvalError}
               onRefresh={loadReplayOverview}
             />
+
+            <ReviewPackCard reviewPack={reviewPack} />
 
             <OperatorReadinessCard
               health={apiHealth}
