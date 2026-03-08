@@ -32,6 +32,13 @@ Companion repo:
 - Runtime posture: static demo, demo backend, Gemini live, Ollama local
 - Export posture: JSON, Markdown, Slack, Jira, plus optional Workspace flows
 
+## 2-Minute Review Path
+
+1. `GET /api/healthz` -> confirm deployment mode and backend posture.
+2. `GET /api/review-pack` -> inspect replay proof, runtime modes, and trust boundary.
+3. `GET /api/schema/report` -> verify incident contract and export boundary.
+4. `docs/review-pack.svg` + `docs/architecture.png` -> read reviewer flow and key hygiene in one glance.
+
 ![AegisOps Review Pack](docs/review-pack.svg)
 
 ## What It Does
@@ -82,6 +89,14 @@ AegisOps now exposes four explicit review surfaces for operators and reviewers:
   - required incident-report fields, export formats, field guidance, and input guardrails
 
 This is intentional: the repo should be reviewable as a service surface, not just a frontend demo.
+
+## Proof Assets
+
+- `docs/review-pack.svg`
+- `docs/architecture.png`
+- `docs/INCIDENT_REPLAY_EVALS.md`
+- `samples/logs`
+- `samples/screenshots`
 
 ## Architecture
 

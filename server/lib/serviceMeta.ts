@@ -16,6 +16,36 @@ type ServiceMetaOptions = {
 const REPORT_EXPORT_FORMATS: ExportFormat[] = ["json", "markdown", "slack", "jira"];
 const REVIEW_PACK_ID = "aegisops-review-pack-v1";
 
+function buildAegisOpsProofAssets() {
+  return [
+    {
+      label: "Review pack diagram",
+      path: "docs/review-pack.svg",
+      kind: "diagram",
+    },
+    {
+      label: "Architecture snapshot",
+      path: "docs/architecture.png",
+      kind: "diagram",
+    },
+    {
+      label: "Replay eval rubric",
+      path: "docs/INCIDENT_REPLAY_EVALS.md",
+      kind: "doc",
+    },
+    {
+      label: "Sample logs",
+      path: "samples/logs",
+      kind: "sample",
+    },
+    {
+      label: "Sample screenshots",
+      path: "samples/screenshots",
+      kind: "sample",
+    },
+  ];
+}
+
 export function buildIncidentReportSchema(options: Pick<ServiceMetaOptions, "maxImages" | "maxLogChars" | "maxQuestionChars" | "maxTtsChars">) {
   return {
     ok: true,
@@ -211,6 +241,28 @@ export function buildAegisOpsReviewPack(options: ServiceMetaOptions) {
       "Inspect the report contract and payload limits to confirm the current evidence fits the service boundary.",
       "Review the generated report, timeline, and action items before exporting or communicating downstream.",
     ],
+    twoMinuteReview: [
+      {
+        step: "1. Runtime posture",
+        surface: "/api/healthz -> /api/meta",
+        proof: "Confirm deployment mode, runtime options, and replay telemetry before reading any report.",
+      },
+      {
+        step: "2. Replay quality",
+        surface: "/api/review-pack -> /api/evals/replays",
+        proof: "Use pass rate, severity accuracy, and rubric count to judge incident-quality readiness.",
+      },
+      {
+        step: "3. Contract boundary",
+        surface: "/api/schema/report",
+        proof: "Check required fields, export formats, and payload limits before trusting handoff output.",
+      },
+      {
+        step: "4. Asset proof",
+        surface: "docs/review-pack.svg -> docs/architecture.png",
+        proof: "Verify reviewer flow and key hygiene without tracing the full codebase first.",
+      },
+    ],
     proofBundle: {
       replayPassRate: serviceMeta.replaySuite.passRate,
       severityAccuracy: serviceMeta.replaySuite.severityAccuracy,
@@ -219,6 +271,7 @@ export function buildAegisOpsReviewPack(options: ServiceMetaOptions) {
       exportFormats: reportSchema.exportFormats,
       requiredFields: reportSchema.requiredFields,
     },
+    proofAssets: buildAegisOpsProofAssets(),
     links: serviceMeta.links,
   };
 }

@@ -15,6 +15,9 @@ export const ReviewPackCard: React.FC<Props> = ({ reviewPack }) => {
     return null;
   }
 
+  const twoMinuteReview = Array.isArray(reviewPack.twoMinuteReview) ? reviewPack.twoMinuteReview : [];
+  const proofAssets = Array.isArray(reviewPack.proofAssets) ? reviewPack.proofAssets : [];
+
   const reviewLinks = [
     { label: "Demo", href: reviewPack.links.demo },
     { label: "Video", href: reviewPack.links.video },
@@ -107,6 +110,40 @@ export const ReviewPackCard: React.FC<Props> = ({ reviewPack }) => {
               <span key={field} className="px-2 py-1 rounded-full border border-border bg-bg text-[10px] text-text-muted">
                 {field}
               </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-2">
+        <div className="rounded-lg border border-border bg-bg/70 p-3">
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-text-dim">
+            <ListChecks className="w-3.5 h-3.5" />
+            2-Minute Review
+          </div>
+          <div className="mt-2 space-y-3 text-2xs text-text-muted leading-relaxed">
+            {twoMinuteReview.map((item) => (
+              <div key={item.step}>
+                <div className="text-text">{item.step}</div>
+                <div>{item.surface}</div>
+                <div>{item.proof}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-border bg-bg/70 p-3">
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-text-dim">
+            <FileText className="w-3.5 h-3.5" />
+            Proof Assets
+          </div>
+          <div className="mt-2 space-y-2 text-2xs text-text-muted leading-relaxed">
+            {proofAssets.map((item) => (
+              <div key={`${item.label}-${item.path}`}>
+                <div className="text-text">{item.label}</div>
+                <div>{item.kind}</div>
+                <div>{item.path}</div>
+              </div>
             ))}
           </div>
         </div>
