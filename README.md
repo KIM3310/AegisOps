@@ -1,6 +1,6 @@
 # AegisOps — GCP-based Multimodal SEV1 Incident Copilot
 
-![CI](https://github.com/KIM3310/AegisOps-AI-Incident-Doctor-for-SREs-Powered-by-Gemini-3-Pro-Google-Workspace-/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/KIM3310/AegisOps/actions/workflows/ci.yml/badge.svg)
 
 In real SEV1 incidents, the hard part is rarely missing telemetry. The harder part is turning scattered evidence from logs,
 screenshots, and alerts into a report that someone else can review quickly.
