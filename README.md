@@ -11,6 +11,14 @@ screenshots, and alerts into a report that someone else can review quickly.
 
 into a single, reviewable incident report.
 
+## Product Family
+
+AegisOps is the multimodal copilot surface in the broader `Aegis` incident-analysis product family.
+
+Companion repo:
+
+- `Aegis-Air`: local-first / air-gapped incident review engine for teams that cannot send telemetry to public APIs
+
 ## Demo / Links
 
 - Demo video: https://youtu.be/FOcjPcMheIg
