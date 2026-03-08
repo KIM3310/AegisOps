@@ -404,6 +404,29 @@ export default function App() {
     }
   };
 
+  const copyProofBundle = async () => {
+    const lines = [
+      'AegisOps proof bundle',
+      `Replay pass rate: ${reviewPack ? `${reviewPack.proofBundle.replayPassRate}%` : 'unavailable'}`,
+      `Severity accuracy: ${reviewPack ? `${reviewPack.proofBundle.severityAccuracy}%` : 'unavailable'}`,
+      `Rubric checks: ${reviewPack?.proofBundle.totalChecks ?? 'unavailable'}`,
+      `Runtime modes: ${reviewPack?.proofBundle.runtimeModes?.join(', ') ?? 'unavailable'}`,
+      `Export formats: ${reviewPack?.proofBundle.exportFormats?.join(', ') ?? 'unavailable'}`,
+      '',
+      'Proof assets',
+      ...(reviewPack?.proofAssets?.length
+        ? reviewPack.proofAssets.map((item) => `- ${item.label} [${item.kind}]: ${item.path}`)
+        : ['- Proof assets unavailable. Open /api/review-pack first.']),
+    ];
+
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      addToast('success', 'Proof bundle copied');
+    } catch {
+      addToast('error', 'Clipboard copy failed');
+    }
+  };
+
   const loadStrongestPreset = () => {
     const preferredPreset =
       SAMPLE_PRESETS.find((preset) => preset.name === 'LLM Latency Spike') ?? SAMPLE_PRESETS[0];
@@ -790,6 +813,12 @@ export default function App() {
                   className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
                 >
                   Copy Review Routes
+                </button>
+                <button
+                  onClick={copyProofBundle}
+                  className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                >
+                  Copy Proof Bundle
                 </button>
                 <button
                   onClick={loadStrongestPreset}
