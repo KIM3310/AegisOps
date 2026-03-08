@@ -1,5 +1,6 @@
 import type { IncidentReport, ReplayEvalOverview } from "../types";
 import { buildIncidentReplayEvalOverview } from "../server/lib/replayEvals";
+import { buildAegisOpsServiceMeta, buildIncidentReportSchema } from "../server/lib/serviceMeta";
 import { demoAnalyzeIncident, demoFollowUpAnswer } from "../server/lib/demo";
 
 export type ApiMode = "demo" | "live";
@@ -58,6 +59,8 @@ export interface HealthzResponse {
     followup?: string;
     tts?: string;
     replayEvals?: string;
+    meta?: string;
+    reportSchema?: string;
   };
 }
 
@@ -70,6 +73,73 @@ export interface GeminiApiKeyStatus {
   configured: boolean;
   masked?: string;
   persisted: boolean;
+}
+
+export interface ServiceMetaResponse {
+  ok: boolean;
+  service: string;
+  version: number;
+  deployment: DeploymentTarget;
+  product: {
+    name: string;
+    category: string;
+    headline: string;
+  };
+  workflow: string[];
+  runtimeModes: Array<{
+    id: string;
+    label: string;
+    useWhen: string;
+  }>;
+  replaySuite: {
+    suiteId: string;
+    totalCases: number;
+    totalChecks: number;
+    passRate: number;
+    severityAccuracy: number;
+  };
+  reportContract: {
+    schemaId: string;
+    requiredFields: string[];
+    exportFormats: string[];
+  };
+  operatorChecklist: string[];
+  models: {
+    analyze: string;
+    tts: string;
+  };
+  links: {
+    healthz: string;
+    replayEvals: string;
+    reportSchema: string;
+    readme: string;
+    demo: string;
+    video: string;
+  };
+}
+
+export interface ReportSchemaResponse {
+  ok: boolean;
+  schemaId: string;
+  version: number;
+  description: string;
+  requiredFields: string[];
+  optionalFields: string[];
+  exportFormats: string[];
+  fieldGuide: Array<{
+    key: string;
+    type: string;
+    guidance: string;
+    minItems?: number;
+    allowed?: string[];
+  }>;
+  inputLimits: {
+    maxImages: number;
+    maxLogChars: number;
+    maxQuestionChars: number;
+    maxTtsChars: number;
+  };
+  operatorRules: string[];
 }
 
 type ApiErrorBody = { error?: { message?: string } };
@@ -105,7 +175,11 @@ function buildStaticDemoHealthz(): HealthzResponse {
       providerConfigured: false,
       nextAction: "Static Pages demo is active. Run the local API to use Gemini BYOK and live backend routes.",
     },
-    capabilities: ["incident-analysis", "followup", "replay-evals", "workspace-demo"],
+    capabilities: ["incident-analysis", "followup", "replay-evals", "service-meta", "report-schema", "workspace-demo"],
+    links: {
+      meta: "/api/meta",
+      reportSchema: "/api/schema/report",
+    },
   };
 }
 
@@ -119,6 +193,27 @@ function buildStaticDemoApiKeyStatus(): GeminiApiKeyStatus {
     configured: false,
     persisted: false,
   };
+}
+
+function buildStaticDemoServiceMeta(): ServiceMetaResponse {
+  return buildAegisOpsServiceMeta({
+    deployment: "static-demo",
+    maxImages: 16,
+    maxLogChars: STATIC_DEMO_MAX_LOG_CHARS,
+    maxQuestionChars: 4_000,
+    maxTtsChars: 0,
+    analyzeModel: "Recorded demo",
+    ttsModel: "Unavailable",
+  }) as ServiceMetaResponse;
+}
+
+function buildStaticDemoReportSchema(): ReportSchemaResponse {
+  return buildIncidentReportSchema({
+    maxImages: 16,
+    maxLogChars: STATIC_DEMO_MAX_LOG_CHARS,
+    maxQuestionChars: 4_000,
+    maxTtsChars: 0,
+  }) as ReportSchemaResponse;
 }
 
 function readHeaderObject(headers: Headers): Record<string, string> {
@@ -254,6 +349,32 @@ export async function fetchGeminiApiKeyStatus(): Promise<GeminiApiKeyStatus> {
   } catch (error) {
     if (isApiUnavailableError(error)) {
       return buildStaticDemoApiKeyStatus();
+    }
+    throw error;
+  }
+}
+
+export async function fetchServiceMeta(): Promise<ServiceMetaResponse> {
+  try {
+    const response = await apiFetch<ServiceMetaResponse>("/api/meta");
+    return {
+      ...response,
+      deployment: response.deployment || "backend",
+    };
+  } catch (error) {
+    if (isApiUnavailableError(error)) {
+      return buildStaticDemoServiceMeta();
+    }
+    throw error;
+  }
+}
+
+export async function fetchReportSchema(): Promise<ReportSchemaResponse> {
+  try {
+    return await apiFetch<ReportSchemaResponse>("/api/schema/report");
+  } catch (error) {
+    if (isApiUnavailableError(error)) {
+      return buildStaticDemoReportSchema();
     }
     throw error;
   }

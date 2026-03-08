@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { analyzeIncident, fetchHealthz, fetchReplayEvalOverview } from "../services/geminiService";
+import { analyzeIncident, fetchHealthz, fetchReplayEvalOverview, fetchReportSchema, fetchServiceMeta } from "../services/geminiService";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -132,6 +132,86 @@ describe("geminiService apiFetch", () => {
     expect(payload.summary.passRate).toBe(100);
   });
 
+  it("loads service meta telemetry", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          service: "aegisops-service-meta",
+          version: 1,
+          deployment: "backend",
+          product: {
+            name: "AegisOps",
+            category: "multimodal incident copilot",
+            headline: "Turn logs, screenshots, and alerts into a reviewable incident report.",
+          },
+          workflow: ["collect", "reason", "decide", "communicate"],
+          runtimeModes: [],
+          replaySuite: {
+            suiteId: "incident-replay-v1",
+            totalCases: 4,
+            totalChecks: 32,
+            passRate: 100,
+            severityAccuracy: 100,
+          },
+          reportContract: {
+            schemaId: "incident-report-v1",
+            requiredFields: ["title", "summary"],
+            exportFormats: ["json"],
+          },
+          operatorChecklist: [],
+          models: {
+            analyze: "gemini-3-pro-preview",
+            tts: "gemini-2.5-flash-preview-tts",
+          },
+          links: {
+            healthz: "/api/healthz",
+            replayEvals: "/api/evals/replays",
+            reportSchema: "/api/schema/report",
+            readme: "https://github.com/KIM3310/AegisOps",
+            demo: "https://aegisops-ai-incident-doctor.pages.dev",
+            video: "https://youtu.be/FOcjPcMheIg",
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+
+    const payload = await fetchServiceMeta();
+    expect(payload.product.name).toBe("AegisOps");
+    expect(payload.replaySuite.totalChecks).toBe(32);
+    expect(payload.reportContract.schemaId).toBe("incident-report-v1");
+  });
+
+  it("loads report schema guidance", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          schemaId: "incident-report-v1",
+          version: 1,
+          description: "Structured report",
+          requiredFields: ["title", "summary", "severity"],
+          optionalFields: ["references"],
+          exportFormats: ["json", "markdown"],
+          fieldGuide: [{ key: "severity", type: "enum", guidance: "Operational urgency" }],
+          inputLimits: {
+            maxImages: 16,
+            maxLogChars: 50000,
+            maxQuestionChars: 4000,
+            maxTtsChars: 0,
+          },
+          operatorRules: ["Prefer logs plus screenshots together when available."],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+
+    const payload = await fetchReportSchema();
+    expect(payload.requiredFields).toContain("severity");
+    expect(payload.fieldGuide[0].key).toBe("severity");
+  });
+
   it("falls back to local replay telemetry when the backend is absent", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response("<!doctype html><html><body>app shell</body></html>", {
@@ -144,5 +224,32 @@ describe("geminiService apiFetch", () => {
     expect(payload.summary.totalChecks).toBe(32);
     expect(payload.summary.passRate).toBe(100);
     expect(payload.cases).toHaveLength(4);
+  });
+
+  it("falls back to static service meta when the backend is absent", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("<!doctype html><html><body>app shell</body></html>", {
+        status: 200,
+        headers: { "Content-Type": "text/html" },
+      })
+    );
+
+    const payload = await fetchServiceMeta();
+    expect(payload.deployment).toBe("static-demo");
+    expect(payload.product.name).toBe("AegisOps");
+    expect(payload.reportContract.schemaId).toBe("incident-report-v1");
+  });
+
+  it("falls back to static report schema when the backend is absent", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("<!doctype html><html><body>app shell</body></html>", {
+        status: 200,
+        headers: { "Content-Type": "text/html" },
+      })
+    );
+
+    const payload = await fetchReportSchema();
+    expect(payload.schemaId).toBe("incident-report-v1");
+    expect(payload.requiredFields).toContain("timeline");
   });
 });

@@ -45,6 +45,7 @@ Companion repo:
 - Enforced payload guardrails for multimodal inputs (image limits + partial-failure tolerance).
 - Kept secrets off the client (server-side key handling; no Vite env injection).
 - Exposed replay results through `GET /api/evals/replays` and `npm run eval:replays`.
+- Exposed service posture through `GET /api/meta` and report contract guidance through `GET /api/schema/report`.
 
 ## Incident Replay Evals
 
@@ -57,6 +58,19 @@ This repo includes a small replay harness for incident analysis quality:
 
 The current suite covers 4 scenarios / 32 rubric checks. For the scoring rubric and case design, see
 `docs/INCIDENT_REPLAY_EVALS.md`.
+
+## Service-Grade Surfaces
+
+AegisOps now exposes three explicit review surfaces for operators and reviewers:
+
+- `GET /api/healthz`
+  - current deployment mode, provider, limits, cache posture, and next action
+- `GET /api/meta`
+  - product workflow, runtime modes, replay summary, operator checklist, and report contract summary
+- `GET /api/schema/report`
+  - required incident-report fields, export formats, field guidance, and input guardrails
+
+This is intentional: the repo should be reviewable as a service surface, not just a frontend demo.
 
 ## Architecture
 

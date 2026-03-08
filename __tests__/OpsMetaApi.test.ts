@@ -1,0 +1,55 @@
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { app } from "../server/index";
+
+describe("service meta endpoints", () => {
+  const server = createServer(app);
+  let baseUrl = "";
+
+  beforeAll(async () => {
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", () => resolve());
+    });
+    const address = server.address() as AddressInfo;
+    baseUrl = `http://127.0.0.1:${address.port}`;
+  });
+
+  afterAll(async () => {
+    await new Promise<void>((resolve, reject) => {
+      server.close((err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve();
+      });
+    });
+  });
+
+  it("returns service meta that ties workflow, replay suite, and report contract together", async () => {
+    const res = await fetch(`${baseUrl}/api/meta`);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.product.name).toBe("AegisOps");
+    expect(body.workflow).toEqual(["collect", "reason", "decide", "communicate"]);
+    expect(body.replaySuite.totalChecks).toBe(32);
+    expect(body.reportContract.schemaId).toBe("incident-report-v1");
+    expect(body.links.reportSchema).toBe("/api/schema/report");
+  });
+
+  it("returns report schema guidance for operator-facing incident reports", async () => {
+    const res = await fetch(`${baseUrl}/api/schema/report`);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.schemaId).toBe("incident-report-v1");
+    expect(body.requiredFields).toContain("title");
+    expect(body.requiredFields).toContain("actionItems");
+    expect(Array.isArray(body.fieldGuide)).toBe(true);
+    expect(body.fieldGuide.some((field: { key: string }) => field.key === "severity")).toBe(true);
+  });
+});

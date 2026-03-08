@@ -11,6 +11,7 @@ import { geminiAnalyzeIncident, geminiFollowUp, geminiTts } from "./lib/gemini";
 import { ollamaAnalyzeIncident, ollamaFollowUp } from "./lib/ollama";
 import { buildAnalyzeCacheKey, createAnalyzeCache } from "./lib/analyzeCache";
 import { buildIncidentReplayEvalOverview } from "./lib/replayEvals";
+import { buildAegisOpsServiceMeta, buildIncidentReportSchema } from "./lib/serviceMeta";
 import { normalizeAndValidateImages } from "./lib/validation";
 
 type AnalyzeBody = {
@@ -308,12 +309,39 @@ app.get("/api/healthz", (req, res) => {
       followup: "/api/followup",
       tts: "/api/tts",
       replayEvals: "/api/evals/replays",
+      meta: "/api/meta",
+      reportSchema: "/api/schema/report",
     },
   });
 });
 
 app.get("/api/evals/replays", (req, res) => {
   res.json(buildIncidentReplayEvalOverview(cfg.maxLogChars));
+});
+
+app.get("/api/meta", (req, res) => {
+  res.json(
+    buildAegisOpsServiceMeta({
+      deployment: "backend",
+      maxImages: cfg.maxImages,
+      maxLogChars: cfg.maxLogChars,
+      maxQuestionChars: cfg.maxQuestionChars,
+      maxTtsChars: cfg.maxTtsChars,
+      analyzeModel: getAnalyzeModel(),
+      ttsModel: getActiveProvider() === "ollama" ? "unsupported" : cfg.modelTts,
+    })
+  );
+});
+
+app.get("/api/schema/report", (req, res) => {
+  res.json(
+    buildIncidentReportSchema({
+      maxImages: cfg.maxImages,
+      maxLogChars: cfg.maxLogChars,
+      maxQuestionChars: cfg.maxQuestionChars,
+      maxTtsChars: cfg.maxTtsChars,
+    })
+  );
 });
 
 app.get("/api/settings/api-key", (req, res) => {

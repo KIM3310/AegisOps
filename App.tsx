@@ -7,10 +7,14 @@ import {
   fetchHealthz,
   fetchReplayEvalOverview,
   fetchGeminiApiKeyStatus,
+  fetchServiceMeta,
+  fetchReportSchema,
   saveGeminiApiKey,
   clearGeminiApiKey,
   type HealthzResponse,
   type ApiKeySource,
+  type ServiceMetaResponse,
+  type ReportSchemaResponse,
 } from './services/geminiService';
 import { StorageService } from './services/StorageService';
 import {
@@ -26,6 +30,7 @@ import { GoogleImport } from './components/GoogleImport';
 import { DatasetExport } from './components/DatasetExport';
 import { CommunityHub } from './components/CommunityHub';
 import { ReplayEvalCard } from './components/ReplayEvalCard';
+import { OperatorReadinessCard } from './components/OperatorReadinessCard';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
 interface ImageFile {
@@ -80,6 +85,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [apiHealth, setApiHealth] = useState<HealthzResponse | null>(null);
+  const [serviceMeta, setServiceMeta] = useState<ServiceMetaResponse | null>(null);
+  const [reportSchema, setReportSchema] = useState<ReportSchemaResponse | null>(null);
   const [replayOverview, setReplayOverview] = useState<ReplayEvalOverview | null>(null);
   const [replayEvalError, setReplayEvalError] = useState<string | null>(null);
   const [replayEvalLoading, setReplayEvalLoading] = useState(true);
@@ -122,6 +129,12 @@ export default function App() {
     fetchHealthz()
       .then((h) => { if (mounted) setApiHealth(h); })
       .catch(() => { if (mounted) setApiHealth(null); });
+    fetchServiceMeta()
+      .then((meta) => { if (mounted) setServiceMeta(meta); })
+      .catch(() => { if (mounted) setServiceMeta(null); });
+    fetchReportSchema()
+      .then((schema) => { if (mounted) setReportSchema(schema); })
+      .catch(() => { if (mounted) setReportSchema(null); });
     return () => { mounted = false; };
   }, []);
 
@@ -634,6 +647,23 @@ export default function App() {
               loading={replayEvalLoading}
               error={replayEvalError}
               onRefresh={loadReplayOverview}
+            />
+
+            <OperatorReadinessCard
+              health={apiHealth}
+              meta={serviceMeta}
+              schema={reportSchema}
+              replayOverview={replayOverview}
+              replayLoading={replayEvalLoading}
+              replayError={replayEvalError}
+              logs={logs}
+              imageCount={images.length}
+              enableGrounding={enableGrounding}
+              enableTmVision={enableTmVision}
+              tmConfigured={tmConfigured}
+              tmStatus={tmStatus}
+              apiKeySource={apiKeySource}
+              onRefreshReplay={loadReplayOverview}
             />
 
             {isStaticDemo && (
