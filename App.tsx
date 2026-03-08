@@ -117,6 +117,12 @@ export default function App() {
   const [isDragging, setIsDragging] = useState(false);
 
   const imagesRef = useRef(images);
+  const reviewRoutes = reviewPack
+    ? Object.entries(reviewPack.links).filter(([, href]) => typeof href === 'string' && href.length > 0)
+    : [];
+  const runtimePosture = apiHealth
+    ? `${apiHealth.mode === 'live' ? 'Live backend' : 'Demo backend'} · ${(apiHealth.provider || 'unknown').toUpperCase()}`
+    : 'Loading backend posture';
   
   useEffect(() => {
     imagesRef.current = images;
@@ -352,6 +358,34 @@ export default function App() {
     setTmStatus('IDLE');
     setTmError(null);
     addToast('info', `Preset "${preset.name}" loaded with screenshots`);
+  };
+
+  const copyReviewChecklist = async () => {
+    const lines = [
+      'AegisOps reviewer checklist',
+      `Runtime: ${runtimePosture}`,
+      `Deployment: ${apiHealth?.deployment ?? reviewPack?.deployment ?? 'unknown'}`,
+      `Report schema: ${reportSchema?.schemaId ?? 'unavailable'}`,
+      `Replay pass rate: ${reviewPack ? `${reviewPack.proofBundle.replayPassRate}%` : 'unavailable'}`,
+      `Severity accuracy: ${reviewPack ? `${reviewPack.proofBundle.severityAccuracy}%` : 'unavailable'}`,
+      '',
+      '2-minute review',
+      ...(reviewPack?.twoMinuteReview?.map((item) => `- ${item.step}: ${item.surface} (${item.proof})`) ?? [
+        '- Review pack unavailable. Start with /api/healthz, /api/review-pack, and replay evals.',
+      ]),
+      '',
+      'Fast links',
+      ...(reviewRoutes.length > 0
+        ? reviewRoutes.map(([label, href]) => `- ${label}: ${href}`)
+        : ['- Review routes unavailable.']),
+    ];
+
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      addToast('success', 'Reviewer checklist copied');
+    } catch {
+      addToast('error', 'Clipboard copy failed');
+    }
   };
 
   const handleImportLogs = (importedLogs: string) => {
@@ -675,6 +709,91 @@ export default function App() {
               onRefreshReplay={loadReplayOverview}
             />
 
+            <div className="rounded-lg border border-border bg-bg-card/90 p-4 space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <div className="text-xs font-semibold flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-accent" />
+                    Reviewer Flight Deck
+                  </div>
+                  <p className="text-2xs text-text-muted max-w-2xl">
+                    입력 전에 runtime posture, 2-minute review, fast links, preset repro path를 한 번에 정리합니다.
+                  </p>
+                </div>
+                <button
+                  onClick={copyReviewChecklist}
+                  className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                >
+                  Copy Review Checklist
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <span className="text-[10px] px-2 py-1 rounded-full border bg-accent/10 text-accent border-accent/20">
+                  {runtimePosture}
+                </span>
+                <span className="text-[10px] px-2 py-1 rounded-full border bg-bg text-text-dim border-border">
+                  Schema {reportSchema?.schemaId ?? 'loading'}
+                </span>
+                <span className="text-[10px] px-2 py-1 rounded-full border bg-bg text-text-dim border-border">
+                  Replay {replayOverview ? `${replayOverview.passRate}% pass` : 'loading'}
+                </span>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-lg border border-border bg-bg/80 p-3 space-y-2">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">2-minute review</div>
+                  <div className="space-y-2">
+                    {(reviewPack?.twoMinuteReview?.length ? reviewPack.twoMinuteReview : [
+                      { step: 'Load review pack', surface: '/api/review-pack', proof: 'review route unavailable' },
+                    ]).map((item) => (
+                      <div key={`${item.step}-${item.surface}`} className="rounded-md border border-border bg-bg-card/70 px-3 py-2">
+                        <div className="text-xs font-medium text-text">{item.step}</div>
+                        <div className="text-2xs text-text-muted mt-1">{item.surface}</div>
+                        <div className="text-2xs text-accent mt-1">{item.proof}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-border bg-bg/80 p-3 space-y-2">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">Fast review routes</div>
+                  <div className="flex flex-wrap gap-2">
+                    {reviewRoutes.length > 0 ? (
+                      reviewRoutes.map(([label, href]) => (
+                        <a
+                          key={label}
+                          href={href}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text inline-flex items-center"
+                        >
+                          Open {label}
+                        </a>
+                      ))
+                    ) : (
+                      <div className="text-2xs text-text-muted">Review routes are still loading.</div>
+                    )}
+                  </div>
+                  <div className="text-2xs text-text-muted">
+                    Presets stay in the same deck so reviewers can reproduce a strong run without hunting through the page.
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {SAMPLE_PRESETS.map((preset) => (
+                  <button
+                    key={preset.name}
+                    onClick={() => loadPreset(preset)}
+                    className="h-7 px-3 text-xs text-text-muted hover:text-text bg-bg hover:bg-bg-hover border border-border hover:border-border-light rounded-full transition-all"
+                  >
+                    Load Preset: {preset.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {isStaticDemo && (
               <div className="rounded-lg border border-border bg-bg-card/90 p-4 space-y-2">
                 <div className="text-xs font-semibold flex items-center gap-1.5">
@@ -745,14 +864,6 @@ export default function App() {
                 </div>
               </div>
             )}
-
-            <div className="flex flex-wrap gap-2 mb-4">
-              {SAMPLE_PRESETS.map((preset) => (
-                <button key={preset.name} onClick={() => loadPreset(preset)} className="h-7 px-3 text-xs text-text-muted hover:text-text bg-bg-card hover:bg-bg-hover border border-border hover:border-border-light rounded-full transition-all">
-                  Load Preset: {preset.name}
-                </button>
-              ))}
-            </div>
 
             {/* Drag & Drop Zone Wrapper */}
             <div 
