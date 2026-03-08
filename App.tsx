@@ -388,6 +388,32 @@ export default function App() {
     }
   };
 
+  const copyReviewRoutes = async () => {
+    const lines = [
+      'AegisOps fast review routes',
+      ...(reviewRoutes.length > 0
+        ? reviewRoutes.map(([label, href]) => `- ${label}: ${href}`)
+        : ['- Review routes unavailable. Start with /api/healthz, /api/meta, and /api/review-pack.']),
+    ];
+
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      addToast('success', 'Review routes copied');
+    } catch {
+      addToast('error', 'Clipboard copy failed');
+    }
+  };
+
+  const loadStrongestPreset = () => {
+    const preferredPreset =
+      SAMPLE_PRESETS.find((preset) => preset.name === 'LLM Latency Spike') ?? SAMPLE_PRESETS[0];
+    if (!preferredPreset) {
+      addToast('error', 'No preset is available');
+      return;
+    }
+    loadPreset(preferredPreset);
+  };
+
   const handleImportLogs = (importedLogs: string) => {
     setLogs((prev) => (prev ? `${prev}\n\n${importedLogs}` : importedLogs));
     addToast('success', 'Logs imported successfully');
@@ -725,6 +751,21 @@ export default function App() {
                   className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
                 >
                   Copy Review Checklist
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={copyReviewRoutes}
+                  className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                >
+                  Copy Review Routes
+                </button>
+                <button
+                  onClick={loadStrongestPreset}
+                  className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                >
+                  Load Strongest Preset
                 </button>
               </div>
 
