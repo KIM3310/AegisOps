@@ -134,6 +134,11 @@ export interface ReviewPackResponse {
   }>;
   trustBoundary: string[];
   reviewSequence: string[];
+  twoMinuteReview?: Array<{
+    step: string;
+    surface: string;
+    proof: string;
+  }>;
   proofBundle: {
     replayPassRate: number;
     severityAccuracy: number;
@@ -142,6 +147,11 @@ export interface ReviewPackResponse {
     exportFormats: string[];
     requiredFields: string[];
   };
+  proofAssets?: Array<{
+    label: string;
+    path: string;
+    kind: string;
+  }>;
   links: {
     healthz: string;
     reviewPack: string;

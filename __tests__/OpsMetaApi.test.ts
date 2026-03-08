@@ -50,6 +50,8 @@ describe("service meta endpoints", () => {
     expect(body.reviewPackId).toBe("aegisops-review-pack-v1");
     expect(body.operatorJourney).toHaveLength(4);
     expect(body.trustBoundary.length).toBeGreaterThan(0);
+    expect(body.twoMinuteReview.length).toBe(4);
+    expect(body.proofAssets.length).toBeGreaterThanOrEqual(4);
     expect(body.proofBundle.totalChecks).toBe(32);
     expect(body.links.reviewPack).toBe("/api/review-pack");
   });
