@@ -299,6 +299,9 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
     persistence: {
       path: persisted.path,
       enabled: persisted.enabled,
+      lastEventAt: persisted.lastEventAt,
+      methodCounts: persisted.methodCounts,
+      statusClasses: persisted.statusClasses,
       recentEvents: persisted.recentEvents,
     },
     operatorAuth: {
