@@ -13,7 +13,12 @@ import { hasValidOperatorToken, isOperatorAuthEnabled, readBearerToken, requires
 import { buildAnalyzeCacheKey, createAnalyzeCache } from "./lib/analyzeCache";
 import { buildIncidentReplayEvalOverview, buildIncidentReplayEvalSummary } from "./lib/replayEvals";
 import { appendRuntimeEvent, buildRuntimeStoreSummary } from "./lib/runtimeStore";
-import { buildAegisOpsReviewPack, buildAegisOpsServiceMeta, buildIncidentReportSchema } from "./lib/serviceMeta";
+import {
+  buildAegisOpsLiveSessionPack,
+  buildAegisOpsReviewPack,
+  buildAegisOpsServiceMeta,
+  buildIncidentReportSchema,
+} from "./lib/serviceMeta";
 import { normalizeAndValidateImages } from "./lib/validation";
 
 type AnalyzeBody = {
@@ -121,7 +126,7 @@ function classifyEndpoint(path: string): RuntimeEndpointKey {
   if (path.startsWith("/api/tts")) return "tts";
   if (path.startsWith("/api/evals/replays")) return "replay";
   if (path.startsWith("/api/meta") || path.startsWith("/api/runtime/scorecard")) return "meta";
-  if (path.startsWith("/api/review-pack") || path.startsWith("/api/schema")) return "review";
+  if (path.startsWith("/api/review-pack") || path.startsWith("/api/live-session-pack") || path.startsWith("/api/schema")) return "review";
   if (path.startsWith("/api/settings")) return "settings";
   if (path.startsWith("/api/healthz")) return "health";
   return "other";
@@ -314,6 +319,7 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
     links: {
       healthz: "/api/healthz",
       meta: "/api/meta",
+      liveSessionPack: "/api/live-session-pack",
       reviewPack: "/api/review-pack",
       replaySummary: "/api/evals/replays/summary",
       reportSchema: "/api/schema/report",
@@ -583,6 +589,7 @@ app.get("/api/healthz", (req, res) => {
       analyze: "/api/analyze",
       followup: "/api/followup",
       tts: "/api/tts",
+      liveSessionPack: "/api/live-session-pack",
       reviewPack: "/api/review-pack",
       replayEvals: "/api/evals/replays",
       replaySummary: "/api/evals/replays/summary",
@@ -630,6 +637,20 @@ app.get("/api/runtime/scorecard", (req, res) => {
     return sendError(req, res, 400, "focus must be one of 'traffic', 'quality', or 'reliability'.");
   }
   return res.json(buildRuntimeScorecard(normalizeScorecardFocus(rawFocus)));
+});
+
+app.get("/api/live-session-pack", (req, res) => {
+  res.json(
+    buildAegisOpsLiveSessionPack({
+      deployment: "backend",
+      maxImages: cfg.maxImages,
+      maxLogChars: cfg.maxLogChars,
+      maxQuestionChars: cfg.maxQuestionChars,
+      maxTtsChars: cfg.maxTtsChars,
+      analyzeModel: getAnalyzeModel(),
+      ttsModel: getActiveProvider() === "ollama" ? "unsupported" : cfg.modelTts,
+    })
+  );
 });
 
 app.get("/api/meta", (req, res) => {
