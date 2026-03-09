@@ -34,7 +34,7 @@ Companion repo:
 - Runtime posture: static demo, demo backend, Gemini live, Ollama local
 - Export posture: JSON, Markdown, Slack, Jira, plus optional Workspace flows
 
-## Quick Review Path
+## Review Flow
 
 1. `GET /api/healthz` -> confirm deployment mode and backend posture.
 2. `GET /api/live-session-pack` -> inspect realtime modality, operator roles, and live handoff routes.
@@ -98,7 +98,7 @@ AegisOps now exposes four explicit review surfaces for operators and reviewers:
 - `GET /api/live-sessions`
   - persisted incident session history with lane-aware summaries and detailed reviewer timelines
 - `GET /api/review-pack`
-  - operator journey, trust boundary, replay proof bundle, export posture, and reviewer links
+  - operator journey, trust boundary, replay evidence, export posture, and reviewer links
 - `GET /api/schema/report`
   - required incident-report fields, export formats, field guidance, and input guardrails
 
