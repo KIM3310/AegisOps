@@ -32,6 +32,13 @@ export function buildRuntimeStoreSummary(limit = 25) {
       enabled: true,
       path: targetPath,
       persistedCount: 0,
+      lastEventAt: null as string | null,
+      methodCounts: {} as Record<string, number>,
+      statusClasses: {
+        ok: 0,
+        clientError: 0,
+        serverError: 0,
+      },
       recentEvents: [] as RuntimeEventRecord[],
     };
   }
@@ -51,10 +58,36 @@ export function buildRuntimeStoreSummary(limit = 25) {
     })
     .filter((item): item is RuntimeEventRecord => item !== null);
 
+  const methodCounts: Record<string, number> = {};
+  const statusClasses = {
+    ok: 0,
+    clientError: 0,
+    serverError: 0,
+  };
+  let lastEventAt: string | null = null;
+
+  for (const event of recentEvents) {
+    const method = String(event.method || "UNKNOWN").toUpperCase();
+    methodCounts[method] = (methodCounts[method] ?? 0) + 1;
+    if (event.statusCode >= 500) {
+      statusClasses.serverError += 1;
+    } else if (event.statusCode >= 400) {
+      statusClasses.clientError += 1;
+    } else {
+      statusClasses.ok += 1;
+    }
+    if (lastEventAt === null || event.timestamp > lastEventAt) {
+      lastEventAt = event.timestamp;
+    }
+  }
+
   return {
     enabled: true,
     path: targetPath,
     persistedCount: lines.length,
+    lastEventAt,
+    methodCounts,
+    statusClasses,
     recentEvents,
   };
 }
