@@ -45,11 +45,11 @@ Companion repo:
 
 ![AegisOps Review Pack](docs/review-pack.svg)
 
-## Role-Ready Artifacts
+## Further Reading
 
-- AI engineer: [`docs/solution-architecture.md`](docs/solution-architecture.md)
-- solutions architect: [`docs/solution-architecture.md`](docs/solution-architecture.md)
-- sales / solution consultant: [`docs/executive-one-pager.md`](docs/executive-one-pager.md), [`docs/discovery-guide.md`](docs/discovery-guide.md)
+- Architecture: [`docs/solution-architecture.md`](docs/solution-architecture.md)
+- Overview: [`docs/executive-one-pager.md`](docs/executive-one-pager.md)
+- Discovery notes: [`docs/discovery-guide.md`](docs/discovery-guide.md)
 
 ## What It Does
 
@@ -104,7 +104,7 @@ AegisOps now exposes four explicit review surfaces for operators and reviewers:
 
 This is intentional: the repo should be reviewable as a service surface, not just a frontend demo.
 
-## Proof Assets
+## Supporting Files
 
 - `docs/review-pack.svg`
 - `docs/architecture.png`
