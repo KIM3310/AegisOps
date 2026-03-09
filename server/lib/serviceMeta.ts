@@ -1,5 +1,5 @@
 import type { ExportFormat } from "../../types";
-import { buildIncidentReplayEvalOverview } from "./replayEvals";
+import { buildIncidentReplayEvalOverview, buildIncidentReplayEvalSummary } from "./replayEvals";
 
 export type ServiceMetaDeployment = "backend" | "static-demo";
 
@@ -128,6 +128,7 @@ export function buildIncidentReportSchema(options: Pick<ServiceMetaOptions, "max
 
 export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
   const replayOverview = buildIncidentReplayEvalOverview(options.maxLogChars);
+  const replaySummary = buildIncidentReplayEvalSummary(options.maxLogChars);
   const reportSchema = buildIncidentReportSchema(options);
 
   return {
@@ -169,6 +170,7 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
       totalChecks: replayOverview.summary.totalChecks,
       passRate: replayOverview.summary.passRate,
       severityAccuracy: replayOverview.summary.severityAccuracy,
+      summaryContract: replaySummary.summaryId,
     },
     reportContract: {
       schemaId: reportSchema.schemaId,
@@ -189,6 +191,7 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
       healthz: "/api/healthz",
       reviewPack: "/api/review-pack",
       replayEvals: "/api/evals/replays",
+      replaySummary: "/api/evals/replays/summary",
       reportSchema: "/api/schema/report",
       readme: "https://github.com/KIM3310/AegisOps",
       demo: "https://aegisops-ai-incident-doctor.pages.dev",
@@ -199,6 +202,7 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
 
 export function buildAegisOpsReviewPack(options: ServiceMetaOptions) {
   const serviceMeta = buildAegisOpsServiceMeta(options);
+  const replaySummary = buildIncidentReplayEvalSummary(options.maxLogChars);
   const reportSchema = buildIncidentReportSchema(options);
 
   return {
@@ -267,6 +271,7 @@ export function buildAegisOpsReviewPack(options: ServiceMetaOptions) {
       replayPassRate: serviceMeta.replaySuite.passRate,
       severityAccuracy: serviceMeta.replaySuite.severityAccuracy,
       totalChecks: serviceMeta.replaySuite.totalChecks,
+      replaySummaryId: replaySummary.summaryId,
       runtimeModes: serviceMeta.runtimeModes.map((mode) => mode.label),
       exportFormats: reportSchema.exportFormats,
       requiredFields: reportSchema.requiredFields,
