@@ -10,6 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "eval:replays": "tsx scripts/run-incident-replays.ts",
+    "exercise:runtime": "node scripts/exercise-runtime.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

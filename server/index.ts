@@ -9,8 +9,10 @@ import { loadConfig } from "./lib/config";
 import { demoAnalyzeIncident, demoFollowUpAnswer } from "./lib/demo";
 import { geminiAnalyzeIncident, geminiFollowUp, geminiTts } from "./lib/gemini";
 import { ollamaAnalyzeIncident, ollamaFollowUp } from "./lib/ollama";
+import { hasValidOperatorToken, isOperatorAuthEnabled, readBearerToken, requiresOperatorToken } from "./lib/operatorAccess";
 import { buildAnalyzeCacheKey, createAnalyzeCache } from "./lib/analyzeCache";
 import { buildIncidentReplayEvalOverview, buildIncidentReplayEvalSummary } from "./lib/replayEvals";
+import { appendRuntimeEvent, buildRuntimeStoreSummary } from "./lib/runtimeStore";
 import { buildAegisOpsReviewPack, buildAegisOpsServiceMeta, buildIncidentReportSchema } from "./lib/serviceMeta";
 import { normalizeAndValidateImages } from "./lib/validation";
 
@@ -141,7 +143,15 @@ function createEndpointTelemetry(): EndpointTelemetry {
   };
 }
 
-function recordRuntimeTelemetry(path: string, statusCode: number, elapsedMs: number): void {
+function recordRuntimeTelemetry(
+  path: string,
+  statusCode: number,
+  elapsedMs: number,
+  options?: {
+    method?: string;
+    requestId?: string;
+  }
+): void {
   const endpointKey = classifyEndpoint(path);
   const bucket = classifyLatencyBucket(elapsedMs);
   const now = new Date().toISOString();
@@ -166,6 +176,15 @@ function recordRuntimeTelemetry(path: string, statusCode: number, elapsedMs: num
   }
 
   runtimeTelemetry.endpoints.set(endpointKey, endpoint);
+  appendRuntimeEvent({
+    elapsedMs,
+    endpoint: endpointKey,
+    method: options?.method || "HTTP",
+    path,
+    requestId: options?.requestId,
+    statusCode,
+    timestamp: now,
+  });
 }
 
 function toPercent(numerator: number, denominator: number): number {
@@ -180,6 +199,7 @@ function normalizeScorecardFocus(value: unknown): RuntimeScorecardFocus {
 }
 
 function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
+  const persisted = buildRuntimeStoreSummary(10);
   const replaySummary = buildIncidentReplayEvalSummary(cfg.maxLogChars, {
     status: focus === "quality" ? "fail" : undefined,
     limit: focus === "traffic" ? 3 : 4,
@@ -257,6 +277,7 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
       cacheEntries,
       analyzeCacheHitRatePct: toPercent(runtimeTelemetry.analyze.cacheHits, analyzeVolume),
       sharedInflightReusePct: toPercent(runtimeTelemetry.analyze.sharedInflightHits, analyzeVolume),
+      persistedEventCount: persisted.persistedCount,
     },
     analyzeRuntime: {
       cacheHits: runtimeTelemetry.analyze.cacheHits,
@@ -274,6 +295,16 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
       failCount: replaySummary.totals.failingCases,
       passRate: replaySummary.totals.passRate,
       topFailureBuckets: replaySummary.topFailureBuckets,
+    },
+    persistence: {
+      path: persisted.path,
+      enabled: persisted.enabled,
+      recentEvents: persisted.recentEvents,
+    },
+    operatorAuth: {
+      enabled: isOperatorAuthEnabled(),
+      protectedRoutes: ["/api/analyze", "/api/followup", "/api/tts"],
+      acceptedHeaders: ["authorization: Bearer <token>", "x-operator-token"],
     },
     spotlight: focusSpotlight,
     recommendations,
@@ -304,12 +335,6 @@ function isLoopbackAddress(value: string | undefined): boolean {
 
 function isLocalRequest(req: express.Request): boolean {
   return isLoopbackAddress(String(req.ip || "")) || isLoopbackAddress(String(req.socket.remoteAddress || ""));
-}
-
-function readBearerToken(value: string | undefined): string {
-  const auth = String(value || "").trim();
-  if (!auth.toLowerCase().startsWith("bearer ")) return "";
-  return auth.slice("bearer ".length).trim();
 }
 
 function hasApiKeySettingsToken(req: express.Request): boolean {
@@ -432,7 +457,10 @@ app.use((req, res, next) => {
   const started = Date.now();
   res.on("finish", () => {
     const elapsedMs = Date.now() - started;
-    recordRuntimeTelemetry(req.path || req.originalUrl || "", res.statusCode, elapsedMs);
+    recordRuntimeTelemetry(req.path || req.originalUrl || "", res.statusCode, elapsedMs, {
+      method: req.method,
+      requestId: req.requestId,
+    });
     if (res.statusCode >= 400 || elapsedMs >= 4_000) {
       // eslint-disable-next-line no-console
       console.warn(
@@ -463,6 +491,21 @@ app.use("/api/settings/api-key", (req, res, next) => {
   }
   if (!hasApiKeySettingsToken(req)) {
     return sendError(req, res, 403, "Missing or invalid API key settings token.");
+  }
+  return next();
+});
+
+app.use((req, res, next) => {
+  if (!requiresOperatorToken(req)) {
+    return next();
+  }
+  if (!hasValidOperatorToken(req)) {
+    return sendError(
+      req,
+      res,
+      403,
+      "Missing or invalid operator token for runtime mutation route."
+    );
   }
   return next();
 });
@@ -515,6 +558,10 @@ app.get("/api/healthz", (req, res) => {
         provider === "demo"
           ? "configure Gemini API key or switch to Ollama for live incident analysis."
           : "runtime healthy",
+    },
+    auth: {
+      operatorTokenEnabled: isOperatorAuthEnabled(),
+      apiKeySettingsTokenEnabled: Boolean(String(cfg.apiKeySettingsToken || "").trim()),
     },
     ops_contract: {
       schema: "ops-envelope-v1",

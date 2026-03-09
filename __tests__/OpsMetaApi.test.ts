@@ -39,6 +39,7 @@ describe("service meta endpoints", () => {
     expect(body.replaySuite.summaryContract).toBe("incident-replay-summary-v1");
     expect(body.reportContract.schemaId).toBe("incident-report-v1");
     expect(body.links.reviewPack).toBe("/api/review-pack");
+    expect(body.links.runtimeScorecard).toBe("/api/runtime/scorecard");
     expect(body.links.replaySummary).toBe("/api/evals/replays/summary");
     expect(body.links.reportSchema).toBe("/api/schema/report");
   });
@@ -94,6 +95,9 @@ describe("service meta endpoints", () => {
     expect(body.summary.totalRequests).toBeGreaterThan(0);
     expect(body.analyzeRuntime.cacheMisses).toBeGreaterThan(0);
     expect(typeof body.summary.analyzeCacheHitRatePct).toBe("number");
+    expect(typeof body.summary.persistedEventCount).toBe("number");
+    expect(body.persistence.enabled).toBe(true);
+    expect(body.operatorAuth.enabled).toBe(false);
     expect(body.replaySummary.summaryId).toBe("incident-replay-summary-v1");
     expect(body.links.runtimeScorecard).toBe("/api/runtime/scorecard");
     expect(Array.isArray(body.endpoints)).toBe(true);
