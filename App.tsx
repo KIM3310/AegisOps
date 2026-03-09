@@ -467,6 +467,38 @@ export default function App() {
     }
   };
 
+  const copyIncidentClaim = async () => {
+    const strongestJourney = reviewPack?.operatorJourney?.[0];
+    const preferredPreset =
+      SAMPLE_PRESETS.find((preset) => preset.name === 'LLM Latency Spike') ?? SAMPLE_PRESETS[0];
+    const lines = [
+      'AegisOps incident claim snapshot',
+      `Headline: ${reviewPack?.headline ?? 'review pack unavailable'}`,
+      `Runtime: ${runtimePosture}`,
+      `Deployment: ${apiHealth?.deployment ?? reviewPack?.deployment ?? 'unknown'}`,
+      `Replay pass rate: ${reviewPack ? `${reviewPack.proofBundle.replayPassRate}%` : 'unavailable'}`,
+      `Severity accuracy: ${reviewPack ? `${reviewPack.proofBundle.severityAccuracy}%` : 'unavailable'}`,
+      `Schema: ${reportSchema?.schemaId ?? 'unavailable'}`,
+      `Preset: ${preferredPreset?.name ?? 'unavailable'}`,
+      '',
+      'Strongest operator proof',
+      strongestJourney
+        ? `- ${strongestJourney.surface}: ${strongestJourney.summary}`
+        : '- Operator journey unavailable.',
+      '',
+      'Export posture',
+      `- Formats: ${reviewPack?.proofBundle.exportFormats?.join(', ') ?? 'unavailable'}`,
+      `- Runtime modes: ${reviewPack?.proofBundle.runtimeModes?.join(', ') ?? 'unavailable'}`,
+    ];
+
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      addToast('success', 'Incident claim copied');
+    } catch {
+      addToast('error', 'Clipboard copy failed');
+    }
+  };
+
   const handleImportLogs = (importedLogs: string) => {
     setLogs((prev) => (prev ? `${prev}\n\n${importedLogs}` : importedLogs));
     addToast('success', 'Logs imported successfully');
@@ -831,6 +863,12 @@ export default function App() {
                   className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
                 >
                   Copy Strongest Preset
+                </button>
+                <button
+                  onClick={copyIncidentClaim}
+                  className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                >
+                  Copy Incident Claim
                 </button>
               </div>
 
