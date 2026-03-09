@@ -31,6 +31,28 @@ type TtsBody = { text?: string };
 type ApiKeyBody = { apiKey?: string };
 type KeySource = "runtime" | "env" | "ollama" | "none";
 type ActiveProvider = "demo" | "gemini" | "ollama";
+type RuntimeScorecardFocus = "traffic" | "quality" | "reliability";
+type RuntimeEndpointKey =
+  | "health"
+  | "meta"
+  | "review"
+  | "replay"
+  | "analyze"
+  | "followup"
+  | "tts"
+  | "settings"
+  | "other";
+
+type EndpointTelemetry = {
+  requests: number;
+  errors: number;
+  slowRequests: number;
+  totalMs: number;
+  maxMs: number;
+  lastRequestAt?: string;
+  lastErrorAt?: string;
+  latencyBuckets: Record<string, number>;
+};
 
 type FollowUpHistoryItem = { role: "user" | "assistant"; content: string };
 
@@ -53,6 +75,26 @@ const analyzeInFlight = new Map<string, Promise<IncidentReport>>();
 const RATE_BUCKET_GC_INTERVAL_MS = 60_000;
 const RATE_BUCKET_MAX_SIZE = 10_000;
 const startedAt = new Date().toISOString();
+const SLOW_REQUEST_MS = 4_000;
+const LATENCY_BUCKET_LABELS = ["lt250ms", "250msTo1s", "1sTo4s", "ge4s"] as const;
+const runtimeTelemetry = {
+  totalRequests: 0,
+  totalErrors: 0,
+  totalSlowRequests: 0,
+  latencyBuckets: {
+    lt250ms: 0,
+    "250msTo1s": 0,
+    "1sTo4s": 0,
+    ge4s: 0,
+  } as Record<(typeof LATENCY_BUCKET_LABELS)[number], number>,
+  endpoints: new Map<RuntimeEndpointKey, EndpointTelemetry>(),
+  analyze: {
+    cacheHits: 0,
+    cacheMisses: 0,
+    sharedInflightHits: 0,
+    providerCalls: 0,
+  },
+};
 
 const app = express();
 app.disable("x-powered-by");
@@ -62,6 +104,188 @@ if (cfg.trustProxy) {
 
 function nextRequestId(): string {
   return `req-${randomUUID().replace(/-/g, "").slice(0, 12)}`;
+}
+
+function classifyLatencyBucket(elapsedMs: number): (typeof LATENCY_BUCKET_LABELS)[number] {
+  if (elapsedMs < 250) return "lt250ms";
+  if (elapsedMs < 1_000) return "250msTo1s";
+  if (elapsedMs < 4_000) return "1sTo4s";
+  return "ge4s";
+}
+
+function classifyEndpoint(path: string): RuntimeEndpointKey {
+  if (path.startsWith("/api/analyze")) return "analyze";
+  if (path.startsWith("/api/followup")) return "followup";
+  if (path.startsWith("/api/tts")) return "tts";
+  if (path.startsWith("/api/evals/replays")) return "replay";
+  if (path.startsWith("/api/meta") || path.startsWith("/api/runtime/scorecard")) return "meta";
+  if (path.startsWith("/api/review-pack") || path.startsWith("/api/schema")) return "review";
+  if (path.startsWith("/api/settings")) return "settings";
+  if (path.startsWith("/api/healthz")) return "health";
+  return "other";
+}
+
+function createEndpointTelemetry(): EndpointTelemetry {
+  return {
+    requests: 0,
+    errors: 0,
+    slowRequests: 0,
+    totalMs: 0,
+    maxMs: 0,
+    latencyBuckets: {
+      lt250ms: 0,
+      "250msTo1s": 0,
+      "1sTo4s": 0,
+      ge4s: 0,
+    },
+  };
+}
+
+function recordRuntimeTelemetry(path: string, statusCode: number, elapsedMs: number): void {
+  const endpointKey = classifyEndpoint(path);
+  const bucket = classifyLatencyBucket(elapsedMs);
+  const now = new Date().toISOString();
+  const endpoint = runtimeTelemetry.endpoints.get(endpointKey) ?? createEndpointTelemetry();
+
+  runtimeTelemetry.totalRequests += 1;
+  runtimeTelemetry.latencyBuckets[bucket] += 1;
+  endpoint.requests += 1;
+  endpoint.totalMs += elapsedMs;
+  endpoint.maxMs = Math.max(endpoint.maxMs, elapsedMs);
+  endpoint.latencyBuckets[bucket] += 1;
+  endpoint.lastRequestAt = now;
+
+  if (elapsedMs >= SLOW_REQUEST_MS) {
+    runtimeTelemetry.totalSlowRequests += 1;
+    endpoint.slowRequests += 1;
+  }
+  if (statusCode >= 400) {
+    runtimeTelemetry.totalErrors += 1;
+    endpoint.errors += 1;
+    endpoint.lastErrorAt = now;
+  }
+
+  runtimeTelemetry.endpoints.set(endpointKey, endpoint);
+}
+
+function toPercent(numerator: number, denominator: number): number {
+  if (denominator <= 0) return 0;
+  return Math.round((numerator / denominator) * 1000) / 10;
+}
+
+function normalizeScorecardFocus(value: unknown): RuntimeScorecardFocus {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "quality" || normalized === "reliability") return normalized;
+  return "traffic";
+}
+
+function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
+  const replaySummary = buildIncidentReplayEvalSummary(cfg.maxLogChars, {
+    status: focus === "quality" ? "fail" : undefined,
+    limit: focus === "traffic" ? 3 : 4,
+  });
+  const cacheEntries = analyzeCache.size();
+  const endpoints = Array.from(runtimeTelemetry.endpoints.entries())
+    .map(([endpoint, telemetry]) => ({
+      endpoint,
+      requests: telemetry.requests,
+      errors: telemetry.errors,
+      slowRequests: telemetry.slowRequests,
+      averageMs: telemetry.requests > 0 ? Math.round(telemetry.totalMs / telemetry.requests) : 0,
+      maxMs: telemetry.maxMs,
+      errorRatePct: toPercent(telemetry.errors, telemetry.requests),
+      slowRatePct: toPercent(telemetry.slowRequests, telemetry.requests),
+      lastRequestAt: telemetry.lastRequestAt || null,
+      lastErrorAt: telemetry.lastErrorAt || null,
+      latencyBuckets: telemetry.latencyBuckets,
+    }))
+    .sort((left, right) => right.requests - left.requests || right.errors - left.errors || left.endpoint.localeCompare(right.endpoint));
+  const analyzeVolume =
+    runtimeTelemetry.analyze.cacheHits +
+    runtimeTelemetry.analyze.cacheMisses +
+    runtimeTelemetry.analyze.sharedInflightHits;
+  const focusSpotlight =
+    focus === "quality"
+      ? {
+          headline: "Replay summary and failure buckets show incident-quality readiness before operator trust.",
+          topFailureBuckets: replaySummary.topFailureBuckets,
+          spotlightCases: replaySummary.spotlightCases,
+        }
+      : focus === "reliability"
+        ? {
+            headline: "Latency, slow routes, and error posture show whether backend runtime is fit for live demos.",
+            topEndpoints: endpoints
+              .slice()
+              .sort((left, right) => right.slowRequests - left.slowRequests || right.errors - left.errors || right.averageMs - left.averageMs)
+              .slice(0, 4),
+          }
+        : {
+            headline: "Route volume, cache behavior, and provider mode show where operator traffic is concentrated.",
+            topEndpoints: endpoints.slice(0, 4),
+          };
+
+  const recommendations = [
+    replaySummary.totals.failingCases > 0 ? "Use /api/evals/replays/summary?status=fail before claiming incident quality is production-ready." : null,
+    runtimeTelemetry.totalSlowRequests > 0 ? "Inspect slow request buckets and keep provider mode explicit before live demos." : null,
+    runtimeTelemetry.totalErrors > 0 ? "Review erroring routes before adding more frontend complexity on top of the runtime." : null,
+    analyzeVolume > 0 && runtimeTelemetry.analyze.cacheHits === 0
+      ? "Analyze traffic is bypassing cache reuse; compare repeated incident payloads before scaling the live path."
+      : null,
+    cacheEntries >= Math.floor(cfg.analyzeCacheMaxEntries * 0.8)
+      ? "Analyze cache is near capacity; tune TTL or max entries before heavier replay workloads."
+      : null,
+  ].filter(Boolean);
+
+  return {
+    ok: true,
+    service: "aegisops-runtime-scorecard",
+    version: 1,
+    generatedAt: new Date().toISOString(),
+    startedAt,
+    focus,
+    provider: getActiveProvider(),
+    mode: getMode(),
+    summary: {
+      totalRequests: runtimeTelemetry.totalRequests,
+      totalErrors: runtimeTelemetry.totalErrors,
+      totalSlowRequests: runtimeTelemetry.totalSlowRequests,
+      errorRatePct: toPercent(runtimeTelemetry.totalErrors, runtimeTelemetry.totalRequests),
+      slowRatePct: toPercent(runtimeTelemetry.totalSlowRequests, runtimeTelemetry.totalRequests),
+      replayPassRate: replaySummary.totals.passRate,
+      replayFailCount: replaySummary.totals.failingCases,
+      severityAccuracy: buildIncidentReplayEvalOverview(cfg.maxLogChars).summary.severityAccuracy,
+      cacheEntries,
+      analyzeCacheHitRatePct: toPercent(runtimeTelemetry.analyze.cacheHits, analyzeVolume),
+      sharedInflightReusePct: toPercent(runtimeTelemetry.analyze.sharedInflightHits, analyzeVolume),
+    },
+    analyzeRuntime: {
+      cacheHits: runtimeTelemetry.analyze.cacheHits,
+      cacheMisses: runtimeTelemetry.analyze.cacheMisses,
+      sharedInflightHits: runtimeTelemetry.analyze.sharedInflightHits,
+      providerCalls: runtimeTelemetry.analyze.providerCalls,
+      cacheEnabled: analyzeCache.enabled(),
+      cacheTtlSec: cfg.analyzeCacheTtlSec,
+      cacheMaxEntries: cfg.analyzeCacheMaxEntries,
+    },
+    latencyBuckets: runtimeTelemetry.latencyBuckets,
+    endpoints,
+    replaySummary: {
+      summaryId: replaySummary.summaryId,
+      failCount: replaySummary.totals.failingCases,
+      passRate: replaySummary.totals.passRate,
+      topFailureBuckets: replaySummary.topFailureBuckets,
+    },
+    spotlight: focusSpotlight,
+    recommendations,
+    links: {
+      healthz: "/api/healthz",
+      meta: "/api/meta",
+      reviewPack: "/api/review-pack",
+      replaySummary: "/api/evals/replays/summary",
+      reportSchema: "/api/schema/report",
+      runtimeScorecard: "/api/runtime/scorecard",
+    },
+  };
 }
 
 function normalizeAddress(value: string | undefined): string {
@@ -208,6 +432,7 @@ app.use((req, res, next) => {
   const started = Date.now();
   res.on("finish", () => {
     const elapsedMs = Date.now() - started;
+    recordRuntimeTelemetry(req.path || req.originalUrl || "", res.statusCode, elapsedMs);
     if (res.statusCode >= 400 || elapsedMs >= 4_000) {
       // eslint-disable-next-line no-console
       console.warn(
@@ -311,6 +536,7 @@ app.get("/api/healthz", (req, res) => {
       reviewPack: "/api/review-pack",
       replayEvals: "/api/evals/replays",
       replaySummary: "/api/evals/replays/summary",
+      runtimeScorecard: "/api/runtime/scorecard",
       meta: "/api/meta",
       reportSchema: "/api/schema/report",
     },
@@ -346,6 +572,14 @@ app.get("/api/evals/replays/summary", (req, res) => {
       status,
     })
   );
+});
+
+app.get("/api/runtime/scorecard", (req, res) => {
+  const rawFocus = String(req.query.focus || "").trim().toLowerCase();
+  if (rawFocus && rawFocus !== "traffic" && rawFocus !== "quality" && rawFocus !== "reliability") {
+    return sendError(req, res, 400, "focus must be one of 'traffic', 'quality', or 'reliability'.");
+  }
+  return res.json(buildRuntimeScorecard(normalizeScorecardFocus(rawFocus)));
 });
 
 app.get("/api/meta", (req, res) => {
@@ -460,11 +694,6 @@ app.post("/api/analyze", async (req, res) => {
     });
 
     const provider = getActiveProvider();
-    if (provider === "demo") {
-      const report = demoAnalyzeIncident({ logs, imageCount: images.length, maxLogChars: cfg.maxLogChars });
-      return res.json(report);
-    }
-
     const modelAnalyze = getAnalyzeModel();
 
     const cacheKey = buildAnalyzeCacheKey({
@@ -475,17 +704,23 @@ app.post("/api/analyze", async (req, res) => {
     });
     const cached = analyzeCache.get(cacheKey);
     if (cached) {
+      runtimeTelemetry.analyze.cacheHits += 1;
       return res.json(cached);
     }
 
     const inFlight = analyzeInFlight.get(cacheKey);
     if (inFlight) {
+      runtimeTelemetry.analyze.sharedInflightHits += 1;
       const shared = await inFlight;
       return res.json(shared);
     }
+    runtimeTelemetry.analyze.cacheMisses += 1;
+    runtimeTelemetry.analyze.providerCalls += 1;
 
     const work =
-      provider === "ollama"
+      provider === "demo"
+        ? Promise.resolve(demoAnalyzeIncident({ logs, imageCount: images.length, maxLogChars: cfg.maxLogChars }))
+        : provider === "ollama"
         ? ollamaAnalyzeIncident({
             baseUrl: cfg.ollamaBaseUrl,
             model: modelAnalyze,
