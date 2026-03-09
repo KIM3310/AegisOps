@@ -123,4 +123,59 @@ describe("service meta endpoints", () => {
     expect(Array.isArray(body.endpoints)).toBe(true);
     expect(Array.isArray(body.recommendations)).toBe(true);
   });
+
+  it("enforces required operator roles for runtime mutation routes when configured", async () => {
+    const previousToken = process.env.AEGISOPS_OPERATOR_TOKEN;
+    const previousRoles = process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES;
+    process.env.AEGISOPS_OPERATOR_TOKEN = "aegis-secret";
+    process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES = "incident-commander,reviewer";
+
+    try {
+      const denied = await fetch(`${baseUrl}/api/analyze`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-operator-token": "aegis-secret",
+        },
+        body: JSON.stringify({ logs: "queue timeout on checkout svc", images: [] }),
+      });
+      const deniedBody = await denied.json();
+
+      expect(denied.status).toBe(403);
+      expect(deniedBody.error.message).toContain("required operator role");
+
+      const allowed = await fetch(`${baseUrl}/api/analyze`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-operator-token": "aegis-secret",
+          "x-operator-role": "incident-commander",
+        },
+        body: JSON.stringify({ logs: "queue timeout on checkout svc", images: [] }),
+      });
+
+      expect(allowed.status).toBe(200);
+
+      const scorecard = await fetch(`${baseUrl}/api/runtime/scorecard`);
+      const scorecardBody = await scorecard.json();
+
+      expect(scorecard.status).toBe(200);
+      expect(scorecardBody.operatorAuth.requiredRoles).toEqual([
+        "incident-commander",
+        "reviewer",
+      ]);
+      expect(scorecardBody.operatorAuth.roleHeaders).toContain("x-operator-role");
+    } finally {
+      if (typeof previousToken === "string") {
+        process.env.AEGISOPS_OPERATOR_TOKEN = previousToken;
+      } else {
+        delete process.env.AEGISOPS_OPERATOR_TOKEN;
+      }
+      if (typeof previousRoles === "string") {
+        process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES = previousRoles;
+      } else {
+        delete process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES;
+      }
+    }
+  });
 });

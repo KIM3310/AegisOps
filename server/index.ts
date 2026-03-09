@@ -9,7 +9,15 @@ import { loadConfig } from "./lib/config";
 import { demoAnalyzeIncident, demoFollowUpAnswer } from "./lib/demo";
 import { geminiAnalyzeIncident, geminiFollowUp, geminiTts } from "./lib/gemini";
 import { ollamaAnalyzeIncident, ollamaFollowUp } from "./lib/ollama";
-import { hasValidOperatorToken, isOperatorAuthEnabled, readBearerToken, requiresOperatorToken } from "./lib/operatorAccess";
+import {
+  getOperatorAllowedRoles,
+  getOperatorRoleHeaders,
+  hasRequiredOperatorRole,
+  hasValidOperatorToken,
+  isOperatorAuthEnabled,
+  readBearerToken,
+  requiresOperatorToken,
+} from "./lib/operatorAccess";
 import { buildAnalyzeCacheKey, createAnalyzeCache } from "./lib/analyzeCache";
 import { buildIncidentReplayEvalOverview, buildIncidentReplayEvalSummary } from "./lib/replayEvals";
 import { appendRuntimeEvent, buildRuntimeStoreSummary } from "./lib/runtimeStore";
@@ -350,6 +358,8 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
       enabled: isOperatorAuthEnabled(),
       protectedRoutes: ["/api/analyze", "/api/followup", "/api/tts"],
       acceptedHeaders: ["authorization: Bearer <token>", "x-operator-token"],
+      roleHeaders: getOperatorRoleHeaders(),
+      requiredRoles: getOperatorAllowedRoles(),
     },
     spotlight: focusSpotlight,
     recommendations,
@@ -554,6 +564,14 @@ app.use((req, res, next) => {
       "Missing or invalid operator token for runtime mutation route."
     );
   }
+  if (!hasRequiredOperatorRole(req)) {
+    return sendError(
+      req,
+      res,
+      403,
+      "Missing required operator role for runtime mutation route."
+    );
+  }
   return next();
 });
 
@@ -608,6 +626,8 @@ app.get("/api/healthz", (req, res) => {
     },
     auth: {
       operatorTokenEnabled: isOperatorAuthEnabled(),
+      operatorRequiredRoles: getOperatorAllowedRoles(),
+      operatorRoleHeaders: getOperatorRoleHeaders(),
       apiKeySettingsTokenEnabled: Boolean(String(cfg.apiKeySettingsToken || "").trim()),
     },
     ops_contract: {
