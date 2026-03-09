@@ -242,14 +242,34 @@ function clampReplaySummaryLimit(limit: number | undefined, fallback = 3): numbe
 
 export function buildIncidentReplayEvalSummary(
   maxLogChars = 50_000,
-  options?: { limit?: number; status?: "pass" | "fail" }
+  options?: {
+    category?: string;
+    limit?: number;
+    status?: "pass" | "fail";
+  }
 ) {
   const overview = buildIncidentReplayEvalOverview(maxLogChars);
+  const availableCategories = overview.buckets.map((item) => item.category);
+  const categoryFilter = options?.category
+    ? normalizeText(options.category)
+    : undefined;
   const statusFilter = options?.status;
   const limit = clampReplaySummaryLimit(options?.limit);
-  const filteredCases = statusFilter
-    ? overview.cases.filter((item) => item.status === statusFilter)
-    : overview.cases;
+  const filteredCases = overview.cases.filter((item) => {
+    if (statusFilter && item.status !== statusFilter) {
+      return false;
+    }
+    if (
+      categoryFilter &&
+      !item.failedChecks.some((check) => normalizeText(check.category) === categoryFilter)
+    ) {
+      return false;
+    }
+    return true;
+  });
+  const filteredBuckets = categoryFilter
+    ? overview.buckets.filter((item) => normalizeText(item.category) === categoryFilter)
+    : overview.buckets;
 
   const spotlightCases = filteredCases
     .slice()
@@ -273,6 +293,7 @@ export function buildIncidentReplayEvalSummary(
     summaryId: "incident-replay-summary-v1",
     generatedAt: overview.generatedAt,
     filters: {
+      category: categoryFilter ?? null,
       status: statusFilter ?? null,
       limit,
     },
@@ -282,8 +303,9 @@ export function buildIncidentReplayEvalSummary(
       failingCases: overview.cases.filter((item) => item.status === "fail").length,
       passRate: overview.summary.passRate,
       severityAccuracy: overview.summary.severityAccuracy,
+      availableCategories,
     },
-    topFailureBuckets: overview.buckets.slice(0, limit),
+    topFailureBuckets: filteredBuckets.slice(0, limit),
     spotlightCases,
     reviewerNotes: [
       "Use failing buckets first to find the weakest incident reasoning categories.",
