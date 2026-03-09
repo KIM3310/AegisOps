@@ -4,6 +4,7 @@ import { app } from "../server/index";
 
 const iterations = Number.parseInt(process.env.AEGISOPS_LOAD_ITERATIONS || "6", 10);
 const operatorToken = String(process.env.AEGISOPS_OPERATOR_TOKEN || "").trim();
+const operatorRole = String(process.env.AEGISOPS_OPERATOR_ROLE || "").trim();
 
 function buildHeaders() {
   const headers: Record<string, string> = {
@@ -11,6 +12,9 @@ function buildHeaders() {
   };
   if (operatorToken) {
     headers.authorization = `Bearer ${operatorToken}`;
+  }
+  if (operatorRole) {
+    headers["x-operator-role"] = operatorRole;
   }
   return headers;
 }
