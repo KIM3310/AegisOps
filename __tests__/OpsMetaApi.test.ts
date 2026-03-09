@@ -38,6 +38,7 @@ describe("service meta endpoints", () => {
     expect(body.replaySuite.totalChecks).toBe(32);
     expect(body.replaySuite.summaryContract).toBe("incident-replay-summary-v1");
     expect(body.reportContract.schemaId).toBe("incident-report-v1");
+    expect(body.links.liveSessionPack).toBe("/api/live-session-pack");
     expect(body.links.reviewPack).toBe("/api/review-pack");
     expect(body.links.runtimeScorecard).toBe("/api/runtime/scorecard");
     expect(body.links.replaySummary).toBe("/api/evals/replays/summary");
@@ -56,8 +57,23 @@ describe("service meta endpoints", () => {
     expect(body.twoMinuteReview.length).toBe(4);
     expect(body.proofAssets.length).toBeGreaterThanOrEqual(4);
     expect(body.proofBundle.totalChecks).toBe(32);
+    expect(body.proofBundle.liveSessionPackId).toBe("aegisops-live-session-pack-v1");
     expect(body.proofBundle.replaySummaryId).toBe("incident-replay-summary-v1");
+    expect(body.links.liveSessionPack).toBe("/api/live-session-pack");
     expect(body.links.reviewPack).toBe("/api/review-pack");
+  });
+
+  it("returns a live session pack for realtime multimodal incident walkthroughs", async () => {
+    const res = await fetch(`${baseUrl}/api/live-session-pack`);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.liveSessionPackId).toBe("aegisops-live-session-pack-v1");
+    expect(body.sessionRoles).toHaveLength(3);
+    expect(body.modalities.some((item: { id: string }) => item.id === "voice-briefing")).toBe(true);
+    expect(body.reliabilityPosture.recommendedReviewRoutes).toContain("/api/live-session-pack");
+    expect(body.links.liveSessionPack).toBe("/api/live-session-pack");
   });
 
   it("returns report schema guidance for operator-facing incident reports", async () => {

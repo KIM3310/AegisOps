@@ -15,6 +15,7 @@ type ServiceMetaOptions = {
 
 const REPORT_EXPORT_FORMATS: ExportFormat[] = ["json", "markdown", "slack", "jira"];
 const REVIEW_PACK_ID = "aegisops-review-pack-v1";
+const LIVE_SESSION_PACK_ID = "aegisops-live-session-pack-v1";
 
 function buildAegisOpsProofAssets() {
   return [
@@ -189,6 +190,7 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
     },
     links: {
       healthz: "/api/healthz",
+      liveSessionPack: "/api/live-session-pack",
       reviewPack: "/api/review-pack",
       runtimeScorecard: "/api/runtime/scorecard",
       replayEvals: "/api/evals/replays",
@@ -198,6 +200,85 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
       demo: "https://aegisops-ai-incident-doctor.pages.dev",
       video: "https://youtu.be/FOcjPcMheIg",
     },
+  };
+}
+
+export function buildAegisOpsLiveSessionPack(options: ServiceMetaOptions) {
+  const serviceMeta = buildAegisOpsServiceMeta(options);
+  const replaySummary = buildIncidentReplayEvalSummary(options.maxLogChars);
+
+  return {
+    ok: true,
+    service: "aegisops-live-session-pack",
+    version: 1,
+    deployment: options.deployment,
+    liveSessionPackId: LIVE_SESSION_PACK_ID,
+    headline:
+      "Real-time incident bridge for voice, screenshots, logs, and handoff-ready operator notes.",
+    sessionRoles: [
+      {
+        role: "incident-commander",
+        responsibility: "Drive the live bridge, confirm impact, and keep the final narrative concise.",
+      },
+      {
+        role: "operator-scribe",
+        responsibility: "Attach screenshots, log snippets, and structured notes without losing evidence traceability.",
+      },
+      {
+        role: "reviewer",
+        responsibility: "Inspect replay proof, schema boundary, and export posture before handoff.",
+      },
+    ],
+    modalities: [
+      {
+        id: "voice-briefing",
+        surface: "Gemini TTS + live backend",
+        note: "Use for commander briefings and on-call updates once runtime posture is confirmed.",
+      },
+      {
+        id: "screenshots",
+        surface: "multimodal image input",
+        note: "Attach dashboards or alerts directly to the live incident session.",
+      },
+      {
+        id: "log-stream",
+        surface: "/api/analyze",
+        note: "Keep raw logs within input limits and pair them with screenshots for stronger grounding.",
+      },
+      {
+        id: "handoff-note",
+        surface: "/api/schema/report",
+        note: "Preserve the same incident-report contract from live capture through export.",
+      },
+    ],
+    liveFlow: [
+      "Start with /api/healthz and /api/runtime/scorecard to confirm the backend can support a live bridge.",
+      "Capture operator voice, screenshots, and logs in one incident session without dropping the structured report contract.",
+      "Use replay proof and schema guidance before turning the live summary into downstream actions or exports.",
+      "Close the session with a handoff-ready incident report that stays reviewable after the call ends.",
+    ],
+    reliabilityPosture: {
+      replaySummaryId: replaySummary.summaryId,
+      replayPassRate: replaySummary.totals.passRate,
+      replaySeverityAccuracy: replaySummary.totals.severityAccuracy,
+      runtimeModes: serviceMeta.runtimeModes.map((mode) => mode.label),
+      recommendedReviewRoutes: [
+        "/api/healthz",
+        "/api/runtime/scorecard",
+        "/api/live-session-pack",
+        "/api/review-pack",
+        "/api/schema/report",
+      ],
+    },
+    proofAssets: [
+      ...buildAegisOpsProofAssets(),
+      {
+        label: "Live session pack",
+        path: "/api/live-session-pack",
+        kind: "route",
+      },
+    ],
+    links: serviceMeta.links,
   };
 }
 
@@ -272,6 +353,7 @@ export function buildAegisOpsReviewPack(options: ServiceMetaOptions) {
       replayPassRate: serviceMeta.replaySuite.passRate,
       severityAccuracy: serviceMeta.replaySuite.severityAccuracy,
       totalChecks: serviceMeta.replaySuite.totalChecks,
+      liveSessionPackId: LIVE_SESSION_PACK_ID,
       replaySummaryId: replaySummary.summaryId,
       runtimeModes: serviceMeta.runtimeModes.map((mode) => mode.label),
       exportFormats: reportSchema.exportFormats,

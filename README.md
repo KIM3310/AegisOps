@@ -28,6 +28,7 @@ Companion repo:
 ## Review Pack At A Glance
 
 - Reviewer API surface: `GET /api/healthz`, `GET /api/meta`, `GET /api/review-pack`, `GET /api/schema/report`
+- Live session surface: `GET /api/live-session-pack`
 - Incident quality proof: replay suite with 4 scenarios / 32 rubric checks
 - Runtime posture: static demo, demo backend, Gemini live, Ollama local
 - Export posture: JSON, Markdown, Slack, Jira, plus optional Workspace flows
@@ -35,9 +36,10 @@ Companion repo:
 ## 2-Minute Review Path
 
 1. `GET /api/healthz` -> confirm deployment mode and backend posture.
-2. `GET /api/review-pack` -> inspect replay proof, runtime modes, and trust boundary.
-3. `GET /api/schema/report` -> verify incident contract and export boundary.
-4. `docs/review-pack.svg` + `docs/architecture.png` -> read reviewer flow and key hygiene in one glance.
+2. `GET /api/live-session-pack` -> inspect realtime modality, operator roles, and live handoff routes.
+3. `GET /api/review-pack` -> inspect replay proof, runtime modes, and trust boundary.
+4. `GET /api/schema/report` -> verify incident contract and export boundary.
+5. `docs/review-pack.svg` + `docs/architecture.png` -> read reviewer flow and key hygiene in one glance.
 
 ![AegisOps Review Pack](docs/review-pack.svg)
 
@@ -89,6 +91,8 @@ AegisOps now exposes four explicit review surfaces for operators and reviewers:
   - current deployment mode, provider, limits, cache posture, and next action
 - `GET /api/meta`
   - product workflow, runtime modes, replay summary, operator checklist, and report contract summary
+- `GET /api/live-session-pack`
+  - realtime modality map, operator roles, reliability posture, and live review routes
 - `GET /api/review-pack`
   - operator journey, trust boundary, replay proof bundle, export posture, and reviewer links
 - `GET /api/schema/report`
@@ -100,6 +104,7 @@ This is intentional: the repo should be reviewable as a service surface, not jus
 
 - `docs/review-pack.svg`
 - `docs/architecture.png`
+- `docs/live-session-pack.md`
 - `docs/INCIDENT_REPLAY_EVALS.md`
 - `samples/logs`
 - `samples/screenshots`
