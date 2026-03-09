@@ -34,7 +34,7 @@ Companion repo:
 - Runtime posture: static demo, demo backend, Gemini live, Ollama local
 - Export posture: JSON, Markdown, Slack, Jira, plus optional Workspace flows
 
-## 2-Minute Review Path
+## Quick Review Path
 
 1. `GET /api/healthz` -> confirm deployment mode and backend posture.
 2. `GET /api/live-session-pack` -> inspect realtime modality, operator roles, and live handoff routes.
@@ -305,7 +305,6 @@ Notes:
 - OAuth: Open Authorization (browser-based consent flow)
 - LLM: Large Language Model
 
-<!-- codex:local-verification:start -->
 ## Local Verification
 ```bash
 npm install
@@ -318,6 +317,3 @@ npm run build
 ## Repository Hygiene
 - Keep runtime artifacts out of commits (`.codex_runs/`, cache folders, temporary venvs).
 - Prefer running verification commands above before opening a PR.
-
-_Last updated: 2026-03-04_
-<!-- codex:local-verification:end -->
