@@ -190,6 +190,7 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
     links: {
       healthz: "/api/healthz",
       reviewPack: "/api/review-pack",
+      runtimeScorecard: "/api/runtime/scorecard",
       replayEvals: "/api/evals/replays",
       replaySummary: "/api/evals/replays/summary",
       reportSchema: "/api/schema/report",
