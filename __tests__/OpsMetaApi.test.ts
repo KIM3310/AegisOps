@@ -71,4 +71,32 @@ describe("service meta endpoints", () => {
     expect(Array.isArray(body.fieldGuide)).toBe(true);
     expect(body.fieldGuide.some((field: { key: string }) => field.key === "severity")).toBe(true);
   });
+
+  it("returns a runtime scorecard that combines request telemetry, cache posture, and replay quality", async () => {
+    await fetch(`${baseUrl}/api/analyze`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ logs: "worker timeout on checkout svc", images: [] }),
+    });
+    await fetch(`${baseUrl}/api/analyze`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ logs: "worker timeout on checkout svc", images: [] }),
+    });
+
+    const res = await fetch(`${baseUrl}/api/runtime/scorecard?focus=quality`);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.service).toBe("aegisops-runtime-scorecard");
+    expect(body.focus).toBe("quality");
+    expect(body.summary.totalRequests).toBeGreaterThan(0);
+    expect(body.analyzeRuntime.cacheMisses).toBeGreaterThan(0);
+    expect(typeof body.summary.analyzeCacheHitRatePct).toBe("number");
+    expect(body.replaySummary.summaryId).toBe("incident-replay-summary-v1");
+    expect(body.links.runtimeScorecard).toBe("/api/runtime/scorecard");
+    expect(Array.isArray(body.endpoints)).toBe(true);
+    expect(Array.isArray(body.recommendations)).toBe(true);
+  });
 });
