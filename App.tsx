@@ -369,7 +369,7 @@ export default function App() {
       `Replay pass rate: ${reviewPack ? `${reviewPack.proofBundle.replayPassRate}%` : 'unavailable'}`,
       `Severity accuracy: ${reviewPack ? `${reviewPack.proofBundle.severityAccuracy}%` : 'unavailable'}`,
       '',
-      '2-minute review',
+      'Review flow',
       ...(reviewPack?.twoMinuteReview?.map((item) => `- ${item.step}: ${item.surface} (${item.proof})`) ?? [
         '- Review pack unavailable. Start with /api/healthz, /api/review-pack, and replay evals.',
       ]),
@@ -404,24 +404,24 @@ export default function App() {
     }
   };
 
-  const copyProofBundle = async () => {
+  const copyEvidenceSnapshot = async () => {
     const lines = [
-      'AegisOps proof bundle',
+      'AegisOps evidence snapshot',
       `Replay pass rate: ${reviewPack ? `${reviewPack.proofBundle.replayPassRate}%` : 'unavailable'}`,
       `Severity accuracy: ${reviewPack ? `${reviewPack.proofBundle.severityAccuracy}%` : 'unavailable'}`,
       `Rubric checks: ${reviewPack?.proofBundle.totalChecks ?? 'unavailable'}`,
       `Runtime modes: ${reviewPack?.proofBundle.runtimeModes?.join(', ') ?? 'unavailable'}`,
       `Export formats: ${reviewPack?.proofBundle.exportFormats?.join(', ') ?? 'unavailable'}`,
       '',
-      'Proof assets',
+      'Supporting assets',
       ...(reviewPack?.proofAssets?.length
         ? reviewPack.proofAssets.map((item) => `- ${item.label} [${item.kind}]: ${item.path}`)
-        : ['- Proof assets unavailable. Open /api/review-pack first.']),
+        : ['- Supporting assets unavailable. Open /api/review-pack first.']),
     ];
 
     try {
       await navigator.clipboard.writeText(lines.join('\n'));
-      addToast('success', 'Proof bundle copied');
+      addToast('success', 'Evidence snapshot copied');
     } catch {
       addToast('error', 'Clipboard copy failed');
     }
@@ -828,7 +828,7 @@ export default function App() {
                     Reviewer Flight Deck
                   </div>
                   <p className="text-2xs text-text-muted max-w-2xl">
-                    입력 전에 runtime posture, 2-minute review, fast links, preset repro path를 한 번에 정리합니다.
+                    입력 전에 runtime posture, review flow, fast links, preset repro path를 한 번에 정리합니다.
                   </p>
                 </div>
                 <button
@@ -847,10 +847,10 @@ export default function App() {
                   Copy Review Routes
                 </button>
                 <button
-                  onClick={copyProofBundle}
+                  onClick={copyEvidenceSnapshot}
                   className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
                 >
-                  Copy Proof Bundle
+                  Copy Evidence Snapshot
                 </button>
                 <button
                   onClick={loadStrongestPreset}
@@ -886,7 +886,7 @@ export default function App() {
 
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-lg border border-border bg-bg/80 p-3 space-y-2">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">2-minute review</div>
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">Review flow</div>
                   <div className="space-y-2">
                     {(reviewPack?.twoMinuteReview?.length ? reviewPack.twoMinuteReview : [
                       { step: 'Load review pack', surface: '/api/review-pack', proof: 'review route unavailable' },
