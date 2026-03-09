@@ -13,6 +13,7 @@ export type RuntimeEventRecord = {
 };
 
 type RuntimeStoreBackend = "jsonl" | "sqlite";
+const sqliteStores = new Map<string, DatabaseSync>();
 
 function resolveStorePath(): string {
   const configured = String(process.env.AEGISOPS_RUNTIME_STORE_PATH || "").trim();
@@ -33,8 +34,15 @@ function resolveStoreBackend(targetPath: string): RuntimeStoreBackend {
 }
 
 function ensureSqliteStore(targetPath: string): DatabaseSync {
+  const cached = sqliteStores.get(targetPath);
+  if (cached) {
+    return cached;
+  }
   mkdirSync(path.dirname(targetPath), { recursive: true });
   const database = new DatabaseSync(targetPath);
+  database.exec("PRAGMA journal_mode = WAL;");
+  database.exec("PRAGMA busy_timeout = 5000;");
+  database.exec("PRAGMA synchronous = NORMAL;");
   database.exec(`
     CREATE TABLE IF NOT EXISTS runtime_events (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,6 +57,7 @@ function ensureSqliteStore(targetPath: string): DatabaseSync {
     CREATE INDEX IF NOT EXISTS idx_runtime_events_timestamp ON runtime_events(timestamp DESC);
     CREATE INDEX IF NOT EXISTS idx_runtime_events_endpoint ON runtime_events(endpoint);
   `);
+  sqliteStores.set(targetPath, database);
   return database;
 }
 
@@ -219,4 +228,3 @@ export function buildRuntimeStoreSummary(limit = 25) {
     ? buildJsonlSummary(targetPath, limit)
     : buildSqliteSummary(targetPath, limit);
 }
-

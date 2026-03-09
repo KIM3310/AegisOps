@@ -225,6 +225,71 @@ describe("service meta endpoints", () => {
     }
   });
 
+  it("boots an operator session cookie and reuses it for protected runtime routes", async () => {
+    const previousToken = process.env.AEGISOPS_OPERATOR_TOKEN;
+    const previousRoles = process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES;
+    process.env.AEGISOPS_OPERATOR_TOKEN = "session-secret";
+    process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES = "incident-commander";
+
+    try {
+      const sessionResponse = await fetch(`${baseUrl}/api/auth/session`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          authMode: "token",
+          credential: "session-secret",
+          roles: ["incident-commander"],
+        }),
+      });
+      const setCookie = sessionResponse.headers.get("set-cookie");
+      const sessionBody = await sessionResponse.json();
+
+      expect(sessionResponse.status).toBe(200);
+      expect(setCookie).toContain("aegisops_operator_session=");
+      expect(sessionBody.active).toBe(true);
+      expect(sessionBody.session.roles).toContain("incident-commander");
+
+      const analyzeResponse = await fetch(`${baseUrl}/api/analyze`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: String(setCookie || "").split(";")[0] || "",
+        },
+        body: JSON.stringify({ logs: "session-backed incident run", images: [] }),
+      });
+      expect(analyzeResponse.status).toBe(200);
+
+      const currentSession = await fetch(`${baseUrl}/api/auth/session`, {
+        headers: {
+          cookie: String(setCookie || "").split(";")[0] || "",
+        },
+      });
+      const currentSessionBody = await currentSession.json();
+      expect(currentSession.status).toBe(200);
+      expect(currentSessionBody.active).toBe(true);
+      expect(currentSessionBody.validation.ok).toBe(true);
+
+      const clearResponse = await fetch(`${baseUrl}/api/auth/session`, {
+        method: "DELETE",
+      });
+      expect(clearResponse.status).toBe(200);
+      expect(clearResponse.headers.get("set-cookie")).toContain("Max-Age=0");
+    } finally {
+      if (typeof previousToken === "string") {
+        process.env.AEGISOPS_OPERATOR_TOKEN = previousToken;
+      } else {
+        delete process.env.AEGISOPS_OPERATOR_TOKEN;
+      }
+      if (typeof previousRoles === "string") {
+        process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES = previousRoles;
+      } else {
+        delete process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES;
+      }
+    }
+  });
+
   it("accepts OIDC bearer tokens with required roles for runtime mutation routes", async () => {
     const previousIssuer = process.env.AEGISOPS_OPERATOR_OIDC_ISSUER;
     const previousAudience = process.env.AEGISOPS_OPERATOR_OIDC_AUDIENCE;

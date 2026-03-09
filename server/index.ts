@@ -16,6 +16,14 @@ import {
   requiresOperatorToken,
   validateOperatorAccess,
 } from "./lib/operatorAccess";
+import {
+  applyOperatorSession,
+  clearOperatorSessionCookie,
+  createOperatorSessionCookie,
+  getOperatorSessionCookieName,
+  readOperatorSession,
+  type OperatorSessionView,
+} from "./lib/operatorSession";
 import { buildAnalyzeCacheKey, createAnalyzeCache } from "./lib/analyzeCache";
 import { buildIncidentReplayEvalOverview, buildIncidentReplayEvalSummary } from "./lib/replayEvals";
 import { appendRuntimeEvent, buildRuntimeStoreSummary } from "./lib/runtimeStore";
@@ -54,6 +62,7 @@ type FollowUpBody = {
 
 type TtsBody = { text?: string; lane?: string; sessionId?: string };
 type ApiKeyBody = { apiKey?: string };
+type OperatorSessionBody = { authMode?: string; credential?: string; roles?: string[] | string };
 type KeySource = "runtime" | "env" | "ollama" | "none";
 type ActiveProvider = "demo" | "gemini" | "ollama";
 type RuntimeScorecardFocus = "traffic" | "quality" | "reliability";
@@ -84,6 +93,7 @@ type FollowUpHistoryItem = { role: "user" | "assistant"; content: string };
 declare global {
   namespace Express {
     interface Request {
+      operatorSession?: OperatorSessionView | null;
       requestId?: string;
     }
   }
@@ -206,20 +216,66 @@ function recordRuntimeTelemetry(
   }
 
   runtimeTelemetry.endpoints.set(endpointKey, endpoint);
-  appendRuntimeEvent({
-    elapsedMs,
-    endpoint: endpointKey,
-    method: options?.method || "HTTP",
-    path,
-    requestId: options?.requestId,
-    statusCode,
-    timestamp: now,
-  });
+  try {
+    appendRuntimeEvent({
+      elapsedMs,
+      endpoint: endpointKey,
+      method: options?.method || "HTTP",
+      path,
+      requestId: options?.requestId,
+      statusCode,
+      timestamp: now,
+    });
+  } catch (error) {
+    logApiEvent("warn", "runtime-telemetry-persist-failed", {
+      error: error instanceof Error ? error.message : String(error),
+      method: options?.method || "HTTP",
+      path,
+      requestId: options?.requestId || null,
+      statusCode,
+    });
+  }
 }
 
 function toPercent(numerator: number, denominator: number): number {
   if (denominator <= 0) return 0;
   return Math.round((numerator / denominator) * 1000) / 10;
+}
+
+function logApiEvent(
+  level: "error" | "info" | "warn",
+  event: string,
+  payload: Record<string, unknown>
+): void {
+  const line = JSON.stringify({
+    at: new Date().toISOString(),
+    event,
+    level,
+    service: "aegisops-api",
+    ...payload,
+  });
+  if (level === "error") {
+    console.error(line);
+  } else if (level === "warn") {
+    console.warn(line);
+  } else {
+    console.info(line);
+  }
+}
+
+function normalizeSessionRoles(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item).trim().toLowerCase())
+      .filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  return [];
 }
 
 function normalizeScorecardFocus(value: unknown): RuntimeScorecardFocus {
@@ -359,6 +415,7 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
       mode: operatorAuth.mode,
       protectedRoutes: ["/api/analyze", "/api/followup", "/api/tts"],
       acceptedHeaders: operatorAuth.acceptedHeaders,
+      sessionCookie: getOperatorSessionCookieName(),
       roleHeaders: operatorAuth.roleHeaders,
       requiredRoles: operatorAuth.requiredRoles,
       oidc: operatorAuth.oidc,
@@ -374,6 +431,7 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
       replaySummary: "/api/evals/replays/summary",
       reportSchema: "/api/schema/report",
       runtimeScorecard: "/api/runtime/scorecard",
+      authSession: "/api/auth/session",
     },
   };
 }
@@ -506,6 +564,7 @@ function maskApiKey(value: string): string {
 
 app.use((req, res, next) => {
   req.requestId = String(req.headers["x-request-id"] || nextRequestId());
+  req.operatorSession = applyOperatorSession(req);
   res.setHeader("x-request-id", req.requestId);
   res.setHeader("cache-control", "no-store");
   res.setHeader("x-content-type-options", "nosniff");
@@ -520,12 +579,16 @@ app.use((req, res, next) => {
       method: req.method,
       requestId: req.requestId,
     });
-    if (res.statusCode >= 400 || elapsedMs >= 4_000) {
-      // eslint-disable-next-line no-console
-      console.warn(
-        `[api] ${req.method} ${req.originalUrl} status=${res.statusCode} ms=${elapsedMs} requestId=${req.requestId}`
-      );
-    }
+    logApiEvent(res.statusCode >= 400 || elapsedMs >= 4_000 ? "warn" : "info", "request-finished", {
+      elapsedMs,
+      method: req.method,
+      operatorAuthMode: req.operatorSession?.authMode || null,
+      operatorRoles: req.operatorSession?.roles || [],
+      path: req.originalUrl,
+      requestId: req.requestId,
+      sessionActive: Boolean(req.operatorSession),
+      statusCode: res.statusCode,
+    });
   });
   next();
 });
@@ -572,6 +635,129 @@ app.use((req, res, next) => {
     }
     return next();
   })().catch(next);
+});
+
+app.get("/api/auth/session", async (req, res) => {
+  const session = readOperatorSession(req);
+  const authResult = session ? await validateOperatorAccess(req) : null;
+  return res.json({
+    ok: true,
+    requestId: req.requestId,
+    active: Boolean(session && authResult?.ok),
+    cookieName: getOperatorSessionCookieName(),
+    session,
+    validation:
+      authResult && session
+        ? {
+            authMode: authResult.authMode,
+            ok: authResult.ok,
+            reason: authResult.reason,
+            roles: authResult.roles,
+            subject: authResult.subject,
+          }
+        : null,
+    links: {
+      healthz: "/api/healthz",
+      runtimeScorecard: "/api/runtime/scorecard",
+    },
+  });
+});
+
+app.post("/api/auth/session", async (req, res) => {
+  if (!isOperatorAuthEnabled()) {
+    return sendError(req, res, 409, "Operator auth is not configured for session login.");
+  }
+
+  const body = (req.body || {}) as OperatorSessionBody;
+  const credential = String(body.credential || "").trim();
+  const requestedMode = String(body.authMode || "").trim().toLowerCase();
+  const roles = normalizeSessionRoles(body.roles);
+  if (!credential) {
+    return sendError(req, res, 400, "Missing credential.");
+  }
+  if (requestedMode && requestedMode !== "token" && requestedMode !== "oidc") {
+    return sendError(req, res, 400, "authMode must be either 'token' or 'oidc'.");
+  }
+
+  const previousAuthorization = req.headers.authorization;
+  const previousOperatorToken = req.headers["x-operator-token"];
+  const previousOperatorRoles = req.headers["x-operator-roles"];
+
+  delete req.headers.authorization;
+  delete req.headers["x-operator-token"];
+  delete req.headers["x-operator-roles"];
+
+  if (requestedMode === "oidc") {
+    req.headers.authorization = `Bearer ${credential}`;
+  } else {
+    req.headers["x-operator-token"] = credential;
+  }
+  if (roles.length > 0) {
+    req.headers["x-operator-roles"] = roles.join(",");
+  }
+
+  const authResult = await validateOperatorAccess(req);
+
+  if (typeof previousAuthorization === "string") {
+    req.headers.authorization = previousAuthorization;
+  } else {
+    delete req.headers.authorization;
+  }
+  if (typeof previousOperatorToken === "string") {
+    req.headers["x-operator-token"] = previousOperatorToken;
+  } else {
+    delete req.headers["x-operator-token"];
+  }
+  if (typeof previousOperatorRoles === "string") {
+    req.headers["x-operator-roles"] = previousOperatorRoles;
+  } else {
+    delete req.headers["x-operator-roles"];
+  }
+
+  if (!authResult.ok) {
+    return sendError(
+      req,
+      res,
+      403,
+      authResult.reason === "missing-role"
+        ? "Missing required operator role for session bootstrap."
+        : "Missing or invalid operator credential for session bootstrap."
+    );
+  }
+
+  const sessionCookie = createOperatorSessionCookie({
+    authMode: authResult.authMode === "oidc" ? "oidc" : "token",
+    credential,
+    roles: authResult.roles,
+    subject: authResult.subject,
+  });
+  res.setHeader("set-cookie", sessionCookie.cookie);
+  logApiEvent("info", "operator-session-created", {
+    authMode: sessionCookie.session.authMode,
+    requestId: req.requestId,
+    roles: sessionCookie.session.roles,
+    subject: sessionCookie.session.subject,
+  });
+  return res.json({
+    ok: true,
+    requestId: req.requestId,
+    active: true,
+    cookieName: getOperatorSessionCookieName(),
+    session: sessionCookie.session,
+  });
+});
+
+app.delete("/api/auth/session", (req, res) => {
+  res.setHeader("set-cookie", clearOperatorSessionCookie());
+  logApiEvent("info", "operator-session-cleared", {
+    requestId: req.requestId,
+  });
+  return res.json({
+    ok: true,
+    requestId: req.requestId,
+    active: false,
+    cookieName: getOperatorSessionCookieName(),
+  });
 });
 
 app.get("/api/healthz", (req, res) => {
@@ -628,6 +814,7 @@ app.get("/api/healthz", (req, res) => {
       operatorAuthMode: getOperatorAuthStatus().mode,
       operatorRequiredRoles: getOperatorAuthStatus().requiredRoles,
       operatorRoleHeaders: getOperatorAuthStatus().roleHeaders,
+      operatorSessionCookie: getOperatorSessionCookieName(),
       operatorOidc: getOperatorAuthStatus().oidc,
       apiKeySettingsTokenEnabled: Boolean(String(cfg.apiKeySettingsToken || "").trim()),
     },
@@ -654,6 +841,7 @@ app.get("/api/healthz", (req, res) => {
       replayEvals: "/api/evals/replays",
       replaySummary: "/api/evals/replays/summary",
       runtimeScorecard: "/api/runtime/scorecard",
+      authSession: "/api/auth/session",
       meta: "/api/meta",
       reportSchema: "/api/schema/report",
     },
@@ -1146,26 +1334,32 @@ let server: ReturnType<typeof app.listen> | undefined;
 export function startServer() {
   if (server) return server;
   server = app.listen(cfg.port, cfg.host, () => {
-    // eslint-disable-next-line no-console
-    console.log(
-      `[api] AegisOps API listening on http://${cfg.host}:${cfg.port} (startupMode=${cfg.mode}, provider=${cfg.llmProvider}, activeProvider=${getActiveProvider()}, keySource=${getKeySource()})`
-    );
+    logApiEvent("info", "server-started", {
+      activeProvider: getActiveProvider(),
+      host: cfg.host,
+      keySource: getKeySource(),
+      llmProvider: cfg.llmProvider,
+      port: cfg.port,
+      startupMode: cfg.mode,
+    });
   });
   return server;
 }
 
 function shutdown(signal: string): void {
-  // eslint-disable-next-line no-console
-  console.log(`[api] Received ${signal}. Shutting down gracefully...`);
+  logApiEvent("info", "server-shutdown-started", { signal });
   if (!server) {
     process.exit(0);
   }
   server.close((err) => {
     if (err) {
-      // eslint-disable-next-line no-console
-      console.error("[api] Graceful shutdown failed:", err);
+      logApiEvent("error", "server-shutdown-failed", {
+        error: err instanceof Error ? err.message : String(err),
+        signal,
+      });
       process.exit(1);
     }
+    logApiEvent("info", "server-shutdown-complete", { signal });
     process.exit(0);
   });
 }
