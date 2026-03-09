@@ -10,7 +10,7 @@ import { demoAnalyzeIncident, demoFollowUpAnswer } from "./lib/demo";
 import { geminiAnalyzeIncident, geminiFollowUp, geminiTts } from "./lib/gemini";
 import { ollamaAnalyzeIncident, ollamaFollowUp } from "./lib/ollama";
 import { buildAnalyzeCacheKey, createAnalyzeCache } from "./lib/analyzeCache";
-import { buildIncidentReplayEvalOverview } from "./lib/replayEvals";
+import { buildIncidentReplayEvalOverview, buildIncidentReplayEvalSummary } from "./lib/replayEvals";
 import { buildAegisOpsReviewPack, buildAegisOpsServiceMeta, buildIncidentReportSchema } from "./lib/serviceMeta";
 import { normalizeAndValidateImages } from "./lib/validation";
 
@@ -310,6 +310,7 @@ app.get("/api/healthz", (req, res) => {
       tts: "/api/tts",
       reviewPack: "/api/review-pack",
       replayEvals: "/api/evals/replays",
+      replaySummary: "/api/evals/replays/summary",
       meta: "/api/meta",
       reportSchema: "/api/schema/report",
     },
@@ -318,6 +319,24 @@ app.get("/api/healthz", (req, res) => {
 
 app.get("/api/evals/replays", (req, res) => {
   res.json(buildIncidentReplayEvalOverview(cfg.maxLogChars));
+});
+
+app.get("/api/evals/replays/summary", (req, res) => {
+  const rawLimit = Number.parseInt(String(req.query.limit || ""), 10);
+  const limit = Number.isFinite(rawLimit) ? rawLimit : undefined;
+  const rawStatus = String(req.query.status || "").trim().toLowerCase();
+  const status = rawStatus === "pass" || rawStatus === "fail" ? rawStatus : undefined;
+
+  if (rawStatus && !status) {
+    return sendError(req, res, 400, "status must be either 'pass' or 'fail'.");
+  }
+
+  return res.json(
+    buildIncidentReplayEvalSummary(cfg.maxLogChars, {
+      limit,
+      status,
+    })
+  );
 });
 
 app.get("/api/meta", (req, res) => {

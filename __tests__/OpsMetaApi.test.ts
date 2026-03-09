@@ -36,8 +36,10 @@ describe("service meta endpoints", () => {
     expect(body.product.name).toBe("AegisOps");
     expect(body.workflow).toEqual(["collect", "reason", "decide", "communicate"]);
     expect(body.replaySuite.totalChecks).toBe(32);
+    expect(body.replaySuite.summaryContract).toBe("incident-replay-summary-v1");
     expect(body.reportContract.schemaId).toBe("incident-report-v1");
     expect(body.links.reviewPack).toBe("/api/review-pack");
+    expect(body.links.replaySummary).toBe("/api/evals/replays/summary");
     expect(body.links.reportSchema).toBe("/api/schema/report");
   });
 
@@ -53,6 +55,7 @@ describe("service meta endpoints", () => {
     expect(body.twoMinuteReview.length).toBe(4);
     expect(body.proofAssets.length).toBeGreaterThanOrEqual(4);
     expect(body.proofBundle.totalChecks).toBe(32);
+    expect(body.proofBundle.replaySummaryId).toBe("incident-replay-summary-v1");
     expect(body.links.reviewPack).toBe("/api/review-pack");
   });
 

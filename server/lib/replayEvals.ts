@@ -232,3 +232,63 @@ export function buildIncidentReplayEvalOverview(maxLogChars = 50_000): ReplayEva
     cases,
   };
 }
+
+function clampReplaySummaryLimit(limit: number | undefined, fallback = 3): number {
+  if (typeof limit !== "number" || !Number.isFinite(limit)) {
+    return fallback;
+  }
+  return Math.max(1, Math.min(Math.trunc(limit), 10));
+}
+
+export function buildIncidentReplayEvalSummary(
+  maxLogChars = 50_000,
+  options?: { limit?: number; status?: "pass" | "fail" }
+) {
+  const overview = buildIncidentReplayEvalOverview(maxLogChars);
+  const statusFilter = options?.status;
+  const limit = clampReplaySummaryLimit(options?.limit);
+  const filteredCases = statusFilter
+    ? overview.cases.filter((item) => item.status === statusFilter)
+    : overview.cases;
+
+  const spotlightCases = filteredCases
+    .slice()
+    .sort((left, right) => {
+      const failedDelta = right.failedChecks.length - left.failedChecks.length;
+      if (failedDelta !== 0) return failedDelta;
+      return left.id.localeCompare(right.id);
+    })
+    .slice(0, limit)
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      status: item.status,
+      passRate: item.passRate,
+      failedCheckCount: item.failedChecks.length,
+      failedCategories: Array.from(new Set(item.failedChecks.map((check) => check.category))),
+    }));
+
+  return {
+    ok: true,
+    summaryId: "incident-replay-summary-v1",
+    generatedAt: overview.generatedAt,
+    filters: {
+      status: statusFilter ?? null,
+      limit,
+    },
+    totals: {
+      totalCases: overview.summary.totalCases,
+      visibleCases: filteredCases.length,
+      failingCases: overview.cases.filter((item) => item.status === "fail").length,
+      passRate: overview.summary.passRate,
+      severityAccuracy: overview.summary.severityAccuracy,
+    },
+    topFailureBuckets: overview.buckets.slice(0, limit),
+    spotlightCases,
+    reviewerNotes: [
+      "Use failing buckets first to find the weakest incident reasoning categories.",
+      "Spotlight cases keep the highest-friction failures visible for regression checks.",
+      "Severity accuracy alone is not enough; failed category buckets still need review.",
+    ],
+  };
+}
