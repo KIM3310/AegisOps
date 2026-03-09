@@ -10,13 +10,11 @@ import { demoAnalyzeIncident, demoFollowUpAnswer } from "./lib/demo";
 import { geminiAnalyzeIncident, geminiFollowUp, geminiTts } from "./lib/gemini";
 import { ollamaAnalyzeIncident, ollamaFollowUp } from "./lib/ollama";
 import {
-  getOperatorAllowedRoles,
-  getOperatorRoleHeaders,
-  hasRequiredOperatorRole,
-  hasValidOperatorToken,
+  getOperatorAuthStatus,
   isOperatorAuthEnabled,
   readBearerToken,
   requiresOperatorToken,
+  validateOperatorAccess,
 } from "./lib/operatorAccess";
 import { buildAnalyzeCacheKey, createAnalyzeCache } from "./lib/analyzeCache";
 import { buildIncidentReplayEvalOverview, buildIncidentReplayEvalSummary } from "./lib/replayEvals";
@@ -247,6 +245,7 @@ function resolveLiveSessionContext(options: {
 function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
   const persisted = buildRuntimeStoreSummary(10);
   const liveSessions = buildLiveSessionStoreSummary(5);
+  const operatorAuth = getOperatorAuthStatus();
   const replaySummary = buildIncidentReplayEvalSummary(cfg.maxLogChars, {
     status: focus === "quality" ? "fail" : undefined,
     limit: focus === "traffic" ? 3 : 4,
@@ -346,6 +345,7 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
       topFailureBuckets: replaySummary.topFailureBuckets,
     },
     persistence: {
+      backend: persisted.backend,
       path: persisted.path,
       enabled: persisted.enabled,
       lastEventAt: persisted.lastEventAt,
@@ -355,11 +355,13 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
     },
     liveSessions,
     operatorAuth: {
-      enabled: isOperatorAuthEnabled(),
+      enabled: operatorAuth.enabled,
+      mode: operatorAuth.mode,
       protectedRoutes: ["/api/analyze", "/api/followup", "/api/tts"],
-      acceptedHeaders: ["authorization: Bearer <token>", "x-operator-token"],
-      roleHeaders: getOperatorRoleHeaders(),
-      requiredRoles: getOperatorAllowedRoles(),
+      acceptedHeaders: operatorAuth.acceptedHeaders,
+      roleHeaders: operatorAuth.roleHeaders,
+      requiredRoles: operatorAuth.requiredRoles,
+      oidc: operatorAuth.oidc,
     },
     spotlight: focusSpotlight,
     recommendations,
@@ -556,23 +558,20 @@ app.use((req, res, next) => {
   if (!requiresOperatorToken(req)) {
     return next();
   }
-  if (!hasValidOperatorToken(req)) {
-    return sendError(
-      req,
-      res,
-      403,
-      "Missing or invalid operator token for runtime mutation route."
-    );
-  }
-  if (!hasRequiredOperatorRole(req)) {
-    return sendError(
-      req,
-      res,
-      403,
-      "Missing required operator role for runtime mutation route."
-    );
-  }
-  return next();
+  void (async () => {
+    const authResult = await validateOperatorAccess(req);
+    if (!authResult.ok) {
+      return sendError(
+        req,
+        res,
+        403,
+        authResult.reason === "missing-role"
+          ? "Missing required operator role for runtime mutation route."
+          : "Missing or invalid operator credential for runtime mutation route."
+      );
+    }
+    return next();
+  })().catch(next);
 });
 
 app.get("/api/healthz", (req, res) => {
@@ -626,8 +625,10 @@ app.get("/api/healthz", (req, res) => {
     },
     auth: {
       operatorTokenEnabled: isOperatorAuthEnabled(),
-      operatorRequiredRoles: getOperatorAllowedRoles(),
-      operatorRoleHeaders: getOperatorRoleHeaders(),
+      operatorAuthMode: getOperatorAuthStatus().mode,
+      operatorRequiredRoles: getOperatorAuthStatus().requiredRoles,
+      operatorRoleHeaders: getOperatorAuthStatus().roleHeaders,
+      operatorOidc: getOperatorAuthStatus().oidc,
       apiKeySettingsTokenEnabled: Boolean(String(cfg.apiKeySettingsToken || "").trim()),
     },
     ops_contract: {

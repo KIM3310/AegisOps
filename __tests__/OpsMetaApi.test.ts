@@ -1,7 +1,53 @@
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
+import { createSign, generateKeyPairSync } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { app } from "../server/index";
+
+function encodeBase64Url(value: string): string {
+  return Buffer.from(value, "utf8")
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+function createOidcToken(options: {
+  audience: string;
+  issuer: string;
+  roles?: string[];
+}) {
+  const { privateKey, publicKey } = generateKeyPairSync("rsa", {
+    modulusLength: 2048,
+  });
+  const publicJwk = publicKey.export({ format: "jwk" }) as Record<string, string>;
+  const kid = "aegisops-test-key";
+  const header = encodeBase64Url(JSON.stringify({ alg: "RS256", kid, typ: "JWT" }));
+  const payload = encodeBase64Url(
+    JSON.stringify({
+      iss: options.issuer,
+      aud: options.audience,
+      sub: "operator-123",
+      exp: Math.floor(Date.now() / 1000) + 60,
+      roles: options.roles ?? [],
+    })
+  );
+  const signer = createSign("RSA-SHA256");
+  signer.update(`${header}.${payload}`);
+  signer.end();
+  const signature = signer
+    .sign(privateKey)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+  return {
+    jwksJson: JSON.stringify({
+      keys: [{ ...publicJwk, alg: "RS256", kid, use: "sig" }],
+    }),
+    token: `${header}.${payload}.${signature}`,
+  };
+}
 
 describe("service meta endpoints", () => {
   const server = createServer(app);
@@ -175,6 +221,73 @@ describe("service meta endpoints", () => {
         process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES = previousRoles;
       } else {
         delete process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES;
+      }
+    }
+  });
+
+  it("accepts OIDC bearer tokens with required roles for runtime mutation routes", async () => {
+    const previousIssuer = process.env.AEGISOPS_OPERATOR_OIDC_ISSUER;
+    const previousAudience = process.env.AEGISOPS_OPERATOR_OIDC_AUDIENCE;
+    const previousJwks = process.env.AEGISOPS_OPERATOR_OIDC_JWKS_JSON;
+    const previousRoles = process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES;
+    const previousToken = process.env.AEGISOPS_OPERATOR_TOKEN;
+    const issuer = "https://issuer.aegisops.test";
+    const audience = "aegisops-api";
+    const { jwksJson, token } = createOidcToken({
+      issuer,
+      audience,
+      roles: ["incident-commander"],
+    });
+    delete process.env.AEGISOPS_OPERATOR_TOKEN;
+    process.env.AEGISOPS_OPERATOR_OIDC_ISSUER = issuer;
+    process.env.AEGISOPS_OPERATOR_OIDC_AUDIENCE = audience;
+    process.env.AEGISOPS_OPERATOR_OIDC_JWKS_JSON = jwksJson;
+    process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES = "incident-commander";
+
+    try {
+      const allowed = await fetch(`${baseUrl}/api/analyze`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ logs: "oidc incident auth smoke", images: [] }),
+      });
+
+      expect(allowed.status).toBe(200);
+
+      const scorecard = await fetch(`${baseUrl}/api/runtime/scorecard`);
+      const scorecardBody = await scorecard.json();
+
+      expect(scorecard.status).toBe(200);
+      expect(scorecardBody.operatorAuth.mode).toBe("oidc");
+      expect(scorecardBody.operatorAuth.oidc.enabled).toBe(true);
+      expect(scorecardBody.operatorAuth.oidc.issuer).toBe(issuer);
+    } finally {
+      if (typeof previousIssuer === "string") {
+        process.env.AEGISOPS_OPERATOR_OIDC_ISSUER = previousIssuer;
+      } else {
+        delete process.env.AEGISOPS_OPERATOR_OIDC_ISSUER;
+      }
+      if (typeof previousAudience === "string") {
+        process.env.AEGISOPS_OPERATOR_OIDC_AUDIENCE = previousAudience;
+      } else {
+        delete process.env.AEGISOPS_OPERATOR_OIDC_AUDIENCE;
+      }
+      if (typeof previousJwks === "string") {
+        process.env.AEGISOPS_OPERATOR_OIDC_JWKS_JSON = previousJwks;
+      } else {
+        delete process.env.AEGISOPS_OPERATOR_OIDC_JWKS_JSON;
+      }
+      if (typeof previousRoles === "string") {
+        process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES = previousRoles;
+      } else {
+        delete process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES;
+      }
+      if (typeof previousToken === "string") {
+        process.env.AEGISOPS_OPERATOR_TOKEN = previousToken;
+      } else {
+        delete process.env.AEGISOPS_OPERATOR_TOKEN;
       }
     }
   });

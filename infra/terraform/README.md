@@ -15,7 +15,7 @@ terraform apply \
   -var="project_id=your-project" \
   -var="image=asia-northeast3-docker.pkg.dev/your-project/apps/aegisops:latest" \
   -var='env={
-    AEGISOPS_RUNTIME_STORE_PATH="/app/.runtime/aegisops-runtime-events.jsonl"
+    AEGISOPS_RUNTIME_STORE_PATH="/app/.runtime/aegisops-runtime-events.db"
     AEGISOPS_OPERATOR_ALLOWED_ROLES="incident_commander,sre"
   }' \
   -var='secret_env={

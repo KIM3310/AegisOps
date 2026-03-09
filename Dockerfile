@@ -10,7 +10,7 @@ COPY . .
 ENV NODE_ENV=production
 ENV PORT=8080
 ENV HOST=0.0.0.0
-ENV AEGISOPS_RUNTIME_STORE_PATH=/app/.runtime/aegisops-runtime-events.jsonl
+ENV AEGISOPS_RUNTIME_STORE_PATH=/app/.runtime/aegisops-runtime-events.db
 
 RUN npm run build
 

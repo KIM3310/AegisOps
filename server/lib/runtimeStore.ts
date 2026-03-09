@@ -1,5 +1,6 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 
 export type RuntimeEventRecord = {
   elapsedMs: number;
@@ -11,24 +12,50 @@ export type RuntimeEventRecord = {
   timestamp: string;
 };
 
+type RuntimeStoreBackend = "jsonl" | "sqlite";
+
 function resolveStorePath(): string {
   const configured = String(process.env.AEGISOPS_RUNTIME_STORE_PATH || "").trim();
   if (configured) {
     return path.resolve(configured);
   }
-  return path.join(process.cwd(), ".runtime", "aegisops-runtime-events.jsonl");
+  return path.join(process.cwd(), ".runtime", "aegisops-runtime-events.db");
 }
 
-export function appendRuntimeEvent(record: RuntimeEventRecord): void {
-  const targetPath = resolveStorePath();
+function resolveStoreBackend(targetPath: string): RuntimeStoreBackend {
+  const configured = String(process.env.AEGISOPS_RUNTIME_STORE_BACKEND || "")
+    .trim()
+    .toLowerCase();
+  if (configured === "jsonl" || configured === "sqlite") {
+    return configured;
+  }
+  return targetPath.endsWith(".jsonl") ? "jsonl" : "sqlite";
+}
+
+function ensureSqliteStore(targetPath: string): DatabaseSync {
   mkdirSync(path.dirname(targetPath), { recursive: true });
-  appendFileSync(targetPath, `${JSON.stringify(record)}\n`, "utf8");
+  const database = new DatabaseSync(targetPath);
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS runtime_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp TEXT NOT NULL,
+      method TEXT NOT NULL,
+      path TEXT NOT NULL,
+      endpoint TEXT NOT NULL,
+      status_code INTEGER NOT NULL,
+      elapsed_ms INTEGER NOT NULL,
+      request_id TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_runtime_events_timestamp ON runtime_events(timestamp DESC);
+    CREATE INDEX IF NOT EXISTS idx_runtime_events_endpoint ON runtime_events(endpoint);
+  `);
+  return database;
 }
 
-export function buildRuntimeStoreSummary(limit = 25) {
-  const targetPath = resolveStorePath();
+function buildJsonlSummary(targetPath: string, limit: number) {
   if (!existsSync(targetPath)) {
     return {
+      backend: "jsonl" as const,
       enabled: true,
       path: targetPath,
       persistedCount: 0,
@@ -82,6 +109,7 @@ export function buildRuntimeStoreSummary(limit = 25) {
   }
 
   return {
+    backend: "jsonl" as const,
     enabled: true,
     path: targetPath,
     persistedCount: lines.length,
@@ -91,3 +119,104 @@ export function buildRuntimeStoreSummary(limit = 25) {
     recentEvents,
   };
 }
+
+function buildSqliteSummary(targetPath: string, limit: number) {
+  const database = ensureSqliteStore(targetPath);
+  const countRow = database
+    .prepare("SELECT COUNT(*) as count, MAX(timestamp) as last_event_at FROM runtime_events")
+    .get() as { count?: number; last_event_at?: string | null };
+  const methodRows = database
+    .prepare(
+      "SELECT method, COUNT(*) as count FROM runtime_events GROUP BY method ORDER BY method ASC"
+    )
+    .all() as Array<{ count?: number; method?: string }>;
+  const statusRow = database
+    .prepare(
+      `SELECT
+        SUM(CASE WHEN status_code < 400 THEN 1 ELSE 0 END) as ok,
+        SUM(CASE WHEN status_code >= 400 AND status_code < 500 THEN 1 ELSE 0 END) as client_error,
+        SUM(CASE WHEN status_code >= 500 THEN 1 ELSE 0 END) as server_error
+      FROM runtime_events`
+    )
+    .get() as {
+      client_error?: number;
+      ok?: number;
+      server_error?: number;
+    };
+  const recentEvents = database
+    .prepare(
+      `SELECT
+        elapsed_ms as elapsedMs,
+        endpoint,
+        method,
+        path,
+        request_id as requestId,
+        status_code as statusCode,
+        timestamp
+      FROM runtime_events
+      ORDER BY id DESC
+      LIMIT ?`
+    )
+    .all(Math.max(1, limit)) as RuntimeEventRecord[];
+
+  const methodCounts = Object.fromEntries(
+    methodRows.map((row) => [String(row.method || "UNKNOWN").toUpperCase(), Number(row.count || 0)])
+  );
+
+  return {
+    backend: "sqlite" as const,
+    enabled: true,
+    path: targetPath,
+    persistedCount: Number(countRow.count || 0),
+    lastEventAt: countRow.last_event_at || null,
+    methodCounts,
+    statusClasses: {
+      ok: Number(statusRow.ok || 0),
+      clientError: Number(statusRow.client_error || 0),
+      serverError: Number(statusRow.server_error || 0),
+    },
+    recentEvents: recentEvents.reverse(),
+  };
+}
+
+export function appendRuntimeEvent(record: RuntimeEventRecord): void {
+  const targetPath = resolveStorePath();
+  const backend = resolveStoreBackend(targetPath);
+  if (backend === "jsonl") {
+    mkdirSync(path.dirname(targetPath), { recursive: true });
+    appendFileSync(targetPath, `${JSON.stringify(record)}\n`, "utf8");
+    return;
+  }
+
+  const database = ensureSqliteStore(targetPath);
+  database
+    .prepare(
+      `INSERT INTO runtime_events (
+        timestamp,
+        method,
+        path,
+        endpoint,
+        status_code,
+        elapsed_ms,
+        request_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`
+    )
+    .run(
+      record.timestamp,
+      record.method,
+      record.path,
+      record.endpoint,
+      record.statusCode,
+      record.elapsedMs,
+      record.requestId ?? null
+    );
+}
+
+export function buildRuntimeStoreSummary(limit = 25) {
+  const targetPath = resolveStorePath();
+  const backend = resolveStoreBackend(targetPath);
+  return backend === "jsonl"
+    ? buildJsonlSummary(targetPath, limit)
+    : buildSqliteSummary(targetPath, limit);
+}
+
