@@ -39,24 +39,26 @@ describe("GET /api/evals/replays", () => {
   });
 
   it("returns a filtered replay summary surface for reviewer triage", async () => {
-    const res = await fetch(`${baseUrl}/api/evals/replays/summary?status=fail&limit=2`);
+    const res = await fetch(`${baseUrl}/api/evals/replays/summary?status=pass&limit=2`);
     const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.summaryId).toBe("incident-replay-summary-v1");
-    expect(body.filters.status).toBe("fail");
+    expect(body.filters.category).toBeNull();
+    expect(body.filters.status).toBe("pass");
     expect(body.filters.limit).toBe(2);
     expect(Array.isArray(body.topFailureBuckets)).toBe(true);
+    expect(Array.isArray(body.totals.availableCategories)).toBe(true);
     expect(body.spotlightCases.length).toBeLessThanOrEqual(2);
-    expect(body.spotlightCases.every((item: { status: string }) => item.status === "fail")).toBe(true);
+    expect(body.spotlightCases.every((item: { status: string }) => item.status === "pass")).toBe(true);
   });
 
   it("rejects invalid replay summary filters", async () => {
-    const res = await fetch(`${baseUrl}/api/evals/replays/summary?status=unknown`);
+    const res = await fetch(`${baseUrl}/api/evals/replays/summary?category=unknown`);
     const body = await res.json();
 
     expect(res.status).toBe(400);
-    expect(body.error.message).toContain("status must be either");
+    expect(body.error.message).toContain("category must match");
   });
 });

@@ -324,15 +324,24 @@ app.get("/api/evals/replays", (req, res) => {
 app.get("/api/evals/replays/summary", (req, res) => {
   const rawLimit = Number.parseInt(String(req.query.limit || ""), 10);
   const limit = Number.isFinite(rawLimit) ? rawLimit : undefined;
+  const rawCategory = String(req.query.category || "").trim().toLowerCase();
   const rawStatus = String(req.query.status || "").trim().toLowerCase();
   const status = rawStatus === "pass" || rawStatus === "fail" ? rawStatus : undefined;
+  const categories = buildIncidentReplayEvalOverview(cfg.maxLogChars).buckets.map((item) =>
+    item.category.toLowerCase()
+  );
+  const category = rawCategory ? rawCategory : undefined;
 
   if (rawStatus && !status) {
     return sendError(req, res, 400, "status must be either 'pass' or 'fail'.");
   }
+  if (rawCategory && !categories.includes(rawCategory)) {
+    return sendError(req, res, 400, "category must match a known replay failure bucket.");
+  }
 
   return res.json(
     buildIncidentReplayEvalSummary(cfg.maxLogChars, {
+      category,
       limit,
       status,
     })
