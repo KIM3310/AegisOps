@@ -35,6 +35,13 @@ import { ReplayEvalCard } from './components/ReplayEvalCard';
 import { OperatorReadinessCard } from './components/OperatorReadinessCard';
 import { ReviewPackCard } from './components/ReviewPackCard';
 import { ToastContainer, ToastMessage } from './components/Toast';
+import {
+  buildReviewShareUrl,
+  buildReviewUrlSearch,
+  parseReviewUrlState,
+  replaceReviewUrlSearch,
+  slugifyPresetName,
+} from './utils/urlState';
 
 interface ImageFile {
   file: File;
@@ -79,6 +86,8 @@ const SAMPLE_PRESETS = [
 ];
 
 export default function App() {
+  const initialReviewUrlState =
+    typeof window === 'undefined' ? {} : parseReviewUrlState(window.location.search);
   const [logs, setLogs] = useState('');
   const [images, setImages] = useState<ImageFile[]>([]);
   const [savedIncidents, setSavedIncidents] = useState<SavedIncident[]>(() => StorageService.getIncidents());
@@ -99,30 +108,60 @@ export default function App() {
   const [apiKeyBusy, setApiKeyBusy] = useState(false);
   const [apiKeySource, setApiKeySource] = useState<ApiKeySource>('none');
   const [showApiKeyPanel, setShowApiKeyPanel] = useState(false);
-  const [enableGrounding, setEnableGrounding] = useState(false);
+  const [enableGrounding, setEnableGrounding] = useState(
+    () => initialReviewUrlState.grounding ?? false
+  );
   const tmConfigured = isTeachableMachineConfigured();
   const isOllamaMode = apiHealth?.provider === 'ollama';
   const isStaticDemo = apiHealth?.deployment === 'static-demo';
   const ttsAvailable = apiHealth?.mode === 'live' && apiHealth?.provider === 'gemini';
-  const [enableTmVision, setEnableTmVision] = useState(tmConfigured);
+  const [enableTmVision, setEnableTmVision] = useState(
+    () => initialReviewUrlState.tm ?? tmConfigured
+  );
   const [tmStatus, setTmStatus] = useState<'IDLE' | 'RUNNING' | 'READY' | 'ERROR'>('IDLE');
   const [tmError, setTmError] = useState<string | null>(null);
   const [tmSignals, setTmSignals] = useState<TmImagePrediction[]>([]);
   
   // Modals & UI State
-  const [showHistory, setShowHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(
+    () => initialReviewUrlState.history ?? false
+  );
   const [showGoogleImport, setShowGoogleImport] = useState(false);
   const [showDatasetExport, setShowDatasetExport] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(
+    () => initialReviewUrlState.incident ?? null
+  );
+  const [selectedPresetSlug, setSelectedPresetSlug] = useState<string | null>(
+    () => initialReviewUrlState.preset ?? null
+  );
+  const [reviewStateHydrated, setReviewStateHydrated] = useState(false);
 
   const imagesRef = useRef(images);
+  const initialReviewStateRef = useRef(initialReviewUrlState);
+  const appliedInitialReviewState = useRef(false);
   const reviewRoutes = reviewPack
     ? Object.entries(reviewPack.links).filter(([, href]) => typeof href === 'string' && href.length > 0)
     : [];
   const runtimePosture = apiHealth
     ? `${apiHealth.mode === 'live' ? 'Live backend' : 'Demo backend'} · ${(apiHealth.provider || 'unknown').toUpperCase()}`
     : 'Loading backend posture';
+  const maxLogChars = apiHealth?.limits?.maxLogChars ?? 12000;
+  const maxImages = apiHealth?.limits?.maxImages ?? 16;
+  const logCharsUsed = logs.length;
+  const logCharsRemaining = Math.max(maxLogChars - logCharsUsed, 0);
+  const logsNearBudget = logCharsUsed >= Math.floor(maxLogChars * 0.8);
+  const logsOverBudget = logCharsUsed > maxLogChars;
+  const imagesWithinBudget = Math.min(images.length, maxImages);
+  const extraImages = Math.max(images.length - maxImages, 0);
+  const reviewStateChips = [
+    selectedPresetSlug ? `Preset ${selectedPresetSlug}` : null,
+    selectedIncidentId ? `Incident ${selectedIncidentId.slice(-8)}` : null,
+    enableGrounding ? 'Grounding ON' : 'Grounding OFF',
+    enableTmVision ? 'TM Vision ON' : 'TM Vision OFF',
+    showHistory ? 'History open' : null,
+  ].filter((value): value is string => Boolean(value));
   
   useEffect(() => {
     imagesRef.current = images;
@@ -187,6 +226,7 @@ export default function App() {
 
   useEffect(() => {
     if (!apiHealth) return;
+    if (typeof initialReviewStateRef.current.grounding === 'boolean') return;
     setEnableGrounding((prev) => prev || apiHealth.defaults?.grounding || false);
   }, [apiHealth]);
 
@@ -205,6 +245,78 @@ export default function App() {
   const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
+
+  useEffect(() => {
+    if (appliedInitialReviewState.current) return;
+    const initialState = initialReviewStateRef.current;
+    if (!initialState) {
+      appliedInitialReviewState.current = true;
+      setReviewStateHydrated(true);
+      return;
+    }
+
+    if (initialState.history) {
+      setShowHistory(true);
+    }
+
+    if (initialState.incident) {
+      const incident = savedIncidents.find((item) => item.id === initialState.incident);
+      if (incident) {
+        setSelectedIncidentId(incident.id);
+        setSelectedPresetSlug(null);
+        setLogs(incident.inputLogs || '');
+        setImages([]);
+        setReport(incident.report);
+        setStatus('COMPLETE');
+        setError(null);
+      }
+    } else if (initialState.preset) {
+      const preset = SAMPLE_PRESETS.find(
+        (item) => slugifyPresetName(item.name) === initialState.preset
+      );
+      if (preset) {
+        setSelectedPresetSlug(slugifyPresetName(preset.name));
+        setSelectedIncidentId(null);
+        setLogs(preset.logs);
+        if (preset.hasImage) {
+          const byteCharacters = atob(DEMO_IMG_BASE64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'image/png' });
+          const file = new File([blob], 'monitoring_dashboard.png', { type: 'image/png' });
+          setImages([{ file, preview: URL.createObjectURL(file) }]);
+        } else {
+          setImages([]);
+        }
+      }
+    }
+
+    appliedInitialReviewState.current = true;
+    setReviewStateHydrated(true);
+  }, [savedIncidents]);
+
+  useEffect(() => {
+    if (!reviewStateHydrated) return;
+    replaceReviewUrlSearch(
+      buildReviewUrlSearch({
+        preset: selectedPresetSlug ?? undefined,
+        incident: selectedIncidentId ?? undefined,
+        grounding: enableGrounding,
+        tm: enableTmVision,
+        history: showHistory,
+      })
+    );
+  }, [
+    enableGrounding,
+    enableTmVision,
+    reviewStateHydrated,
+    selectedIncidentId,
+    selectedPresetSlug,
+    showHistory,
+  ]);
 
   const handleSaveApiKey = async () => {
     const candidate = apiKeyInput.trim();
@@ -260,7 +372,13 @@ export default function App() {
       file,
       preview: URL.createObjectURL(file)
     }));
+    const nextImageCount = imagesRef.current.length + newImages.length;
     setImages(prev => [...prev, ...newImages]);
+    setSelectedIncidentId(null);
+    setSelectedPresetSlug(null);
+    if (nextImageCount > maxImages) {
+      addToast('info', `Only the first ${maxImages} images will be analyzed (payload safeguard).`);
+    }
     return newImages.length;
   };
 
@@ -308,6 +426,8 @@ export default function App() {
           
           const mergedLogs = contents.join('\n\n');
           setLogs(prev => prev ? `${prev}\n\n${mergedLogs}` : mergedLogs);
+          setSelectedIncidentId(null);
+          setSelectedPresetSlug(null);
           addToast('info', `${textFiles.length} logs added`);
         } catch (err) {
           console.error("File read error:", err);
@@ -320,6 +440,8 @@ export default function App() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const count = processAndAddImages(Array.from(e.target.files));
+      setSelectedIncidentId(null);
+      setSelectedPresetSlug(null);
       addToast('info', `${count} screenshots added`);
     }
     e.target.value = '';
@@ -331,10 +453,15 @@ export default function App() {
       if (target) URL.revokeObjectURL(target.preview);
       return prev.filter((_, i) => i !== index);
     });
+    setSelectedIncidentId(null);
+    setSelectedPresetSlug(null);
   };
 
   const loadPreset = (preset: (typeof SAMPLE_PRESETS)[0]) => {
     setLogs(preset.logs);
+    setSelectedPresetSlug(slugifyPresetName(preset.name));
+    setSelectedIncidentId(null);
+    setShowHistory(false);
     images.forEach(img => URL.revokeObjectURL(img.preview));
 
     if (preset.hasImage) {
@@ -404,6 +531,54 @@ export default function App() {
     }
   };
 
+  const copyReviewStateLink = async () => {
+    const shareUrl = buildReviewShareUrl(
+      buildReviewUrlSearch({
+        preset: selectedPresetSlug ?? undefined,
+        incident: selectedIncidentId ?? undefined,
+        grounding: enableGrounding,
+        tm: enableTmVision,
+        history: showHistory,
+      })
+    );
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      addToast('success', 'Review state link copied');
+    } catch {
+      addToast('error', 'Clipboard copy failed');
+    }
+  };
+
+  const copyReviewerBundle = async () => {
+    const lines = [
+      'AegisOps reviewer bundle',
+      `Runtime: ${runtimePosture}`,
+      `Deployment: ${apiHealth?.deployment ?? reviewPack?.deployment ?? 'unknown'}`,
+      `Schema: ${reportSchema?.schemaId ?? 'unavailable'}`,
+      '',
+      'Current review state',
+      ...reviewStateChips.map((chip) => `- ${chip}`),
+      '',
+      'Fast links',
+      ...(reviewRoutes.length > 0
+        ? reviewRoutes.map(([label, href]) => `- ${label}: ${href}`)
+        : ['- Review routes unavailable.']),
+      '',
+      'Proof assets',
+      ...(reviewPack?.proofAssets?.length
+        ? reviewPack.proofAssets.map((item) => `- ${item.label} [${item.kind}]: ${item.path}`)
+        : ['- Proof assets unavailable.']),
+    ];
+
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      addToast('success', 'Reviewer bundle copied');
+    } catch {
+      addToast('error', 'Clipboard copy failed');
+    }
+  };
+
   const copyEvidenceSnapshot = async () => {
     const lines = [
       'AegisOps evidence snapshot',
@@ -422,6 +597,26 @@ export default function App() {
     try {
       await navigator.clipboard.writeText(lines.join('\n'));
       addToast('success', 'Evidence snapshot copied');
+    } catch {
+      addToast('error', 'Clipboard copy failed');
+    }
+  };
+
+  const copyPayloadBudgetSnapshot = async () => {
+    const lines = [
+      'AegisOps payload budget snapshot',
+      `Logs used: ${logCharsUsed.toLocaleString()}/${maxLogChars.toLocaleString()}`,
+      `Images used: ${imagesWithinBudget}/${maxImages}`,
+      `Extra images trimmed: ${extraImages}`,
+      `Grounding: ${enableGrounding ? 'on' : 'off'}`,
+      `TM Vision: ${enableTmVision ? 'on' : 'off'}`,
+      `Preset: ${selectedPresetSlug ?? 'none'}`,
+      `Incident: ${selectedIncidentId ?? 'none'}`,
+    ];
+
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      addToast('success', 'Payload budget snapshot copied');
     } catch {
       addToast('error', 'Clipboard copy failed');
     }
@@ -501,11 +696,15 @@ export default function App() {
 
   const handleImportLogs = (importedLogs: string) => {
     setLogs((prev) => (prev ? `${prev}\n\n${importedLogs}` : importedLogs));
+    setSelectedIncidentId(null);
+    setSelectedPresetSlug(null);
     addToast('success', 'Logs imported successfully');
   };
 
   const handleImportImages = (importedImages: File[]) => {
     processAndAddImages(importedImages);
+    setSelectedIncidentId(null);
+    setSelectedPresetSlug(null);
     addToast('success', 'Images imported successfully');
   };
 
@@ -525,7 +724,6 @@ export default function App() {
     let progressInterval: ReturnType<typeof setInterval> | null = null;
 
     try {
-      const maxImages = apiHealth?.limits?.maxImages ?? 16;
       const imagesToAnalyze = images.slice(0, maxImages);
       if (images.length > maxImages) {
         addToast('info', `Analyzing first ${maxImages} images only (payload safeguard).`);
@@ -588,6 +786,11 @@ export default function App() {
         }
       }
 
+      if (effectiveLogs.length > maxLogChars) {
+        effectiveLogs = effectiveLogs.slice(0, maxLogChars);
+        addToast('info', `Logs were trimmed to ${maxLogChars.toLocaleString()} chars to match the backend payload budget.`);
+      }
+
       progressInterval = setInterval(() => {
         setAnalysisProgress((prev) => Math.min(prev + Math.random() * 12, 90));
       }, 500);
@@ -604,6 +807,7 @@ export default function App() {
       const analysisTime = Date.now() - startTime;
       const saved = StorageService.saveIncident(result, effectiveLogs, images.length, analysisTime);
       setSavedIncidents((prev) => [saved, ...prev]);
+      setSelectedIncidentId(saved.id);
 
       setReport(result);
       setStatus('COMPLETE');
@@ -624,6 +828,9 @@ export default function App() {
     
     setLogs('');
     setImages([]);
+    setSelectedIncidentId(null);
+    setSelectedPresetSlug(null);
+    setShowHistory(false);
     setReport(null);
     setStatus('IDLE');
     setError(null);
@@ -635,6 +842,7 @@ export default function App() {
   };
 
   const handleEditInputs = () => {
+    setSelectedIncidentId(null);
     setReport(null);
     setStatus('IDLE');
     setError(null);
@@ -651,6 +859,9 @@ export default function App() {
     if (incident && incident.report) {
         images.forEach(img => URL.revokeObjectURL(img.preview));
         setImages([]);
+        setSelectedIncidentId(incident.id);
+        setSelectedPresetSlug(null);
+        setShowHistory(false);
         setReport(incident.report);
         setLogs(incident.inputLogs || '');
         setStatus('COMPLETE');
@@ -668,6 +879,9 @@ export default function App() {
   const handleDeleteIncident = (id: string) => {
     StorageService.deleteIncident(id);
     setSavedIncidents((prev) => prev.filter((inc) => inc.id !== id));
+    if (selectedIncidentId === id) {
+      setSelectedIncidentId(null);
+    }
     addToast('info', 'Incident deleted');
   };
 
@@ -677,11 +891,72 @@ export default function App() {
         if (status === 'IDLE' && (logs.trim() || images.length > 0)) {
           handleAnalyze();
         }
+        return;
+      }
+
+      const target = e.target as HTMLElement | null;
+      const tagName = target?.tagName?.toLowerCase();
+      const isTypingTarget =
+        Boolean(target?.isContentEditable) ||
+        tagName === 'input' ||
+        tagName === 'textarea' ||
+        tagName === 'select';
+      if (isTypingTarget || e.altKey || (!e.shiftKey && (e.metaKey || e.ctrlKey))) {
+        return;
+      }
+      if (!e.shiftKey) {
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+      if (key === 'l') {
+        e.preventDefault();
+        void copyReviewStateLink();
+      } else if (key === 'r') {
+        e.preventDefault();
+        void copyReviewRoutes();
+      } else if (key === 'k') {
+        e.preventDefault();
+        void copyReviewChecklist();
+      } else if (key === 'e') {
+        e.preventDefault();
+        void copyEvidenceSnapshot();
+      } else if (key === 'b') {
+        e.preventDefault();
+        void copyReviewerBundle();
+      } else if (key === 'm') {
+        e.preventDefault();
+        void copyPayloadBudgetSnapshot();
+      } else if (key === 'p') {
+        e.preventDefault();
+        loadStrongestPreset();
+      } else if (key === 'h') {
+        e.preventDefault();
+        setShowHistory((prev) => !prev);
+      } else if (key === '?') {
+        e.preventDefault();
+        addToast('info', 'Hotkeys: ⌘Enter analyze · L link · R routes · K checklist · E evidence · B bundle · M payload budget · P preset · H history');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [logs, images, status]);
+  }, [
+    apiHealth?.deployment,
+    copyEvidenceSnapshot,
+    copyReviewChecklist,
+    copyReviewRoutes,
+    copyReviewStateLink,
+    copyPayloadBudgetSnapshot,
+    copyReviewerBundle,
+    images.length,
+    logs,
+    reportSchema?.schemaId,
+    reviewPack,
+    reviewRoutes,
+    reviewStateChips,
+    runtimePosture,
+    status,
+  ]);
 
   return (
     <div className="min-h-screen bg-bg selection:bg-accent/30 selection:text-white relative overflow-hidden">
@@ -777,6 +1052,10 @@ export default function App() {
               <History className="w-3.5 h-3.5" />
               {savedIncidents.length > 0 && <span className="bg-accent/20 text-accent px-1.5 rounded-full text-[10px] font-bold min-w-[1.25rem] text-center">{savedIncidents.length}</span>}
             </button>
+            <button onClick={copyReviewStateLink} className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors">
+              <FileText className="w-3.5 h-3.5" />
+              Copy Review Link
+            </button>
           </div>
         </div>
       </header>
@@ -870,7 +1149,29 @@ export default function App() {
                 >
                   Copy Incident Claim
                 </button>
+                <button
+                  onClick={copyReviewStateLink}
+                  className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                >
+                  Copy Review Link
+                </button>
+                <button
+                  onClick={copyReviewerBundle}
+                  className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                >
+                  Copy Reviewer Bundle
+                </button>
+                <button
+                  onClick={copyPayloadBudgetSnapshot}
+                  className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                >
+                  Copy Payload Budget
+                </button>
               </div>
+
+              <p className="text-[11px] text-text-dim">
+                Hotkeys: <span className="text-text">⌘Enter</span> analyze · <span className="text-text">L</span> link · <span className="text-text">R</span> routes · <span className="text-text">K</span> checklist · <span className="text-text">E</span> evidence · <span className="text-text">B</span> bundle · <span className="text-text">M</span> payload budget · <span className="text-text">P</span> preset · <span className="text-text">H</span> history
+              </p>
 
               <div className="flex flex-wrap gap-2">
                 <span className="text-[10px] px-2 py-1 rounded-full border bg-accent/10 text-accent border-accent/20">
@@ -882,6 +1183,11 @@ export default function App() {
                 <span className="text-[10px] px-2 py-1 rounded-full border bg-bg text-text-dim border-border">
                   Replay {replayOverview ? `${replayOverview.passRate}% pass` : 'loading'}
                 </span>
+                {reviewStateChips.map((chip) => (
+                  <span key={chip} className="text-[10px] px-2 py-1 rounded-full border bg-bg text-text-dim border-border">
+                    {chip}
+                  </span>
+                ))}
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
@@ -1030,16 +1336,39 @@ export default function App() {
                   <label htmlFor="log-input" className="flex items-center gap-2 text-xs font-medium text-text-muted cursor-pointer group-hover:text-text transition-colors">
                     <FileText className="w-4 h-4" />System Logs
                   </label>
-                  <span className="text-[10px] text-text-dim px-2 py-0.5 bg-bg rounded-full border border-border">{logs.split('\n').filter(Boolean).length} lines</span>
+                  <span className="text-[10px] text-text-dim px-2 py-0.5 bg-bg rounded-full border border-border">
+                    {logs.split('\n').filter(Boolean).length} lines
+                  </span>
                 </div>
                 <textarea
                   id="log-input"
                   value={logs}
-                  onChange={(e) => setLogs(e.target.value)}
+                  onChange={(e) => {
+                    setLogs(e.target.value);
+                    setSelectedIncidentId(null);
+                    setSelectedPresetSlug(null);
+                  }}
                   placeholder="Paste raw logs here..."
                   className="flex-1 w-full p-3 bg-bg border border-border rounded-md text-xs font-mono text-text placeholder-text-dim/50 resize-none focus:outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent/50 transition-all leading-relaxed"
                   spellCheck={false}
                 />
+                <div className="mt-2 flex items-center justify-between text-[10px]">
+                  <span className={`${logsOverBudget ? 'text-sev1' : logsNearBudget ? 'text-sev2' : 'text-text-dim'}`}>
+                    {logCharsUsed.toLocaleString()} / {maxLogChars.toLocaleString()} chars
+                  </span>
+                  <span className="text-text-dim">
+                    {logCharsRemaining.toLocaleString()} chars remaining
+                  </span>
+                </div>
+                {logsOverBudget ? (
+                  <p className="mt-1 text-[10px] text-sev1">
+                    Analyze will trim logs to the backend limit before upload.
+                  </p>
+                ) : logsNearBudget ? (
+                  <p className="mt-1 text-[10px] text-sev2">
+                    Near the payload limit. Extra context may be trimmed after Teachable Machine signals are appended.
+                  </p>
+                ) : null}
               </div>
 
               <div className="bg-bg-card border border-border rounded-lg p-4 flex flex-col h-[280px] shadow-sm hover:border-border-light transition-colors group">
@@ -1047,7 +1376,9 @@ export default function App() {
                   <div className="flex items-center gap-2 text-xs font-medium text-text-muted group-hover:text-text transition-colors">
                     <ImageIcon className="w-4 h-4" />Screenshots
                   </div>
-                  <span className="text-[10px] text-text-dim px-2 py-0.5 bg-bg rounded-full border border-border">{images.length} files</span>
+                  <span className="text-[10px] text-text-dim px-2 py-0.5 bg-bg rounded-full border border-border">
+                    {images.length} files
+                  </span>
                 </div>
                 
                 <div className="flex-1 flex flex-col">
@@ -1061,11 +1392,11 @@ export default function App() {
                           </button>
                         </div>
                       ))}
-                      <label className="aspect-square rounded border border-dashed border-border flex items-center justify-center cursor-pointer hover:bg-bg-hover hover:border-text-dim transition-colors text-text-dim">
-                        <Upload className="w-4 h-4" />
-                        <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
-                      </label>
-                    </div>
+                    <label className="aspect-square rounded border border-dashed border-border flex items-center justify-center cursor-pointer hover:bg-bg-hover hover:border-text-dim transition-colors text-text-dim">
+                      <Upload className="w-4 h-4" />
+                      <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                    </label>
+                  </div>
                   ) : (
                     <label className="flex-1 flex flex-col items-center justify-center border border-dashed border-border rounded-md cursor-pointer hover:border-text-dim hover:bg-bg-hover/50 transition-all text-text-dim">
                       <div className="w-10 h-10 rounded-full bg-bg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
@@ -1076,6 +1407,14 @@ export default function App() {
                       <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
                     </label>
                   )}
+                  <div className="mt-2 flex items-center justify-between text-[10px]">
+                    <span className={`${extraImages > 0 ? 'text-sev2' : 'text-text-dim'}`}>
+                      {imagesWithinBudget} / {maxImages} images will be analyzed
+                    </span>
+                    <span className="text-text-dim">
+                      {extraImages > 0 ? `${extraImages} extra files ignored` : 'Within image budget'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
