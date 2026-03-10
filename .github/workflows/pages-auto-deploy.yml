@@ -23,6 +23,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Skip deploy when Cloudflare secrets are missing
+        if: ${{ env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == '' }}
+        run: echo "Cloudflare secrets are not configured; skipping Pages deploy."
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -36,6 +40,7 @@ jobs:
           npm run build
 
       - name: Deploy to Cloudflare Pages (retry)
+        if: ${{ env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' }}
         run: |
           set -euo pipefail
           for attempt in 1 2 3; do
