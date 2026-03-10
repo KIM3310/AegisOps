@@ -123,6 +123,14 @@ export default function App() {
   const runtimePosture = apiHealth
     ? `${apiHealth.mode === 'live' ? 'Live backend' : 'Demo backend'} · ${(apiHealth.provider || 'unknown').toUpperCase()}`
     : 'Loading backend posture';
+  const maxLogChars = apiHealth?.limits?.maxLogChars ?? 12000;
+  const maxImages = apiHealth?.limits?.maxImages ?? 16;
+  const logCharsUsed = logs.length;
+  const logCharsRemaining = Math.max(maxLogChars - logCharsUsed, 0);
+  const logsNearBudget = logCharsUsed >= Math.floor(maxLogChars * 0.8);
+  const logsOverBudget = logCharsUsed > maxLogChars;
+  const imagesWithinBudget = Math.min(images.length, maxImages);
+  const extraImages = Math.max(images.length - maxImages, 0);
   
   useEffect(() => {
     imagesRef.current = images;
@@ -260,7 +268,11 @@ export default function App() {
       file,
       preview: URL.createObjectURL(file)
     }));
+    const nextImageCount = imagesRef.current.length + newImages.length;
     setImages(prev => [...prev, ...newImages]);
+    if (nextImageCount > maxImages) {
+      addToast('info', `Only the first ${maxImages} images will be analyzed (payload safeguard).`);
+    }
     return newImages.length;
   };
 
@@ -525,7 +537,6 @@ export default function App() {
     let progressInterval: ReturnType<typeof setInterval> | null = null;
 
     try {
-      const maxImages = apiHealth?.limits?.maxImages ?? 16;
       const imagesToAnalyze = images.slice(0, maxImages);
       if (images.length > maxImages) {
         addToast('info', `Analyzing first ${maxImages} images only (payload safeguard).`);
@@ -586,6 +597,11 @@ export default function App() {
           setTmError(tmMessage);
           addToast('error', 'Teachable Machine failed. Continuing without visual signals.');
         }
+      }
+
+      if (effectiveLogs.length > maxLogChars) {
+        effectiveLogs = effectiveLogs.slice(0, maxLogChars);
+        addToast('info', `Logs were trimmed to ${maxLogChars.toLocaleString()} chars to match the backend payload budget.`);
       }
 
       progressInterval = setInterval(() => {
@@ -1030,7 +1046,9 @@ export default function App() {
                   <label htmlFor="log-input" className="flex items-center gap-2 text-xs font-medium text-text-muted cursor-pointer group-hover:text-text transition-colors">
                     <FileText className="w-4 h-4" />System Logs
                   </label>
-                  <span className="text-[10px] text-text-dim px-2 py-0.5 bg-bg rounded-full border border-border">{logs.split('\n').filter(Boolean).length} lines</span>
+                  <span className="text-[10px] text-text-dim px-2 py-0.5 bg-bg rounded-full border border-border">
+                    {logs.split('\n').filter(Boolean).length} lines
+                  </span>
                 </div>
                 <textarea
                   id="log-input"
@@ -1040,6 +1058,23 @@ export default function App() {
                   className="flex-1 w-full p-3 bg-bg border border-border rounded-md text-xs font-mono text-text placeholder-text-dim/50 resize-none focus:outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent/50 transition-all leading-relaxed"
                   spellCheck={false}
                 />
+                <div className="mt-2 flex items-center justify-between text-[10px]">
+                  <span className={`${logsOverBudget ? 'text-sev1' : logsNearBudget ? 'text-sev2' : 'text-text-dim'}`}>
+                    {logCharsUsed.toLocaleString()} / {maxLogChars.toLocaleString()} chars
+                  </span>
+                  <span className="text-text-dim">
+                    {logCharsRemaining.toLocaleString()} chars remaining
+                  </span>
+                </div>
+                {logsOverBudget ? (
+                  <p className="mt-1 text-[10px] text-sev1">
+                    Analyze will trim logs to the backend limit before upload.
+                  </p>
+                ) : logsNearBudget ? (
+                  <p className="mt-1 text-[10px] text-sev2">
+                    Near the payload limit. Extra context may be trimmed after Teachable Machine signals are appended.
+                  </p>
+                ) : null}
               </div>
 
               <div className="bg-bg-card border border-border rounded-lg p-4 flex flex-col h-[280px] shadow-sm hover:border-border-light transition-colors group">
@@ -1047,7 +1082,9 @@ export default function App() {
                   <div className="flex items-center gap-2 text-xs font-medium text-text-muted group-hover:text-text transition-colors">
                     <ImageIcon className="w-4 h-4" />Screenshots
                   </div>
-                  <span className="text-[10px] text-text-dim px-2 py-0.5 bg-bg rounded-full border border-border">{images.length} files</span>
+                  <span className="text-[10px] text-text-dim px-2 py-0.5 bg-bg rounded-full border border-border">
+                    {images.length} files
+                  </span>
                 </div>
                 
                 <div className="flex-1 flex flex-col">
@@ -1061,11 +1098,11 @@ export default function App() {
                           </button>
                         </div>
                       ))}
-                      <label className="aspect-square rounded border border-dashed border-border flex items-center justify-center cursor-pointer hover:bg-bg-hover hover:border-text-dim transition-colors text-text-dim">
-                        <Upload className="w-4 h-4" />
-                        <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
-                      </label>
-                    </div>
+                    <label className="aspect-square rounded border border-dashed border-border flex items-center justify-center cursor-pointer hover:bg-bg-hover hover:border-text-dim transition-colors text-text-dim">
+                      <Upload className="w-4 h-4" />
+                      <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                    </label>
+                  </div>
                   ) : (
                     <label className="flex-1 flex flex-col items-center justify-center border border-dashed border-border rounded-md cursor-pointer hover:border-text-dim hover:bg-bg-hover/50 transition-all text-text-dim">
                       <div className="w-10 h-10 rounded-full bg-bg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
@@ -1076,6 +1113,14 @@ export default function App() {
                       <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
                     </label>
                   )}
+                  <div className="mt-2 flex items-center justify-between text-[10px]">
+                    <span className={`${extraImages > 0 ? 'text-sev2' : 'text-text-dim'}`}>
+                      {imagesWithinBudget} / {maxImages} images will be analyzed
+                    </span>
+                    <span className="text-text-dim">
+                      {extraImages > 0 ? `${extraImages} extra files ignored` : 'Within image budget'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
