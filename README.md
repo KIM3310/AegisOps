@@ -15,6 +15,12 @@ into a single, reviewable incident report.
 - Review this repo as an operator surface with multiple runtime postures (demo, Gemini, Ollama), not as a single always-live environment.
 - The live-session pack, review pack, and replay suite matter more than the static UI alone when you judge the product story.
 
+
+## Role signals
+- **AI engineer:** multimodal evidence handling, grounding controls, and structured incident output are all first-class.
+- **Solution architect:** live/demo posture, reviewer routes, and operator-role boundaries are visible in the product surface.
+- **Field / sales engineer:** the repo is easy to walk from screenshot + logs -> incident report -> reviewer bundle.
+
 ## Product Family
 
 AegisOps is the multimodal copilot surface in the broader `Aegis` incident-analysis product family.
