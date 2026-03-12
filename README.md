@@ -21,6 +21,12 @@ into a single, reviewable incident report.
 - **Solution / cloud architect:** live/demo posture, reviewer routes, and operator-role boundaries are visible in the product surface.
 - **Field / solutions engineer:** the repo is easy to walk from screenshot + logs -> incident report -> reviewer bundle.
 
+
+## Portfolio context
+- **Portfolio family:** AI reliability and incident systems
+- **This repo's role:** flagship multimodal incident operator console in the portfolio.
+- **Related repos:** `Aegis-Air`, `stage-pilot`, `ogx`
+
 ## Product Family
 
 AegisOps is the multimodal copilot surface in the broader `Aegis` incident-analysis product family.
