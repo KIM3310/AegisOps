@@ -208,6 +208,19 @@ export default function App() {
   const runtimePosture = apiHealth
     ? `${apiHealth.mode === 'live' ? 'Live backend' : 'Demo backend'} · ${(apiHealth.provider || 'unknown').toUpperCase()}`
     : 'Loading backend posture';
+  const strongestPreset =
+    SAMPLE_PRESETS.find((preset) => preset.name === 'LLM Latency Spike') ?? SAMPLE_PRESETS[0] ?? null;
+  const proofSummary = replayOverview
+    ? `${replayOverview.summary.passRate}% replay pass · ${replayOverview.summary.severityAccuracy}% severity accuracy`
+    : replayEvalLoading
+      ? 'Loading replay proof'
+      : 'Replay proof unavailable';
+  const providerNarrative = providerComparison?.summary.headline ?? 'Compare provider posture only after the replay-backed incident story is clear.';
+  const runtimeEvidenceNote = isStaticDemo
+    ? 'This Pages build uses replay-backed browser proof. Provider posture is comparative guidance here, not live runtime telemetry from this session.'
+    : apiHealth?.mode === 'live'
+      ? 'Live backend routes are available, but the front door still starts with replay evidence before any provider claim.'
+      : 'Demo backend routes are available for rehearsal. Treat provider posture as intent framing until a live provider run is exercised.';
   const maxLogChars = apiHealth?.limits?.maxLogChars ?? 12000;
   const maxImages = apiHealth?.limits?.maxImages ?? 16;
   const logCharsUsed = logs.length;
@@ -703,22 +716,20 @@ export default function App() {
   };
 
   const loadStrongestPreset = () => {
-    const preferredPreset =
-      SAMPLE_PRESETS.find((preset) => preset.name === 'LLM Latency Spike') ?? SAMPLE_PRESETS[0];
-    if (!preferredPreset) {
+    if (!strongestPreset) {
       addToast('error', 'No preset is available');
       return;
     }
-    loadPreset(preferredPreset);
+    loadPreset(strongestPreset);
   };
 
   const copyStrongestPreset = async () => {
-    const preferredPreset =
-      SAMPLE_PRESETS.find((preset) => preset.name === 'LLM Latency Spike') ?? SAMPLE_PRESETS[0];
-    if (!preferredPreset) {
+    if (!strongestPreset) {
       addToast('error', 'No preset is available');
       return;
     }
+
+    const preferredPreset = strongestPreset;
 
     const lines = [
       'AegisOps strongest preset',
@@ -744,8 +755,7 @@ export default function App() {
 
   const copyIncidentClaim = async () => {
     const strongestJourney = reviewPack?.operatorJourney?.[0];
-    const preferredPreset =
-      SAMPLE_PRESETS.find((preset) => preset.name === 'LLM Latency Spike') ?? SAMPLE_PRESETS[0];
+    const preferredPreset = strongestPreset;
     const lines = [
       'AegisOps incident claim snapshot',
       `Headline: ${reviewPack?.headline ?? 'review pack unavailable'}`,
@@ -1234,76 +1244,140 @@ export default function App() {
       <main className="max-w-4xl mx-auto px-4 py-8 relative z-10" role="main">
         {!report && status !== 'COMPLETE' ? (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
-            <div className="mb-8 text-center sm:text-left">
-              <h1 className="text-xl font-semibold mb-2 flex items-center gap-2 justify-center sm:justify-start">
-                Incident Analysis <Sparkles className="w-4 h-4 text-accent animate-pulse" />
-              </h1>
-              <p className="text-sm text-text-muted max-w-xl">
-                Paste system logs or drag & drop monitoring screenshots. 
-                <br className="hidden sm:block"/>Generate a structured incident summary with severity, timeline, and next actions.
-              </p>
-            </div>
-
-            <div className="rounded-lg border border-border bg-bg-card/90 p-4 space-y-3">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-1">
-                  <div className="text-xs font-semibold flex items-center gap-1.5">
-                    <Shield className="w-3.5 h-3.5 text-accent" />
-                    Start here
+            <section className="rounded-2xl border border-border bg-bg-card/95 p-5 sm:p-6 shadow-sm space-y-5">
+              <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-accent">Incident theater front door</div>
+                    <h1 className="text-2xl font-semibold flex items-center gap-2">
+                      Walk a believable incident before you talk about runtime.
+                      <Sparkles className="w-4 h-4 text-accent animate-pulse" />
+                    </h1>
+                    <p className="text-sm text-text-muted max-w-2xl leading-6">
+                      Start with a replay-backed incident claim, show exactly what is proven in this build, then use provider posture and reviewer handoff tools to guide the next conversation.
+                    </p>
                   </div>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {Object.entries(REVIEW_LENSES).map(([key, lens]) => (
+
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-[10px] px-2 py-1 rounded-full border bg-accent/10 text-accent border-accent/20">
+                      {runtimePosture}
+                    </span>
+                    <span className="text-[10px] px-2 py-1 rounded-full border bg-bg text-text-dim border-border">
+                      {proofSummary}
+                    </span>
+                    <span className="text-[10px] px-2 py-1 rounded-full border bg-bg text-text-dim border-border">
+                      Schema {reportSchema?.schemaId ?? 'loading'}
+                    </span>
+                    {strongestPreset && (
+                      <span className="text-[10px] px-2 py-1 rounded-full border bg-bg text-text-dim border-border">
+                        First click {strongestPreset.name}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="rounded-xl border border-border bg-bg/80 px-4 py-3 space-y-2">
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">What this front door proves</div>
+                    <p className="text-sm text-text font-medium">{providerNarrative}</p>
+                    <p className="text-2xs text-text-muted leading-5">{runtimeEvidenceNote}</p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={loadStrongestPreset}
+                      className="h-9 px-4 rounded-md border border-accent/30 bg-accent/10 hover:bg-accent/15 text-sm font-medium text-accent"
+                    >
+                      Load Strongest Preset
+                    </button>
+                    <button
+                      onClick={copyReviewChecklist}
+                      className="h-9 px-4 rounded-md border border-border bg-bg hover:bg-bg-hover text-sm text-text-muted hover:text-text"
+                    >
+                      Copy Review Checklist
+                    </button>
+                    <button
+                      onClick={copyIncidentClaim}
+                      className="h-9 px-4 rounded-md border border-border bg-bg hover:bg-bg-hover text-sm text-text-muted hover:text-text"
+                    >
+                      Copy Incident Claim
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border bg-bg/80 p-4 space-y-3">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">First review pass</div>
+                  <div className="space-y-2">
+                    <article className="rounded-lg border border-border bg-bg-card/70 px-3 py-3">
+                      <div className="text-xs font-semibold text-text">01 · Land the incident story</div>
+                      <p className="text-2xs text-text-muted mt-2 leading-5">
+                        Load {strongestPreset?.name ?? 'the strongest preset'} so the first click opens on a concrete failure, screenshot, and operator-safe summary.
+                      </p>
+                    </article>
+                    <article className="rounded-lg border border-border bg-bg-card/70 px-3 py-3">
+                      <div className="text-xs font-semibold text-text">02 · Separate proof from provider posture</div>
+                      <p className="text-2xs text-text-muted mt-2 leading-5">
+                        Use replay pass rate and severity accuracy as the proof lane, then use provider comparison to explain deployment tradeoffs without implying live measurements.
+                      </p>
+                    </article>
+                    <article className="rounded-lg border border-border bg-bg-card/70 px-3 py-3">
+                      <div className="text-xs font-semibold text-text">03 · Exit with the right handoff</div>
+                      <p className="text-2xs text-text-muted mt-2 leading-5">
+                        Choose the {REVIEW_LENSES[reviewLens].label.toLowerCase()} framing, then end with a checklist, bundle, or escalation brief instead of narrating every panel live.
+                      </p>
+                    </article>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-border/80 pt-5 space-y-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-1">
+                    <div className="text-xs font-semibold flex items-center gap-1.5">
+                      <Shield className="w-3.5 h-3.5 text-accent" />
+                      Reviewer / operator framing
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {Object.entries(REVIEW_LENSES).map(([key, lens]) => (
+                        <button
+                          key={key}
+                          onClick={() => setReviewLens(key as 'recruiter' | 'commander' | 'platform')}
+                          className={`h-7 px-3 rounded-full border text-[11px] font-semibold transition-colors ${
+                            reviewLens === key
+                              ? 'border-accent/40 bg-accent/10 text-accent'
+                              : 'border-border bg-bg text-text-dim hover:text-text hover:bg-bg-hover'
+                          }`}
+                        >
+                          {lens.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-accent">{REVIEW_LENSES[reviewLens].eyebrow}</p>
+                    <p className="text-sm text-text max-w-2xl font-medium">{REVIEW_LENSES[reviewLens].headline}</p>
+                    <p className="text-2xs text-text-muted max-w-2xl">
+                      {REVIEW_LENSES[reviewLens].description}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {REVIEW_LENSES[reviewLens].actions.map((action) => (
                       <button
-                        key={key}
-                        onClick={() => setReviewLens(key as 'recruiter' | 'commander' | 'platform')}
-                        className={`h-7 px-3 rounded-full border text-[11px] font-semibold transition-colors ${
-                          reviewLens === key
-                            ? 'border-accent/40 bg-accent/10 text-accent'
-                            : 'border-border bg-bg text-text-dim hover:text-text hover:bg-bg-hover'
-                        }`}
+                        key={`${reviewLens}-${action.label}`}
+                        onClick={() => void runReviewLensAction(action.type)}
+                        className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
                       >
-                        {lens.label}
+                        {action.label}
                       </button>
                     ))}
                   </div>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-accent">{REVIEW_LENSES[reviewLens].eyebrow}</p>
-                  <p className="text-sm text-text max-w-2xl font-medium">{REVIEW_LENSES[reviewLens].headline}</p>
-                  <p className="text-2xs text-text-muted max-w-2xl">
-                    {REVIEW_LENSES[reviewLens].description}
-                  </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {REVIEW_LENSES[reviewLens].actions.map((action) => (
-                    <button
-                      key={`${reviewLens}-${action.label}`}
-                      onClick={() => void runReviewLensAction(action.type)}
-                      className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
-                    >
-                      {action.label}
-                    </button>
+                <div className="grid gap-3 md:grid-cols-3">
+                  {REVIEW_LENSES[reviewLens].cards.map(([title, body]) => (
+                    <article key={`${reviewLens}-${title}`} className="rounded-lg border border-border bg-bg/80 px-3 py-3">
+                      <div className="text-xs font-semibold text-text">{title}</div>
+                      <p className="text-2xs text-text-muted mt-2 leading-5">{body}</p>
+                    </article>
                   ))}
                 </div>
               </div>
-              <div className="grid gap-3 md:grid-cols-3">
-                {REVIEW_LENSES[reviewLens].cards.map(([title, body]) => (
-                  <article key={`${reviewLens}-${title}`} className="rounded-lg border border-border bg-bg/80 px-3 py-3">
-                    <div className="text-xs font-semibold text-text">{title}</div>
-                    <p className="text-2xs text-text-muted mt-2 leading-5">{body}</p>
-                  </article>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <span className="text-[10px] px-2 py-1 rounded-full border bg-accent/10 text-accent border-accent/20">
-                  {runtimePosture}
-                </span>
-                <span className="text-[10px] px-2 py-1 rounded-full border bg-bg text-text-dim border-border">
-                  Replay first, live later
-                </span>
-                <span className="text-[10px] px-2 py-1 rounded-full border bg-bg text-text-dim border-border">
-                  Schema {reportSchema?.schemaId ?? 'loading'}
-                </span>
-              </div>
-            </div>
+            </section>
 
             <ReplayEvalCard
               overview={replayOverview}
