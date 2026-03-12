@@ -19,10 +19,10 @@ export const ProviderComparisonCard: React.FC<Props> = ({
         <div>
           <div className="text-xs font-semibold flex items-center gap-1.5">
             <RadioTower className="w-3.5 h-3.5 text-accent" />
-            Provider Comparison
+            Provider Posture
           </div>
           <p className="text-2xs text-text-muted mt-1 max-w-2xl leading-relaxed">
-            Compare demo, Gemini, and Ollama tradeoffs before claiming runtime quality, latency, or cost posture.
+            Use replay evidence first, then compare demo, Gemini, and Ollama tradeoffs without overselling this page as a live runtime benchmark.
           </p>
         </div>
         {comparison && (
@@ -48,7 +48,10 @@ export const ProviderComparisonCard: React.FC<Props> = ({
         <div className="mt-4 space-y-4">
           <div className="rounded-lg border border-border bg-bg px-3 py-3 text-2xs text-text-muted">
             <div className="text-xs text-text font-medium">{comparison.summary.headline}</div>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 text-2xs text-text-muted leading-5">
+              Treat the latency, quality, and cost bands below as directional operating posture. They are not per-session live measurements from the current page load.
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
               <span className="px-2 py-1 rounded-full border border-border bg-bg-card/70">
                 Replay baseline {comparison.summary.replayBaselinePassRate}% pass
               </span>
