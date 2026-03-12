@@ -88,6 +88,60 @@ const SAMPLE_PRESETS = [
   },
 ];
 
+const REVIEW_LENSES = {
+  recruiter: {
+    label: 'Recruiter',
+    eyebrow: 'Recruiter lens',
+    headline: 'Show the strongest proof path without making the reviewer hunt.',
+    description:
+      'Lead with the strongest preset, confirm replay quality, then close with a compact reviewer bundle.',
+    cards: [
+      ['01 · Strongest preset', 'Start from a representative incident so the walkthrough lands fast.'],
+      ['02 · Replay proof', 'Use pass rate and severity accuracy before talking about provider quality.'],
+      ['03 · Reviewer bundle', 'Send one compact handoff instead of narrating every panel live.'],
+    ],
+    actions: [
+      { label: 'Load Strongest Preset', type: 'load-preset' },
+      { label: 'Copy Review Checklist', type: 'checklist' },
+      { label: 'Copy Reviewer Bundle', type: 'bundle' },
+    ],
+  },
+  commander: {
+    label: 'Commander',
+    eyebrow: 'Incident commander lens',
+    headline: 'Keep escalation, provider posture, and replay evidence in one deck.',
+    description:
+      'Use this lens when the audience cares about escalation quality, provider tradeoffs, and the next operator move.',
+    cards: [
+      ['01 · Incident claim', 'Summarize the current incident with severity, bucket, and replay posture.'],
+      ['02 · Provider tradeoff', 'Compare static demo, backend runtime, and provider options before escalating.'],
+      ['03 · Escalation brief', 'End with a copyable brief that already contains the fast routes.'],
+    ],
+    actions: [
+      { label: 'Copy Incident Claim', type: 'claim' },
+      { label: 'Copy Escalation Brief', type: 'escalation' },
+      { label: 'Copy Review Routes', type: 'routes' },
+    ],
+  },
+  platform: {
+    label: 'Platform',
+    eyebrow: 'Platform lens',
+    headline: 'Frame the service as an operator-safe incident system, not just a demo.',
+    description:
+      'Use this path when the reviewer is thinking about runtime posture, payload limits, and how the service scales beyond the preset.',
+    cards: [
+      ['01 · Runtime posture', 'Anchor the conversation in deployment mode, provider state, and schema contract.'],
+      ['02 · Payload budget', 'Show where logs and screenshots hit the safety limits before live runtime claims.'],
+      ['03 · Review link', 'Keep a shareable state link so the same proof path can be replayed later.'],
+    ],
+    actions: [
+      { label: 'Copy Payload Budget', type: 'payload' },
+      { label: 'Copy Review Link', type: 'link' },
+      { label: 'Copy Review Routes', type: 'routes' },
+    ],
+  },
+} as const;
+
 export default function App() {
   const initialReviewUrlState =
     typeof window === 'undefined' ? {} : parseReviewUrlState(window.location.search);
@@ -142,6 +196,7 @@ export default function App() {
   const [selectedPresetSlug, setSelectedPresetSlug] = useState<string | null>(
     () => initialReviewUrlState.preset ?? null
   );
+  const [reviewLens, setReviewLens] = useState<'recruiter' | 'commander' | 'platform'>('recruiter');
   const [reviewStateHydrated, setReviewStateHydrated] = useState(false);
 
   const imagesRef = useRef(images);
@@ -772,6 +827,40 @@ export default function App() {
     }
   };
 
+  const runReviewLensAction = async (type: string) => {
+    if (type === 'load-preset') {
+      loadStrongestPreset();
+      return;
+    }
+    if (type === 'checklist') {
+      await copyReviewChecklist();
+      return;
+    }
+    if (type === 'bundle') {
+      await copyReviewerBundle();
+      return;
+    }
+    if (type === 'claim') {
+      await copyIncidentClaim();
+      return;
+    }
+    if (type === 'escalation') {
+      await copyEscalationBrief();
+      return;
+    }
+    if (type === 'payload') {
+      await copyPayloadBudgetSnapshot();
+      return;
+    }
+    if (type === 'link') {
+      await copyReviewStateLink();
+      return;
+    }
+    if (type === 'routes') {
+      await copyReviewRoutes();
+    }
+  };
+
   const handleImportLogs = (importedLogs: string) => {
     setLogs((prev) => (prev ? `${prev}\n\n${importedLogs}` : importedLogs));
     setSelectedIncidentId(null);
@@ -1162,31 +1251,46 @@ export default function App() {
                     <Shield className="w-3.5 h-3.5 text-accent" />
                     Start here
                   </div>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {Object.entries(REVIEW_LENSES).map(([key, lens]) => (
+                      <button
+                        key={key}
+                        onClick={() => setReviewLens(key as 'recruiter' | 'commander' | 'platform')}
+                        className={`h-7 px-3 rounded-full border text-[11px] font-semibold transition-colors ${
+                          reviewLens === key
+                            ? 'border-accent/40 bg-accent/10 text-accent'
+                            : 'border-border bg-bg text-text-dim hover:text-text hover:bg-bg-hover'
+                        }`}
+                      >
+                        {lens.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-accent">{REVIEW_LENSES[reviewLens].eyebrow}</p>
+                  <p className="text-sm text-text max-w-2xl font-medium">{REVIEW_LENSES[reviewLens].headline}</p>
                   <p className="text-2xs text-text-muted max-w-2xl">
-                    If you are reviewing this cold, open the strongest preset first, skim the replay proof,
-                    then compare provider posture before talking about live runtime quality.
+                    {REVIEW_LENSES[reviewLens].description}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={loadStrongestPreset}
-                    className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
-                  >
-                    Load Strongest Preset
-                  </button>
-                  <button
-                    onClick={copyReviewChecklist}
-                    className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
-                  >
-                    Copy Review Checklist
-                  </button>
-                  <button
-                    onClick={copyReviewRoutes}
-                    className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
-                  >
-                    Copy Review Routes
-                  </button>
+                  {REVIEW_LENSES[reviewLens].actions.map((action) => (
+                    <button
+                      key={`${reviewLens}-${action.label}`}
+                      onClick={() => void runReviewLensAction(action.type)}
+                      className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                    >
+                      {action.label}
+                    </button>
+                  ))}
                 </div>
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                {REVIEW_LENSES[reviewLens].cards.map(([title, body]) => (
+                  <article key={`${reviewLens}-${title}`} className="rounded-lg border border-border bg-bg/80 px-3 py-3">
+                    <div className="text-xs font-semibold text-text">{title}</div>
+                    <p className="text-2xs text-text-muted mt-2 leading-5">{body}</p>
+                  </article>
+                ))}
               </div>
               <div className="flex flex-wrap gap-2">
                 <span className="text-[10px] px-2 py-1 rounded-full border bg-accent/10 text-accent border-accent/20">
