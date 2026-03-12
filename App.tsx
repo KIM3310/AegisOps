@@ -1155,6 +1155,52 @@ export default function App() {
               </p>
             </div>
 
+            <div className="rounded-lg border border-border bg-bg-card/90 p-4 space-y-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <div className="text-xs font-semibold flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-accent" />
+                    Start here
+                  </div>
+                  <p className="text-2xs text-text-muted max-w-2xl">
+                    If you are reviewing this cold, open the strongest preset first, skim the replay proof,
+                    then compare provider posture before talking about live runtime quality.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={loadStrongestPreset}
+                    className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                  >
+                    Load Strongest Preset
+                  </button>
+                  <button
+                    onClick={copyReviewChecklist}
+                    className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                  >
+                    Copy Review Checklist
+                  </button>
+                  <button
+                    onClick={copyReviewRoutes}
+                    className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                  >
+                    Copy Review Routes
+                  </button>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="text-[10px] px-2 py-1 rounded-full border bg-accent/10 text-accent border-accent/20">
+                  {runtimePosture}
+                </span>
+                <span className="text-[10px] px-2 py-1 rounded-full border bg-bg text-text-dim border-border">
+                  Replay first, live later
+                </span>
+                <span className="text-[10px] px-2 py-1 rounded-full border bg-bg text-text-dim border-border">
+                  Schema {reportSchema?.schemaId ?? 'loading'}
+                </span>
+              </div>
+            </div>
+
             <ReplayEvalCard
               overview={replayOverview}
               loading={replayEvalLoading}
