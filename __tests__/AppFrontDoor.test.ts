@@ -239,6 +239,7 @@ describe('App front door', () => {
     expect(text).toContain('Walk a believable incident before you talk about runtime.');
     expect(text).toContain('First review pass');
     expect(text).toContain('Load Strongest Preset');
+    expect(text).toContain('Right now');
     expect(text).toContain('Separate proof from provider posture');
     expect(text).toContain('Provider posture is comparative guidance here, not live runtime telemetry from this session.');
   });

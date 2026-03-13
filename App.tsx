@@ -236,6 +236,9 @@ export default function App() {
     enableTmVision ? 'TM Vision ON' : 'TM Vision OFF',
     showHistory ? 'History open' : null,
   ].filter((value): value is string => Boolean(value));
+  const activeReviewLens = REVIEW_LENSES[reviewLens];
+  const reviewLensNextAction = activeReviewLens.actions[0];
+  const reviewLensNextStep = activeReviewLens.cards[0];
   
   useEffect(() => {
     imagesRef.current = images;
@@ -1350,14 +1353,21 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-accent">{REVIEW_LENSES[reviewLens].eyebrow}</p>
-                    <p className="text-sm text-text max-w-2xl font-medium">{REVIEW_LENSES[reviewLens].headline}</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-accent">{activeReviewLens.eyebrow}</p>
+                    <p className="text-sm text-text max-w-2xl font-medium">{activeReviewLens.headline}</p>
                     <p className="text-2xs text-text-muted max-w-2xl">
-                      {REVIEW_LENSES[reviewLens].description}
+                      {activeReviewLens.description}
                     </p>
+                    <div className="rounded-lg border border-border bg-bg/80 px-3 py-3 max-w-xl">
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">Right now</div>
+                      <div className="text-xs font-semibold text-text mt-2">{reviewLensNextAction.label}</div>
+                      <p className="text-2xs text-text-muted mt-2 leading-5">
+                        {reviewLensNextStep[1]}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {REVIEW_LENSES[reviewLens].actions.map((action) => (
+                    {activeReviewLens.actions.map((action) => (
                       <button
                         key={`${reviewLens}-${action.label}`}
                         onClick={() => void runReviewLensAction(action.type)}
@@ -1369,7 +1379,7 @@ export default function App() {
                   </div>
                 </div>
                 <div className="grid gap-3 md:grid-cols-3">
-                  {REVIEW_LENSES[reviewLens].cards.map(([title, body]) => (
+                  {activeReviewLens.cards.map(([title, body]) => (
                     <article key={`${reviewLens}-${title}`} className="rounded-lg border border-border bg-bg/80 px-3 py-3">
                       <div className="text-xs font-semibold text-text">{title}</div>
                       <p className="text-2xs text-text-muted mt-2 leading-5">{body}</p>
