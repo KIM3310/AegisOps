@@ -250,6 +250,10 @@ describe('App front door', () => {
     expect(text).toContain('Walk a believable incident before you talk about runtime.');
     expect(text).toContain('Right now');
     expect(text).toContain('Load Strongest Preset');
+    expect(text).toContain('Decision support');
+    expect(text).toContain('Go now');
+    expect(text).toContain('Hold line');
+    expect(text).toContain('Exit with');
     expect(text).toContain('First review pass');
     expect(text).toContain('Load Strongest Preset');
     expect(text).toContain('Right now');
