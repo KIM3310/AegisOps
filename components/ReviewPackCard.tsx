@@ -17,6 +17,14 @@ export const ReviewPackCard: React.FC<Props> = ({ reviewPack }) => {
 
   const twoMinuteReview = Array.isArray(reviewPack.twoMinuteReview) ? reviewPack.twoMinuteReview : [];
   const proofAssets = Array.isArray(reviewPack.proofAssets) ? reviewPack.proofAssets : [];
+  const fallbackPosture =
+    reviewPack.deployment === "static-demo"
+      ? "Static demo keeps the reviewer path available while backend-only runtime controls stay out of scope."
+      : "Backend runtime is available, so move from replay proof into live scorecard and export checks before handoff.";
+  const nextOperatorStep =
+    reviewPack.deployment === "static-demo"
+      ? "Start with replay proof, then explain what changes when the local API is enabled."
+      : "Open the runtime scorecard after replay proof so the handoff stays grounded in live posture.";
 
   const reviewLinks = [
     { label: "Demo", href: reviewPack.links.demo },
@@ -116,6 +124,16 @@ export const ReviewPackCard: React.FC<Props> = ({ reviewPack }) => {
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">
+        <div className="rounded-lg border border-border bg-bg/70 p-3">
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-text-dim">
+            <Shield className="w-3.5 h-3.5" />
+            Fallback posture
+          </div>
+          <div className="mt-2 text-2xs text-text-muted leading-relaxed">{fallbackPosture}</div>
+          <div className="mt-3 text-[11px] uppercase tracking-[0.18em] text-text-dim">Next operator step</div>
+          <div className="mt-2 text-2xs text-text-muted leading-relaxed">{nextOperatorStep}</div>
+        </div>
+
         <div className="rounded-lg border border-border bg-bg/70 p-3">
           <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-text-dim">
             <ListChecks className="w-3.5 h-3.5" />

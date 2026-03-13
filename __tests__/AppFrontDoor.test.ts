@@ -1,5 +1,6 @@
 import React, { act } from 'react';
 import ReactDOM from 'react-dom/client';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -203,7 +204,6 @@ vi.mock('../components/Toast', () => ({
 }));
 
 import App from '../App';
-
 describe('App front door', () => {
   let container: HTMLDivElement;
   let root: ReactDOM.Root;
@@ -255,5 +255,18 @@ describe('App front door', () => {
     expect(text).toContain('Right now');
     expect(text).toContain('Separate proof from provider posture');
     expect(text).toContain('Provider posture is comparative guidance here, not live runtime telemetry from this session.');
+  });
+});
+
+describe('ReviewPackCard', () => {
+  it('shows fallback posture and next operator step for static-demo packs', async () => {
+    const { ReviewPackCard } = await vi.importActual<typeof import('../components/ReviewPackCard')>(
+      '../components/ReviewPackCard'
+    );
+    const html = renderToStaticMarkup(React.createElement(ReviewPackCard, { reviewPack: mockReviewPack }));
+
+    expect(html).toContain('Fallback posture');
+    expect(html).toContain('Static demo keeps the reviewer path available');
+    expect(html).toContain('Next operator step');
   });
 });
