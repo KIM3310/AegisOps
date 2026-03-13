@@ -237,6 +237,8 @@ describe('App front door', () => {
     const text = container.textContent ?? '';
     expect(text).toContain('Incident theater front door');
     expect(text).toContain('Walk a believable incident before you talk about runtime.');
+    expect(text).toContain('Right now');
+    expect(text).toContain('Load Strongest Preset');
     expect(text).toContain('First review pass');
     expect(text).toContain('Load Strongest Preset');
     expect(text).toContain('Right now');

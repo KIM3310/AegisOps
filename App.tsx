@@ -1284,6 +1284,14 @@ export default function App() {
                     <p className="text-2xs text-text-muted leading-5">{runtimeEvidenceNote}</p>
                   </div>
 
+                  <div className="rounded-xl border border-border bg-bg/80 px-4 py-3 space-y-2">
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">Right now</div>
+                    <p className="text-sm text-text font-medium">{reviewLensNextAction?.label ?? 'Load Strongest Preset'}</p>
+                    <p className="text-2xs text-text-muted leading-5">
+                      {reviewLensNextStep?.[1] ?? 'Start from one concrete incident so the walkthrough lands before provider discussion branches.'}
+                    </p>
+                  </div>
+
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={loadStrongestPreset}
