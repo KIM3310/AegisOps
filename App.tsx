@@ -229,6 +229,22 @@ export default function App() {
   const logsOverBudget = logCharsUsed > maxLogChars;
   const imagesWithinBudget = Math.min(images.length, maxImages);
   const extraImages = Math.max(images.length - maxImages, 0);
+  const payloadGuardrail = logsOverBudget
+    ? {
+        title: "Payload guardrail",
+        detail:
+          "Logs exceed the backend limit, so AegisOps will trim the payload unless you tighten the incident slice first.",
+        next:
+          "Trim the log excerpt or load the strongest preset before you claim live-runtime readiness.",
+      }
+    : extraImages > 0
+      ? {
+          title: "Payload guardrail",
+          detail: `Only the first ${maxImages} image${maxImages === 1 ? "" : "s"} will be analyzed in this request.`,
+          next:
+            "Remove extra screenshots or keep the current strongest proof image set before analyze.",
+        }
+      : null;
   const reviewStateChips = [
     selectedPresetSlug ? `Preset ${selectedPresetSlug}` : null,
     selectedIncidentId ? `Incident ${selectedIncidentId.slice(-8)}` : null,
@@ -1754,6 +1770,14 @@ export default function App() {
                 </div>
               </div>
             </div>
+
+            {payloadGuardrail && (
+              <div className="rounded-lg border border-sev2/20 bg-sev2/5 px-4 py-3 space-y-1">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-sev2">{payloadGuardrail.title}</div>
+                <p className="text-sm text-text font-medium">{payloadGuardrail.detail}</p>
+                <p className="text-2xs text-text-muted leading-5">{payloadGuardrail.next}</p>
+              </div>
+            )}
 
             {error && (
               <div className="flex items-start gap-3 p-4 bg-sev1/5 border border-sev1/20 rounded-lg text-xs text-sev1 animate-in fade-in slide-in-from-top-1">

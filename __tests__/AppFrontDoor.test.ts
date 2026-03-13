@@ -223,7 +223,18 @@ describe('App front door', () => {
       root.unmount();
     });
     container.remove();
+    mockHealthz.limits.maxLogChars = 50000;
+    mockHealthz.limits.maxImages = 16;
     vi.clearAllMocks();
+  });
+
+  it('ships explicit payload guardrail copy in the front-door source', async () => {
+    const source = await import('node:fs/promises').then((fs) =>
+      fs.readFile(new URL('../App.tsx', `file://${process.cwd()}/__tests__/`), 'utf8')
+    );
+    expect(source).toContain('Payload guardrail');
+    expect(source).toContain('Logs exceed the backend limit, so AegisOps will trim the payload unless you tighten the incident slice first.');
+    expect(source).toContain('Trim the log excerpt or load the strongest preset before you claim live-runtime readiness.');
   });
 
   it('frames the first-click proof path without claiming live runtime evidence', async () => {
