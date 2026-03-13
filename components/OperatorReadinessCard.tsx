@@ -52,11 +52,76 @@ function buildWarnings(props: Props): string[] {
   return warnings;
 }
 
+function buildNextMove(props: Props) {
+  const limits = props.health?.limits;
+  const maxImages = limits?.maxImages ?? props.schema?.inputLimits.maxImages ?? 16;
+  const maxLogChars = limits?.maxLogChars ?? props.schema?.inputLimits.maxLogChars ?? 50_000;
+
+  if (!props.logs.trim() && props.imageCount === 0) {
+    return {
+      title: "Load a believable incident first",
+      summary: "Start with a preset or drop in logs/screenshots so the first click proves the incident flow before any runtime claim.",
+      bullets: [
+        "Preset-first is the fastest reviewer-safe path",
+        "A screenshot plus logs makes the report structure feel grounded",
+        "Replay proof matters more than provider talk at this point",
+      ],
+    };
+  }
+
+  if (props.logs.length > maxLogChars || props.imageCount > maxImages) {
+    return {
+      title: "Trim the payload before analysis",
+      summary: "Current evidence is past the default input contract, so reduce the payload before asking the model to reason over it.",
+      bullets: [
+        `Logs budget ${props.logs.length}/${maxLogChars} chars`,
+        `Screenshots budget ${props.imageCount}/${maxImages}`,
+        "Keep the first run focused on the clearest failure evidence",
+      ],
+    };
+  }
+
+  if (props.health?.deployment === "static-demo") {
+    return {
+      title: "Prove the replay path, not live runtime",
+      summary: "This build is static-demo, so the strongest next move is analyze the current incident and then use review routes to explain what would change in live mode.",
+      bullets: [
+        "Static demo can still prove incident structure and reviewer handoff",
+        "Provider comparison is guidance, not live telemetry",
+        "Use the exported report as the handoff artifact",
+      ],
+    };
+  }
+
+  if (props.health?.mode === "demo") {
+    return {
+      title: "Decide whether demo mode is enough",
+      summary: "You can analyze now in demo mode, but switch to a live key or Ollama when the audience expects live-provider evidence.",
+      bullets: [
+        `API key source ${props.apiKeySource}`,
+        "Demo mode is acceptable for structure and workflow walkthroughs",
+        "Move to Gemini or Ollama only when the reviewer asks for live runtime proof",
+      ],
+    };
+  }
+
+  return {
+    title: "Analyze now, then export the handoff",
+    summary: "Inputs fit the service guardrails, so the next move is to run analysis and exit with the report rather than adding more setup noise.",
+    bullets: [
+      `Grounding ${props.enableGrounding ? "enabled" : "disabled"} for this run`,
+      `TM Vision ${props.enableTmVision ? props.tmStatus : "off"}`,
+      "Keep the follow-up bundle focused on severity, actions, and timeline",
+    ],
+  };
+}
+
 export const OperatorReadinessCard: React.FC<Props> = (props) => {
   const limits = props.health?.limits ?? props.schema?.inputLimits;
   const warnings = buildWarnings(props);
   const replayPassRate = props.replayOverview?.summary.passRate ?? props.meta?.replaySuite.passRate ?? 0;
   const severityAccuracy = props.replayOverview?.summary.severityAccuracy ?? props.meta?.replaySuite.severityAccuracy ?? 0;
+  const nextMove = buildNextMove(props);
 
   return (
     <section className="rounded-xl border border-border bg-bg-card/90 p-4 sm:p-5 space-y-4 shadow-sm">
@@ -128,6 +193,20 @@ export const OperatorReadinessCard: React.FC<Props> = (props) => {
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="rounded-lg border border-border bg-bg/70 p-3">
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-text-dim">
+            <Sparkles className="w-3.5 h-3.5" />
+            Best Next Move
+          </div>
+          <div className="mt-2 text-sm font-medium text-text">{nextMove.title}</div>
+          <p className="mt-2 text-2xs text-text-muted leading-relaxed">{nextMove.summary}</p>
+          <div className="mt-3 space-y-2 text-2xs text-text-muted">
+            {nextMove.bullets.map((item) => (
+              <div key={item}>- {item}</div>
+            ))}
+          </div>
+        </div>
+
         <div className="rounded-lg border border-border bg-bg/70 p-3">
           <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-text-dim">
             <ListChecks className="w-3.5 h-3.5" />
