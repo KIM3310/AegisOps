@@ -1295,10 +1295,10 @@ export default function App() {
                       Copy Review Checklist
                     </button>
                     <button
-                      onClick={copyIncidentClaim}
+                      onClick={copyReviewRoutes}
                       className="h-9 px-4 rounded-md border border-border bg-bg hover:bg-bg-hover text-sm text-text-muted hover:text-text"
                     >
-                      Copy Incident Claim
+                      Copy Review Routes
                     </button>
                   </div>
                 </div>
