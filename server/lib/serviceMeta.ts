@@ -194,6 +194,7 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
       liveSessions: "/api/live-sessions",
       liveSessionPack: "/api/live-session-pack",
       postmortemPack: "/api/postmortem-pack",
+      escalationReadiness: "/api/escalation-readiness",
       reviewPack: "/api/review-pack",
       reviewerBundle: "/api/reviewer-bundle",
       reviewerBundleVerify: "/api/reviewer-bundle/verify",

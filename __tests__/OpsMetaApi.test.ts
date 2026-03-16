@@ -86,6 +86,7 @@ describe("service meta endpoints", () => {
     expect(body.reportContract.schemaId).toBe("incident-report-v1");
     expect(body.links.liveSessionPack).toBe("/api/live-session-pack");
     expect(body.links.postmortemPack).toBe("/api/postmortem-pack");
+    expect(body.links.escalationReadiness).toBe("/api/escalation-readiness");
     expect(body.links.reviewPack).toBe("/api/review-pack");
     expect(body.links.reviewerBundle).toBe("/api/reviewer-bundle");
     expect(body.links.reviewerBundleVerify).toBe("/api/reviewer-bundle/verify");
@@ -177,7 +178,35 @@ describe("service meta endpoints", () => {
     expect(body.evidenceTimeline.some((item: { source: string }) => item.source === "runtime-event")).toBe(true);
     expect(body.proofBundle.replaySummaryId).toBe("incident-replay-summary-v1");
     expect(body.links.postmortemPack).toBe("/api/postmortem-pack");
+    expect(body.links.escalationReadiness).toBe("/api/escalation-readiness");
     expect(body.links.runtimeScorecard).toBe("/api/runtime/scorecard");
+  });
+
+  it("returns escalation readiness for commander handoff review", async () => {
+    await fetch(`${baseUrl}/api/analyze`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        logs: "api latency spike on checkout path",
+        images: [],
+        lane: "incident-command",
+        sessionId: "sev1-commander",
+      }),
+    });
+
+    const res = await fetch(`${baseUrl}/api/escalation-readiness`);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.service).toBe("aegisops-escalation-readiness");
+    expect(body.escalationReadinessId).toBe("aegisops-escalation-readiness-v1");
+    expect(["attention", "ready"]).toContain(body.summary.escalationStatus);
+    expect(["high", "moderate", "bounded"]).toContain(body.summary.confidenceBand);
+    expect(body.confidenceBands).toHaveLength(3);
+    expect(body.handoffContract.requiredEvidence).toContain("/api/postmortem-pack");
+    expect(body.links.escalationReadiness).toBe("/api/escalation-readiness");
+    expect(body.links.providerComparison).toBe("/api/evals/providers");
   });
 
   it("returns report schema guidance for operator-facing incident reports", async () => {

@@ -431,6 +431,7 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
       liveSessions: "/api/live-sessions",
       liveSessionPack: "/api/live-session-pack",
       postmortemPack: "/api/postmortem-pack",
+      escalationReadiness: "/api/escalation-readiness",
       reviewPack: "/api/review-pack",
       providerComparison: "/api/evals/providers",
       replaySummary: "/api/evals/replays/summary",
@@ -551,10 +552,122 @@ function buildPostmortemPack() {
       liveSessions: "/api/live-sessions",
       liveSessionPack: "/api/live-session-pack",
       postmortemPack: "/api/postmortem-pack",
+      escalationReadiness: "/api/escalation-readiness",
       reviewPack: "/api/review-pack",
       reviewerBundle: "/api/reviewer-bundle",
       runtimeScorecard: "/api/runtime/scorecard",
       replaySummary: "/api/evals/replays/summary",
+      reportSchema: "/api/schema/report",
+    },
+  };
+}
+
+function buildEscalationReadiness() {
+  const runtimeScorecard = buildRuntimeScorecard("reliability");
+  const postmortemPack = buildPostmortemPack();
+  const liveSessionPack = buildAegisOpsLiveSessionPack({
+    deployment: "backend",
+    maxImages: cfg.maxImages,
+    maxLogChars: cfg.maxLogChars,
+    maxQuestionChars: cfg.maxQuestionChars,
+    maxTtsChars: cfg.maxTtsChars,
+    analyzeModel: getAnalyzeModel(),
+    ttsModel: getActiveProvider() === "ollama" ? "unsupported" : cfg.modelTts,
+  });
+  const providerComparison = buildAegisOpsProviderComparison({
+    deployment: "backend",
+    activeProvider: getActiveProvider(),
+    analyzeModel: getAnalyzeModel(),
+    ttsModel: getActiveProvider() === "ollama" ? "unsupported" : cfg.modelTts,
+    maxLogChars: cfg.maxLogChars,
+  });
+  const blockers: string[] = [];
+  if (runtimeScorecard.summary.replayFailCount > 0) {
+    blockers.push("replay_quality_floor");
+  }
+  if (runtimeScorecard.summary.totalErrors > 0) {
+    blockers.push("runtime_error_posture");
+  }
+  if (postmortemPack.summary.evidenceTimelineCount === 0) {
+    blockers.push("missing_evidence_timeline");
+  }
+
+  const replayPassRate = Number(runtimeScorecard.summary.replayPassRate || 0);
+  const severityAccuracy = Number(runtimeScorecard.summary.severityAccuracy || 0);
+  const confidenceBand =
+    replayPassRate >= 90 && severityAccuracy >= 90
+      ? "high"
+      : replayPassRate >= 80 && severityAccuracy >= 75
+        ? "moderate"
+        : "bounded";
+
+  return {
+    ok: true,
+    service: "aegisops-escalation-readiness",
+    version: 1,
+    generatedAt: new Date().toISOString(),
+    escalationReadinessId: "aegisops-escalation-readiness-v1",
+    headline:
+      "Commander-facing escalation surface that compresses replay quality, live evidence, and provider posture into one handoff decision.",
+    summary: {
+      escalationStatus: blockers.length === 0 ? "ready" : "attention",
+      blockerCount: blockers.length,
+      blockers,
+      provider: runtimeScorecard.provider,
+      replayPassRate,
+      severityAccuracy,
+      liveSessionCount: Number(postmortemPack.summary.liveSessionCount || 0),
+      evidenceTimelineCount: Number(postmortemPack.summary.evidenceTimelineCount || 0),
+      confidenceBand,
+    },
+    confidenceBands: [
+      {
+        band: "high",
+        useWhen: "Replay pass rate and severity accuracy are both strong, with live evidence already captured.",
+      },
+      {
+        band: "moderate",
+        useWhen: "Runtime posture is acceptable, but a reviewer should still inspect replay failures or evidence gaps before escalation.",
+      },
+      {
+        band: "bounded",
+        useWhen: "Treat this as an internal rehearsal surface until replay quality and live evidence improve.",
+      },
+    ],
+    handoffContract: {
+      commanderRoles: liveSessionPack.sessionRoles.map((item) => item.role),
+      requiredEvidence: [
+        "/api/live-session-pack",
+        "/api/postmortem-pack",
+        "/api/runtime/scorecard",
+        "/api/schema/report",
+      ],
+      approvalRule:
+        "Escalate only after replay quality, evidence timeline, and runtime posture are all visible in the same review path.",
+      nextAction:
+        blockers.length === 0
+          ? "Proceed to live commander handoff with the report contract and evidence timeline."
+          : `Resolve ${blockers[0]} before treating the incident output as escalation-ready.`,
+    },
+    providerTradeoff: {
+      currentProvider: providerComparison.summary.currentProvider,
+      headline: providerComparison.summary.headline,
+      compareAgainst: providerComparison.compareAgainst,
+    },
+    reviewActions: [
+      "Read the postmortem pack before sharing a commander-facing narrative.",
+      "Use the runtime scorecard to explain whether the backend was stable during the incident bridge.",
+      "Keep provider tradeoffs visible so privacy, latency, and multimodal quality are explicit during escalation.",
+    ],
+    links: {
+      healthz: "/api/healthz",
+      meta: "/api/meta",
+      liveSessionPack: "/api/live-session-pack",
+      postmortemPack: "/api/postmortem-pack",
+      escalationReadiness: "/api/escalation-readiness",
+      reviewPack: "/api/review-pack",
+      runtimeScorecard: "/api/runtime/scorecard",
+      providerComparison: "/api/evals/providers",
       reportSchema: "/api/schema/report",
     },
   };
@@ -657,6 +770,7 @@ function buildReviewerBundle() {
       meta: "/api/meta",
       liveSessionPack: "/api/live-session-pack",
       postmortemPack: "/api/postmortem-pack",
+      escalationReadiness: "/api/escalation-readiness",
       reviewPack: "/api/review-pack",
       reviewerBundle: "/api/reviewer-bundle",
       reviewerBundleVerify: "/api/reviewer-bundle/verify",
@@ -1067,6 +1181,7 @@ app.get("/api/healthz", (req, res) => {
       tts: "/api/tts",
       liveSessions: "/api/live-sessions",
       liveSessionPack: "/api/live-session-pack",
+      escalationReadiness: "/api/escalation-readiness",
       reviewPack: "/api/review-pack",
       replayEvals: "/api/evals/replays",
       replaySummary: "/api/evals/replays/summary",
@@ -1186,6 +1301,10 @@ app.get("/api/live-session-pack", (req, res) => {
 
 app.get("/api/postmortem-pack", (req, res) => {
   res.json(buildPostmortemPack());
+});
+
+app.get("/api/escalation-readiness", (req, res) => {
+  res.json(buildEscalationReadiness());
 });
 
 app.get("/api/meta", (req, res) => {
