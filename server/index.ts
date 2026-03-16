@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config({ quiet: true });
 
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import express from "express";
 import type { IncidentReport } from "../types";
@@ -156,6 +156,7 @@ function classifyEndpoint(path: string): RuntimeEndpointKey {
   if (path.startsWith("/api/evals/replays")) return "replay";
   if (path.startsWith("/api/meta") || path.startsWith("/api/runtime/scorecard")) return "meta";
   if (
+    path.startsWith("/api/reviewer-bundle") ||
     path.startsWith("/api/review-pack") ||
     path.startsWith("/api/live-session-pack") ||
     path.startsWith("/api/live-sessions") ||
@@ -434,6 +435,111 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
       reportSchema: "/api/schema/report",
       runtimeScorecard: "/api/runtime/scorecard",
       authSession: "/api/auth/session",
+    },
+  };
+}
+
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableJson(item)).join(",")}]`;
+  }
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, nested]) => `${JSON.stringify(key)}:${stableJson(nested)}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function buildReviewerBundleDigest(payload: unknown) {
+  return createHash("sha256").update(stableJson(payload)).digest("hex");
+}
+
+function buildReviewerBundle() {
+  const reviewPack = buildAegisOpsReviewPack({
+    deployment: "backend",
+    maxImages: cfg.maxImages,
+    maxLogChars: cfg.maxLogChars,
+    maxQuestionChars: cfg.maxQuestionChars,
+    maxTtsChars: cfg.maxTtsChars,
+    analyzeModel: getAnalyzeModel(),
+    ttsModel: getActiveProvider() === "ollama" ? "unsupported" : cfg.modelTts,
+  });
+  const liveSessionPack = buildAegisOpsLiveSessionPack({
+    deployment: "backend",
+    maxImages: cfg.maxImages,
+    maxLogChars: cfg.maxLogChars,
+    maxQuestionChars: cfg.maxQuestionChars,
+    maxTtsChars: cfg.maxTtsChars,
+    analyzeModel: getAnalyzeModel(),
+    ttsModel: getActiveProvider() === "ollama" ? "unsupported" : cfg.modelTts,
+  });
+  const runtimeScorecard = buildRuntimeScorecard("quality");
+  const reportSchema = buildIncidentReportSchema({
+    maxImages: cfg.maxImages,
+    maxLogChars: cfg.maxLogChars,
+    maxQuestionChars: cfg.maxQuestionChars,
+    maxTtsChars: cfg.maxTtsChars,
+  });
+  const digestPayload = {
+    reviewPackId: reviewPack.reviewPackId,
+    liveSessionPackId: liveSessionPack.liveSessionPackId,
+    reportSchemaId: reportSchema.schemaId,
+    provider: runtimeScorecard.provider,
+    focus: runtimeScorecard.focus,
+    replaySummary: runtimeScorecard.replaySummary,
+    operatorAuth: runtimeScorecard.operatorAuth,
+    reviewRoutes: reviewPack.links,
+  };
+  const digest = buildReviewerBundleDigest(digestPayload);
+
+  return {
+    ok: true,
+    service: "aegisops-reviewer-bundle",
+    version: 1,
+    generatedAt: new Date().toISOString(),
+    reviewerBundleId: "aegisops-reviewer-bundle-v1",
+    reviewPackId: reviewPack.reviewPackId,
+    liveSessionPackId: liveSessionPack.liveSessionPackId,
+    reportSchemaId: reportSchema.schemaId,
+    provider: runtimeScorecard.provider,
+    bundle: {
+      reviewPack,
+      liveSessionPack,
+      runtimeScorecard: {
+        service: runtimeScorecard.service,
+        focus: runtimeScorecard.focus,
+        summary: runtimeScorecard.summary,
+        recommendations: runtimeScorecard.recommendations,
+      },
+      reportSchema: {
+        schemaId: reportSchema.schemaId,
+        requiredFields: reportSchema.requiredFields,
+        exportFormats: reportSchema.exportFormats,
+      },
+    },
+    integrity: {
+      algorithm: "SHA-256",
+      digest,
+      coveredSections: [
+        "reviewPack",
+        "liveSessionPack",
+        "runtimeScorecard.summary",
+        "reportSchema",
+        "operatorAuth",
+      ],
+      verificationRoute: "/api/reviewer-bundle/verify",
+    },
+    links: {
+      healthz: "/api/healthz",
+      meta: "/api/meta",
+      liveSessionPack: "/api/live-session-pack",
+      reviewPack: "/api/review-pack",
+      reviewerBundle: "/api/reviewer-bundle",
+      reviewerBundleVerify: "/api/reviewer-bundle/verify",
+      runtimeScorecard: "/api/runtime/scorecard",
+      reportSchema: "/api/schema/report",
     },
   };
 }
@@ -982,6 +1088,27 @@ app.get("/api/review-pack", (req, res) => {
       ttsModel: getActiveProvider() === "ollama" ? "unsupported" : cfg.modelTts,
     })
   );
+});
+
+app.get("/api/reviewer-bundle", (req, res) => {
+  res.json(buildReviewerBundle());
+});
+
+app.get("/api/reviewer-bundle/verify", (req, res) => {
+  const providedDigest = String(req.query.digest || "").trim();
+  const bundle = buildReviewerBundle();
+  res.json({
+    ok: true,
+    service: "aegisops-reviewer-bundle-verify",
+    version: 1,
+    generatedAt: new Date().toISOString(),
+    reviewerBundleId: bundle.reviewerBundleId,
+    providedDigest: providedDigest || null,
+    computedDigest: bundle.integrity.digest,
+    match: Boolean(providedDigest) && providedDigest === bundle.integrity.digest,
+    verificationRoute: bundle.integrity.verificationRoute,
+    coveredSections: bundle.integrity.coveredSections,
+  });
 });
 
 app.get("/api/schema/report", (req, res) => {

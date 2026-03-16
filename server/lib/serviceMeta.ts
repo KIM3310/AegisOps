@@ -193,6 +193,8 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
       liveSessions: "/api/live-sessions",
       liveSessionPack: "/api/live-session-pack",
       reviewPack: "/api/review-pack",
+      reviewerBundle: "/api/reviewer-bundle",
+      reviewerBundleVerify: "/api/reviewer-bundle/verify",
       runtimeScorecard: "/api/runtime/scorecard",
       replayEvals: "/api/evals/replays",
       replaySummary: "/api/evals/replays/summary",

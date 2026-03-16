@@ -86,6 +86,8 @@ describe("service meta endpoints", () => {
     expect(body.reportContract.schemaId).toBe("incident-report-v1");
     expect(body.links.liveSessionPack).toBe("/api/live-session-pack");
     expect(body.links.reviewPack).toBe("/api/review-pack");
+    expect(body.links.reviewerBundle).toBe("/api/reviewer-bundle");
+    expect(body.links.reviewerBundleVerify).toBe("/api/reviewer-bundle/verify");
     expect(body.links.runtimeScorecard).toBe("/api/runtime/scorecard");
     expect(body.links.replaySummary).toBe("/api/evals/replays/summary");
     expect(body.links.reportSchema).toBe("/api/schema/report");
@@ -107,6 +109,29 @@ describe("service meta endpoints", () => {
     expect(body.proofBundle.replaySummaryId).toBe("incident-replay-summary-v1");
     expect(body.links.liveSessionPack).toBe("/api/live-session-pack");
     expect(body.links.reviewPack).toBe("/api/review-pack");
+  });
+
+  it("returns a digest-backed reviewer bundle and verification surface", async () => {
+    const bundleRes = await fetch(`${baseUrl}/api/reviewer-bundle`);
+    const bundleBody = await bundleRes.json();
+
+    expect(bundleRes.status).toBe(200);
+    expect(bundleBody.ok).toBe(true);
+    expect(bundleBody.service).toBe("aegisops-reviewer-bundle");
+    expect(bundleBody.reviewerBundleId).toBe("aegisops-reviewer-bundle-v1");
+    expect(bundleBody.integrity.algorithm).toBe("SHA-256");
+    expect(bundleBody.integrity.digest).toHaveLength(64);
+    expect(bundleBody.links.reviewerBundleVerify).toBe("/api/reviewer-bundle/verify");
+
+    const verifyRes = await fetch(
+      `${baseUrl}/api/reviewer-bundle/verify?digest=${bundleBody.integrity.digest}`
+    );
+    const verifyBody = await verifyRes.json();
+
+    expect(verifyRes.status).toBe(200);
+    expect(verifyBody.service).toBe("aegisops-reviewer-bundle-verify");
+    expect(verifyBody.match).toBe(true);
+    expect(verifyBody.computedDigest).toBe(bundleBody.integrity.digest);
   });
 
   it("returns a live session pack for realtime multimodal incident walkthroughs", async () => {
