@@ -170,6 +170,12 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
         label: "Ollama local",
         useWhen: "Running offline local inference without cloud keys.",
       },
+      {
+        id: "openai-live-preview",
+        label: "OpenAI live preview",
+        useWhen:
+          "Running the bounded public reviewer lane with fixed incident bundles and live escalation summaries.",
+      },
     ],
     replaySuite: {
       suiteId: replayOverview.suiteId,
@@ -201,6 +207,7 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
       postmortemPack: "/api/postmortem-pack",
       escalationReadiness: "/api/escalation-readiness",
       systemDesignPack: "/api/system-design-pack",
+      liveEscalationPreview: "/api/live-escalation-preview",
       reviewPack: "/api/review-pack",
       reviewerBundle: "/api/reviewer-bundle",
       reviewerBundleVerify: "/api/reviewer-bundle/verify",

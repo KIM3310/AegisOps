@@ -1,8 +1,13 @@
 import type { ServiceMetaDeployment } from "./serviceMeta";
 import { buildIncidentReplayEvalOverview } from "./replayEvals";
 
-type ActiveProvider = "demo" | "gemini" | "ollama";
-type ProviderCardId = "static-demo" | "demo" | "gemini" | "ollama";
+type ActiveProvider = "demo" | "gemini" | "ollama" | "openai-review";
+type ProviderCardId =
+  | "static-demo"
+  | "demo"
+  | "gemini"
+  | "ollama"
+  | "openai-review";
 type ProviderCostBand = "none" | "local-compute" | "paid";
 type ProviderLatencyBand =
   | "instant"
@@ -51,6 +56,7 @@ export type ProviderComparisonResponse = {
   providers: ProviderCard[];
   links: {
     providerComparison: string;
+    liveEscalationPreview: string;
     replaySummary: string;
     runtimeScorecard: string;
     postmortemPack: string;
@@ -153,6 +159,32 @@ export function buildAegisOpsProviderComparison(
       },
     },
     {
+      id: "openai-review",
+      label: "OpenAI live preview",
+      isCurrent: currentProvider === "openai-review",
+      qualitySignal:
+        "Bounded public reviewer lane using fixed incident bundles and compact escalation summaries.",
+      latencyBand: "network-dependent",
+      costBand: "paid",
+      capabilitySummary:
+        "Reviewer-safe live escalation preview without exposing raw upload or full operator mutation flows.",
+      bestFor: [
+        "public recruiter demos",
+        "incident bundle walkthroughs",
+        "bounded live proof for hiring packets",
+      ],
+      tradeoffs: [
+        "Only fixed incident bundle ids are accepted",
+        "Cost and abuse controls must stay enabled",
+        "Does not replace the full analyst/operator runtime",
+      ],
+      comparison: {
+        qualityDelta: "Adds a public live proof lane without widening the raw ingestion surface",
+        latencyDelta: "Network-dependent but narrower than the full multimodal path",
+        costDelta: "Low paid token path with hard caps",
+      },
+    },
+    {
       id: "ollama",
       label: "Ollama local",
       isCurrent: currentProvider === "ollama",
@@ -194,6 +226,7 @@ export function buildAegisOpsProviderComparison(
     providers,
     links: {
       providerComparison: "/api/evals/providers",
+      liveEscalationPreview: "/api/live-escalation-preview",
       replaySummary: "/api/evals/replays/summary",
       runtimeScorecard: "/api/runtime/scorecard",
       postmortemPack: "/api/postmortem-pack",

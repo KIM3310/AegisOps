@@ -74,6 +74,7 @@ Companion repo:
 ## Review Pack At A Glance
 
 - Reviewer API surface: `GET /api/healthz`, `GET /api/meta`, `GET /api/review-pack`, `GET /api/schema/report`
+- Bounded public live lane: `POST /api/live-escalation-preview`
 - Session history API: `GET /api/live-sessions`, `GET /api/live-sessions/:sessionId`
 - Live session surface: `GET /api/live-session-pack`
 - Postmortem surface: `GET /api/postmortem-pack`
