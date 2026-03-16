@@ -66,6 +66,15 @@ type ApiKeyBody = { apiKey?: string };
 type OperatorSessionBody = { authMode?: string; credential?: string; roles?: string[] | string };
 type KeySource = "runtime" | "env" | "ollama" | "none";
 type ActiveProvider = "demo" | "gemini" | "ollama";
+type OpenAiIncidentBundle = {
+  concern: string;
+  estimatedCostUsd: number;
+  id: string;
+  nextReviewPath: string;
+  prompt: string;
+  severity: string;
+  title: string;
+};
 type RuntimeScorecardFocus = "traffic" | "quality" | "reliability";
 type RuntimeEndpointKey =
   | "health"
@@ -131,6 +140,36 @@ const runtimeTelemetry = {
     providerCalls: 0,
   },
 };
+const OPENAI_BASE_URL = "https://api.openai.com/v1";
+const OPENAI_PUBLIC_DEFAULT_MODEL = "gpt-4.1-mini";
+const OPENAI_PUBLIC_DEFAULT_DAILY_BUDGET_USD = 4;
+const OPENAI_PUBLIC_DEFAULT_MONTHLY_BUDGET_USD = 120;
+const OPENAI_PUBLIC_DEFAULT_RPM = 6;
+const OPENAI_TIMEOUT_MS = 20_000;
+const LIVE_ESCALATION_PREVIEW_SCHEMA = "aegisops-live-escalation-preview-v1";
+const OPENAI_INCIDENT_BUNDLES: Record<string, OpenAiIncidentBundle> = {
+  "checkout-sev1": {
+    id: "checkout-sev1",
+    title: "Checkout latency spike",
+    severity: "SEV1",
+    concern: "Latency and error bursts on the checkout path need a clear escalation stance.",
+    nextReviewPath: "/api/postmortem-pack",
+    estimatedCostUsd: 0.012,
+    prompt:
+      "Logs show checkout worker timeouts, rising 5xx rates, and command-bridge pressure. A screenshot highlights API latency, queue depth, and payment retries. Decide the escalation stance, human handoff boundary, and reviewer proof path.",
+  },
+  "billing-degraded": {
+    id: "billing-degraded",
+    title: "Billing shard degradation",
+    severity: "SEV2",
+    concern: "Billing remains available but degraded, so commander messaging must stay measured.",
+    nextReviewPath: "/api/escalation-readiness",
+    estimatedCostUsd: 0.011,
+    prompt:
+      "Logs show connection-pool saturation on the billing shard, delayed async retries, and contained blast radius. Explain whether this should escalate to commander handoff now or stay in bounded review with evidence collection.",
+  },
+};
+let lastOpenAiLiveRunAt: string | null = null;
 
 const app = express();
 app.disable("x-powered-by");
@@ -1053,6 +1092,157 @@ function maskApiKey(value: string): string {
   return `${value.slice(0, 4)}...${value.slice(-4)}`;
 }
 
+function readBooleanEnv(name: string, fallback: boolean): boolean {
+  const raw = String(process.env[name] || "").trim().toLowerCase();
+  if (!raw) return fallback;
+  if (["1", "true", "yes", "y", "on"].includes(raw)) return true;
+  if (["0", "false", "no", "n", "off"].includes(raw)) return false;
+  return fallback;
+}
+
+function readUsdEnv(name: string, fallback: number): number {
+  const parsed = Number.parseFloat(String(process.env[name] || ""));
+  if (!Number.isFinite(parsed) || Number.isNaN(parsed)) return fallback;
+  return Math.max(0, Math.round(parsed * 100) / 100);
+}
+
+function readClampedIntEnv(name: string, fallback: number, min: number, max: number) {
+  const parsed = Number.parseInt(String(process.env[name] || ""), 10);
+  if (!Number.isFinite(parsed) || Number.isNaN(parsed)) return fallback;
+  return Math.min(Math.max(parsed, min), max);
+}
+
+function getOpenAiRuntimeContract() {
+  const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
+  const killSwitch = readBooleanEnv("OPENAI_KILL_SWITCH", false);
+  const dailyBudgetUsd = readUsdEnv(
+    "OPENAI_PUBLIC_DAILY_BUDGET_USD",
+    OPENAI_PUBLIC_DEFAULT_DAILY_BUDGET_USD
+  );
+  const monthlyBudgetUsd = readUsdEnv(
+    "OPENAI_PUBLIC_MONTHLY_BUDGET_USD",
+    OPENAI_PUBLIC_DEFAULT_MONTHLY_BUDGET_USD
+  );
+  const publicLiveApi =
+    Boolean(apiKey) &&
+    !killSwitch &&
+    dailyBudgetUsd > 0 &&
+    monthlyBudgetUsd > 0;
+  return {
+    apiKey,
+    dailyBudgetUsd,
+    deploymentMode: publicLiveApi ? "public-capped-live" : "review-only-live",
+    killSwitch,
+    lastLiveRunAt: lastOpenAiLiveRunAt,
+    liveModel:
+      String(process.env.OPENAI_MODEL_PUBLIC || "").trim() ||
+      OPENAI_PUBLIC_DEFAULT_MODEL,
+    moderationEnabled: readBooleanEnv("OPENAI_MODERATION_ENABLED", true),
+    monthlyBudgetUsd,
+    publicLiveApi,
+    publicRpm: readClampedIntEnv(
+      "OPENAI_PUBLIC_RPM",
+      OPENAI_PUBLIC_DEFAULT_RPM,
+      1,
+      120
+    ),
+  };
+}
+
+async function callOpenAiModeration(apiKey: string, input: string): Promise<void> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${OPENAI_BASE_URL}/moderations`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      signal: controller.signal,
+      body: JSON.stringify({ model: "omni-moderation-latest", input }),
+    });
+    if (!response.ok) {
+      throw new Error(`Moderation failed (${response.status})`);
+    }
+    const payload = (await response.json()) as {
+      results?: Array<{ flagged?: boolean }>;
+    };
+    if (payload.results?.[0]?.flagged) {
+      throw Object.assign(new Error("content blocked by moderation"), {
+        status: 400,
+      });
+    }
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw Object.assign(new Error("moderation timed out"), { status: 504 });
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function callOpenAiEscalationPreview(options: {
+  apiKey: string;
+  model: string;
+  bundle: OpenAiIncidentBundle;
+}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${OPENAI_BASE_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${options.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: options.model,
+        temperature: 0.2,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a principal incident commander. Return compact JSON with keys escalationStance, confidenceBand, handoffSummary, reviewerEvidence, commanderMessage, nextAction.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify(options.bundle),
+          },
+        ],
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`OpenAI request failed (${response.status})`);
+    }
+    const payload = (await response.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    const content = String(payload.choices?.[0]?.message?.content || "").trim();
+    if (!content) {
+      throw new Error("OpenAI response content was empty");
+    }
+    return JSON.parse(content) as Record<string, unknown>;
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw Object.assign(new Error("OpenAI response was not valid JSON"), {
+        status: 502,
+      });
+    }
+    if (error instanceof Error && error.name === "AbortError") {
+      throw Object.assign(new Error("OpenAI request timed out"), {
+        status: 504,
+      });
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 app.use((req, res, next) => {
   req.requestId = String(req.headers["x-request-id"] || nextRequestId());
   req.operatorSession = applyOperatorSession(req);
@@ -1256,6 +1446,7 @@ app.get("/api/healthz", (req, res) => {
   const provider = getActiveProvider();
   const providerConfigured = isBackendConfigured();
   const cacheEntries = analyzeCache.size();
+  const openAi = getOpenAiRuntimeContract();
   res.json({
     ok: true,
     status: "ok",
@@ -1297,10 +1488,13 @@ app.get("/api/healthz", (req, res) => {
       providerConfigured,
       cachePressure: cacheEntries >= Math.floor(cfg.analyzeCacheMaxEntries * 0.8) ? "elevated" : "stable",
       nextAction:
-        provider === "demo"
+        openAi.publicLiveApi
+          ? "use /api/live-escalation-preview with a fixed incidentBundleId for the bounded public live lane."
+          : provider === "demo"
           ? "configure Gemini API key or switch to Ollama for live incident analysis."
           : "runtime healthy",
     },
+    openai: openAi,
     auth: {
       operatorTokenEnabled: isOperatorAuthEnabled(),
       operatorAuthMode: getOperatorAuthStatus().mode,
@@ -1330,6 +1524,7 @@ app.get("/api/healthz", (req, res) => {
       liveSessions: "/api/live-sessions",
       liveSessionPack: "/api/live-session-pack",
       escalationReadiness: "/api/escalation-readiness",
+      liveEscalationPreview: "/api/live-escalation-preview",
       systemDesignPack: "/api/system-design-pack",
       reviewPack: "/api/review-pack",
       replayEvals: "/api/evals/replays",
@@ -1391,7 +1586,10 @@ app.get("/api/runtime/scorecard", (req, res) => {
   if (rawFocus && rawFocus !== "traffic" && rawFocus !== "quality" && rawFocus !== "reliability") {
     return sendError(req, res, 400, "focus must be one of 'traffic', 'quality', or 'reliability'.");
   }
-  return res.json(buildRuntimeScorecard(normalizeScorecardFocus(rawFocus)));
+  return res.json({
+    ...buildRuntimeScorecard(normalizeScorecardFocus(rawFocus)),
+    openai: getOpenAiRuntimeContract(),
+  });
 });
 
 app.get("/api/live-sessions", (req, res) => {
@@ -1460,9 +1658,79 @@ app.get("/api/system-design-pack", (req, res) => {
   res.json(buildSystemDesignPack());
 });
 
+app.post("/api/live-escalation-preview", async (req, res) => {
+  const runtime = getOpenAiRuntimeContract();
+  if (!runtime.publicLiveApi) {
+    return sendError(
+      req,
+      res,
+      503,
+      "public OpenAI live preview is unavailable; configure OPENAI_API_KEY and keep budgets above zero."
+    );
+  }
+  if (
+    isRateLimited(
+      `${normalizeIp(req)}:live-escalation-preview`,
+      runtime.publicRpm,
+      60_000
+    )
+  ) {
+    return sendError(req, res, 429, "Too many live escalation preview requests. Please slow down.");
+  }
+
+  const incidentBundleId = String((req.body || {}).incidentBundleId || "")
+    .trim()
+    .toLowerCase();
+  const bundle = OPENAI_INCIDENT_BUNDLES[incidentBundleId];
+  if (!bundle) {
+    return sendError(
+      req,
+      res,
+      400,
+      "incidentBundleId must be one of checkout-sev1 or billing-degraded."
+    );
+  }
+
+  try {
+    if (runtime.moderationEnabled) {
+      await callOpenAiModeration(runtime.apiKey, bundle.prompt);
+    }
+    const result = await callOpenAiEscalationPreview({
+      apiKey: runtime.apiKey,
+      model: runtime.liveModel,
+      bundle,
+    });
+    lastOpenAiLiveRunAt = new Date().toISOString();
+    return res.json({
+      ok: true,
+      schema: LIVE_ESCALATION_PREVIEW_SCHEMA,
+      mode: runtime.deploymentMode,
+      model: runtime.liveModel,
+      scenarioId: bundle.id,
+      moderated: true,
+      capped: true,
+      traceId: req.requestId,
+      estimatedCostUsd: bundle.estimatedCostUsd,
+      nextReviewPath: bundle.nextReviewPath,
+      result: {
+        title: bundle.title,
+        severity: bundle.severity,
+        concern: bundle.concern,
+        ...result,
+      },
+    });
+  } catch (error) {
+    const status = classifyErrorStatus(error);
+    const message =
+      error instanceof Error ? error.message : "live escalation preview failed";
+    return sendError(req, res, status, message);
+  }
+});
+
 app.get("/api/meta", (req, res) => {
   res.json(
-    buildAegisOpsServiceMeta({
+    {
+      ...buildAegisOpsServiceMeta({
       deployment: "backend",
       maxImages: cfg.maxImages,
       maxLogChars: cfg.maxLogChars,
@@ -1470,7 +1738,9 @@ app.get("/api/meta", (req, res) => {
       maxTtsChars: cfg.maxTtsChars,
       analyzeModel: getAnalyzeModel(),
       ttsModel: getActiveProvider() === "ollama" ? "unsupported" : cfg.modelTts,
-    })
+      }),
+      openai: getOpenAiRuntimeContract(),
+    }
   );
 });
 

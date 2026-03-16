@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { createSign, generateKeyPairSync } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { app } from "../server/index";
 
 function encodeBase64Url(value: string): string {
@@ -74,6 +74,7 @@ describe("service meta endpoints", () => {
   });
 
   it("returns service meta that ties workflow, replay suite, and report contract together", async () => {
+    process.env.OPENAI_API_KEY = "sk-aegisops-live";
     const res = await fetch(`${baseUrl}/api/meta`);
     const body = await res.json();
 
@@ -87,6 +88,7 @@ describe("service meta endpoints", () => {
     expect(body.links.liveSessionPack).toBe("/api/live-session-pack");
     expect(body.links.postmortemPack).toBe("/api/postmortem-pack");
     expect(body.links.escalationReadiness).toBe("/api/escalation-readiness");
+    expect(body.links.liveEscalationPreview).toBe("/api/live-escalation-preview");
     expect(body.links.systemDesignPack).toBe("/api/system-design-pack");
     expect(body.links.reviewPack).toBe("/api/review-pack");
     expect(body.links.reviewerBundle).toBe("/api/reviewer-bundle");
@@ -94,6 +96,8 @@ describe("service meta endpoints", () => {
     expect(body.links.runtimeScorecard).toBe("/api/runtime/scorecard");
     expect(body.links.replaySummary).toBe("/api/evals/replays/summary");
     expect(body.links.reportSchema).toBe("/api/schema/report");
+    expect(body.openai.deploymentMode).toBe("public-capped-live");
+    expect(body.openai.publicLiveApi).toBe(true);
   });
 
   it("returns a review pack that compresses flow, trust boundary, and proof links", async () => {
@@ -295,12 +299,79 @@ describe("service meta endpoints", () => {
     expect(body.service).toBe("aegisops-provider-comparison");
     expect(body.compareAgainst).toBe("static-demo");
     expect(body.summary.currentProvider).toBeTruthy();
-    expect(body.providers).toHaveLength(4);
+    expect(body.providers).toHaveLength(5);
     expect(body.providers.some((item: { id: string }) => item.id === "gemini")).toBe(true);
     expect(body.providers.some((item: { id: string }) => item.id === "ollama")).toBe(true);
+    expect(body.providers.some((item: { id: string }) => item.id === "openai-review")).toBe(true);
     expect(body.links.providerComparison).toBe("/api/evals/providers");
     expect(body.links.runtimeScorecard).toBe("/api/runtime/scorecard");
     expect(body.links.postmortemPack).toBe("/api/postmortem-pack");
+    expect(body.links.liveEscalationPreview).toBe("/api/live-escalation-preview");
+  });
+
+  it("returns a bounded OpenAI live escalation preview for fixed incident bundles", async () => {
+    process.env.OPENAI_API_KEY = "sk-aegisops-live";
+    const realFetch = globalThis.fetch;
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url =
+          typeof input === "string"
+            ? input
+            : input instanceof URL
+            ? input.toString()
+            : input.url;
+        if (url.includes("/moderations")) {
+          return {
+            ok: true,
+            json: async () => ({ results: [{ flagged: false }] }),
+            text: async () => "",
+          } as Response;
+        }
+        if (url.includes("/chat/completions")) {
+          return {
+            ok: true,
+            json: async () => ({
+              choices: [
+                {
+                  message: {
+                    content: JSON.stringify({
+                      escalationStance: "page-incident-commander",
+                      confidenceBand: "high",
+                      handoffSummary:
+                        "Escalate now, but keep raw payment retry analysis in reviewer hands.",
+                      reviewerEvidence: [
+                        "/api/postmortem-pack",
+                        "/api/escalation-readiness",
+                      ],
+                      commanderMessage:
+                        "Checkout path is customer-visible and needs command-bridge attention.",
+                      nextAction: "open postmortem pack and confirm handoff bundle",
+                    }),
+                  },
+                },
+              ],
+            }),
+            text: async () => "",
+          } as Response;
+        }
+        return realFetch(input as never, init);
+      }
+    );
+
+    const res = await fetch(`${baseUrl}/api/live-escalation-preview`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ incidentBundleId: "checkout-sev1" }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.schema).toBe("aegisops-live-escalation-preview-v1");
+    expect(body.mode).toBe("public-capped-live");
+    expect(body.model).toBe("gpt-4.1-mini");
+    expect(body.scenarioId).toBe("checkout-sev1");
+    expect(body.nextReviewPath).toBe("/api/postmortem-pack");
+    expect(body.result.escalationStance).toBe("page-incident-commander");
   });
 
   it("enforces required operator roles for runtime mutation routes when configured", async () => {
