@@ -35,6 +35,11 @@ into a single, reviewable incident report.
 - **This repo's role:** flagship multimodal incident operator console in the portfolio.
 - **Related repos:** `Aegis-Air`, `stage-pilot`, `ogx`
 
+## Big-Tech Elevation Track
+
+- Canonical execution plan: [`docs/BIGTECH_ELEVATION_PLAN.md`](docs/BIGTECH_ELEVATION_PLAN.md)
+- Goal: turn this repo from a strong incident demo into a benchmarked multimodal incident operating system proof.
+
 ## Best target-team fit
 
 This repo is strongest for multimodal incident operations, runtime trust, and reviewable handoff workflows. For broader data-platform packaging, pair it with `enterprise-llm-adoption-kit`.
