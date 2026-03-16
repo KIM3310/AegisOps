@@ -158,6 +158,7 @@ function classifyEndpoint(path: string): RuntimeEndpointKey {
   if (
     path.startsWith("/api/reviewer-bundle") ||
     path.startsWith("/api/review-pack") ||
+    path.startsWith("/api/postmortem-pack") ||
     path.startsWith("/api/live-session-pack") ||
     path.startsWith("/api/live-sessions") ||
     path.startsWith("/api/schema")
@@ -429,12 +430,132 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
       meta: "/api/meta",
       liveSessions: "/api/live-sessions",
       liveSessionPack: "/api/live-session-pack",
+      postmortemPack: "/api/postmortem-pack",
       reviewPack: "/api/review-pack",
       providerComparison: "/api/evals/providers",
       replaySummary: "/api/evals/replays/summary",
       reportSchema: "/api/schema/report",
       runtimeScorecard: "/api/runtime/scorecard",
       authSession: "/api/auth/session",
+    },
+  };
+}
+
+function buildPostmortemPack() {
+  const reviewPack = buildAegisOpsReviewPack({
+    deployment: "backend",
+    maxImages: cfg.maxImages,
+    maxLogChars: cfg.maxLogChars,
+    maxQuestionChars: cfg.maxQuestionChars,
+    maxTtsChars: cfg.maxTtsChars,
+    analyzeModel: getAnalyzeModel(),
+    ttsModel: getActiveProvider() === "ollama" ? "unsupported" : cfg.modelTts,
+  });
+  const liveSessionPack = buildAegisOpsLiveSessionPack({
+    deployment: "backend",
+    maxImages: cfg.maxImages,
+    maxLogChars: cfg.maxLogChars,
+    maxQuestionChars: cfg.maxQuestionChars,
+    maxTtsChars: cfg.maxTtsChars,
+    analyzeModel: getAnalyzeModel(),
+    ttsModel: getActiveProvider() === "ollama" ? "unsupported" : cfg.modelTts,
+  });
+  const runtimeScorecard = buildRuntimeScorecard("reliability");
+  const reportSchema = buildIncidentReportSchema({
+    maxImages: cfg.maxImages,
+    maxLogChars: cfg.maxLogChars,
+    maxQuestionChars: cfg.maxQuestionChars,
+    maxTtsChars: cfg.maxTtsChars,
+  });
+  const persisted = buildRuntimeStoreSummary(6);
+  const liveSessions = buildLiveSessionStoreSummary(4);
+  const evidenceTimeline = [
+    ...liveSessions.recentSessions.map((session) => ({
+      at: session.lastEventAt,
+      detail: `${session.eventCount} event(s) across ${session.lanes.join(", ")}`,
+      label: `Session ${session.sessionId}`,
+      requestId: null,
+      source: "live-session",
+    })),
+    ...persisted.recentEvents.map((event) => ({
+      at: event.timestamp,
+      detail: `${event.method} ${event.path} -> ${event.statusCode} in ${event.elapsedMs}ms`,
+      label: `Runtime ${event.endpoint}`,
+      requestId: event.requestId ?? null,
+      source: "runtime-event",
+    })),
+  ]
+    .filter((item) => typeof item.at === "string" && item.at.length > 0)
+    .sort((left, right) => right.at.localeCompare(left.at))
+    .slice(0, 8);
+
+  return {
+    ok: true,
+    service: "aegisops-postmortem-pack",
+    version: 1,
+    generatedAt: new Date().toISOString(),
+    postmortemPackId: "aegisops-postmortem-pack-v1",
+    headline:
+      "Evidence-first postmortem pack that ties live incident capture, runtime telemetry, and handoff contract into one reviewable surface.",
+    summary: {
+      provider: runtimeScorecard.provider,
+      mode: runtimeScorecard.mode,
+      replayPassRate: runtimeScorecard.summary.replayPassRate,
+      replayFailCount: runtimeScorecard.summary.replayFailCount,
+      persistedEventCount: persisted.persistedCount,
+      liveSessionCount: liveSessions.sessionCount,
+      liveSessionEventCount: liveSessions.totalEvents,
+      evidenceTimelineCount: evidenceTimeline.length,
+    },
+    postmortemFlow: [
+      {
+        stage: "Capture",
+        surface: "/api/live-session-pack",
+        proof: "Keep screenshots, logs, voice, and request IDs in the same incident bridge.",
+      },
+      {
+        stage: "Stabilize",
+        surface: "/api/runtime/scorecard",
+        proof: "Check slow routes, replay failures, and provider posture before writing the final narrative.",
+      },
+      {
+        stage: "Explain",
+        surface: "/api/postmortem-pack",
+        proof: "Compress the evidence timeline, replay quality, and report schema into one reviewer bundle.",
+      },
+      {
+        stage: "Handoff",
+        surface: "/api/schema/report",
+        proof: "Preserve the incident-report contract all the way to export and downstream action.",
+      },
+    ],
+    evidenceTimeline,
+    handoffChecklist: [
+      "Confirm the replay summary before treating the incident narrative as a benchmark-quality answer.",
+      "Keep live-session evidence and runtime events together so the postmortem is traceable after the bridge ends.",
+      "Validate required report fields before exporting to JSON, markdown, Slack, or Jira.",
+    ],
+    proofBundle: {
+      reviewPackId: reviewPack.reviewPackId,
+      liveSessionPackId: liveSessionPack.liveSessionPackId,
+      reportSchemaId: reportSchema.schemaId,
+      replaySummaryId: runtimeScorecard.replaySummary.summaryId,
+      runtimeFocus: runtimeScorecard.focus,
+      exportFormats: reportSchema.exportFormats,
+      recentSessionIds: liveSessions.recentSessions.map((session) => session.sessionId),
+      recentRuntimeRoutes: persisted.recentEvents.map((event) => event.path),
+    },
+    links: {
+      healthz: "/api/healthz",
+      meta: "/api/meta",
+      liveSessions: "/api/live-sessions",
+      liveSessionPack: "/api/live-session-pack",
+      postmortemPack: "/api/postmortem-pack",
+      reviewPack: "/api/review-pack",
+      reviewerBundle: "/api/reviewer-bundle",
+      runtimeScorecard: "/api/runtime/scorecard",
+      replaySummary: "/api/evals/replays/summary",
+      reportSchema: "/api/schema/report",
     },
   };
 }
@@ -535,6 +656,7 @@ function buildReviewerBundle() {
       healthz: "/api/healthz",
       meta: "/api/meta",
       liveSessionPack: "/api/live-session-pack",
+      postmortemPack: "/api/postmortem-pack",
       reviewPack: "/api/review-pack",
       reviewerBundle: "/api/reviewer-bundle",
       reviewerBundleVerify: "/api/reviewer-bundle/verify",
@@ -1060,6 +1182,10 @@ app.get("/api/live-session-pack", (req, res) => {
       ttsModel: getActiveProvider() === "ollama" ? "unsupported" : cfg.modelTts,
     })
   );
+});
+
+app.get("/api/postmortem-pack", (req, res) => {
+  res.json(buildPostmortemPack());
 });
 
 app.get("/api/meta", (req, res) => {

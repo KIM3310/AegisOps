@@ -16,6 +16,7 @@ type ServiceMetaOptions = {
 const REPORT_EXPORT_FORMATS: ExportFormat[] = ["json", "markdown", "slack", "jira"];
 const REVIEW_PACK_ID = "aegisops-review-pack-v1";
 const LIVE_SESSION_PACK_ID = "aegisops-live-session-pack-v1";
+const POSTMORTEM_PACK_ID = "aegisops-postmortem-pack-v1";
 
 function buildAegisOpsProofAssets() {
   return [
@@ -192,6 +193,7 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
       healthz: "/api/healthz",
       liveSessions: "/api/live-sessions",
       liveSessionPack: "/api/live-session-pack",
+      postmortemPack: "/api/postmortem-pack",
       reviewPack: "/api/review-pack",
       reviewerBundle: "/api/reviewer-bundle",
       reviewerBundleVerify: "/api/reviewer-bundle/verify",
@@ -272,6 +274,7 @@ export function buildAegisOpsLiveSessionPack(options: ServiceMetaOptions) {
         "/api/runtime/scorecard",
         "/api/live-sessions",
         "/api/live-session-pack",
+        "/api/postmortem-pack",
         "/api/review-pack",
         "/api/schema/report",
       ],
@@ -346,7 +349,7 @@ export function buildAegisOpsReviewPack(options: ServiceMetaOptions) {
       },
       {
         step: "2. Replay quality",
-        surface: "/api/review-pack -> /api/evals/replays",
+        surface: "/api/review-pack -> /api/postmortem-pack -> /api/evals/replays",
         proof: "Use pass rate, severity accuracy, and rubric count to judge incident-quality readiness.",
       },
       {
@@ -365,6 +368,7 @@ export function buildAegisOpsReviewPack(options: ServiceMetaOptions) {
       severityAccuracy: serviceMeta.replaySuite.severityAccuracy,
       totalChecks: serviceMeta.replaySuite.totalChecks,
       liveSessionPackId: LIVE_SESSION_PACK_ID,
+      postmortemPackId: POSTMORTEM_PACK_ID,
       replaySummaryId: replaySummary.summaryId,
       runtimeModes: serviceMeta.runtimeModes.map((mode) => mode.label),
       exportFormats: reportSchema.exportFormats,

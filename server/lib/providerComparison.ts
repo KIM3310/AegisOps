@@ -53,6 +53,7 @@ export type ProviderComparisonResponse = {
     providerComparison: string;
     replaySummary: string;
     runtimeScorecard: string;
+    postmortemPack: string;
     meta: string;
     healthz: string;
   };
@@ -195,6 +196,7 @@ export function buildAegisOpsProviderComparison(
       providerComparison: "/api/evals/providers",
       replaySummary: "/api/evals/replays/summary",
       runtimeScorecard: "/api/runtime/scorecard",
+      postmortemPack: "/api/postmortem-pack",
       meta: "/api/meta",
       healthz: "/api/healthz",
     },
