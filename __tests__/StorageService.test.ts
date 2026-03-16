@@ -1,6 +1,30 @@
 import { StorageService } from '../services/StorageService';
 import type { IncidentReport, SavedIncident } from '../types';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+function createLocalStorageMock(): Storage {
+  const store = new Map<string, string>();
+  return {
+    get length() {
+      return store.size;
+    },
+    clear() {
+      store.clear();
+    },
+    getItem(key: string) {
+      return store.has(key) ? store.get(key)! : null;
+    },
+    key(index: number) {
+      return Array.from(store.keys())[index] ?? null;
+    },
+    removeItem(key: string) {
+      store.delete(key);
+    },
+    setItem(key: string, value: string) {
+      store.set(key, String(value));
+    },
+  };
+}
 
 describe('StorageService', () => {
   const mockReport: IncidentReport = {
@@ -15,8 +39,13 @@ describe('StorageService', () => {
   };
 
   beforeEach(() => {
+    vi.stubGlobal('localStorage', createLocalStorageMock());
     localStorage.clear();
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   describe('saveIncident', () => {

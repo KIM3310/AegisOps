@@ -333,8 +333,11 @@ describe("geminiService apiFetch", () => {
     const payload = await fetchProviderComparison();
     expect(payload.service).toBe("aegisops-provider-comparison");
     expect(payload.compareAgainst).toBe("static-demo");
-    expect(payload.providers).toHaveLength(4);
+    expect(payload.providers).toHaveLength(5);
     expect(payload.providers.some((item) => item.id === "ollama")).toBe(true);
+    expect(payload.providers.some((item) => item.id === "openai-review")).toBe(
+      true
+    );
   });
 
   it("falls back to static service meta when the backend is absent", async () => {
