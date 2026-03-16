@@ -35,6 +35,17 @@ into a single, reviewable incident report.
 - **This repo's role:** flagship multimodal incident operator console in the portfolio.
 - **Related repos:** `Aegis-Air`, `stage-pilot`, `ogx`
 
+## Best target-team fit
+
+This repo is strongest for multimodal incident operations, runtime trust, and reviewable handoff workflows. For broader data-platform packaging, pair it with `enterprise-llm-adoption-kit`.
+
+| Team lens | What should stand out fast | Start here |
+|---|---|---|
+| Frontier / multimodal agents | screenshot + log intake, grounded follow-up, runtime posture switching, structured incident output | `GET /api/live-session-pack`, `GET /api/review-pack`, [`docs/PORTFOLIO_PROOF_SURFACE.md`](docs/PORTFOLIO_PROOF_SURFACE.md) |
+| Big tech / SRE / platform | explicit deployment mode, provider comparison, replay evidence, downstream contract clarity | `GET /api/healthz`, `GET /api/evals/providers`, `GET /api/schema/report` |
+| Palantir / high-trust ops | operator-ready session history, commander handoff, reviewable trust boundary, export posture | `GET /api/live-sessions`, `GET /api/live-session-pack`, [`docs/solution-architecture.md`](docs/solution-architecture.md) |
+| Field / solutions engineer | fast buyer walkthrough from demo to review pack to architecture without hand-wavy claims | Cloudflare Pages demo, `GET /api/meta`, `GET /api/review-pack` |
+
 ## Product Family
 
 AegisOps is the multimodal copilot surface in the broader `Aegis` incident-analysis product family.
@@ -64,6 +75,13 @@ Companion repo:
 - Provider comparison surface: `GET /api/evals/providers`
 - Runtime posture: static demo, demo backend, Gemini live, Ollama local
 - Export posture: JSON, Markdown, Slack, Jira, plus optional Workspace flows
+
+## Reviewer Front Door
+
+- **Recruiter / hiring manager:** read [`docs/PORTFOLIO_PROOF_SURFACE.md`](docs/PORTFOLIO_PROOF_SURFACE.md), then open `GET /api/review-pack`.
+- **AI engineer:** open `GET /api/live-session-pack` -> `GET /api/evals/providers` -> `server/`.
+- **SRE / platform reviewer:** open `GET /api/healthz` -> `GET /api/live-sessions` -> `GET /api/schema/report`.
+- **Solutions / field reviewer:** open the Cloudflare Pages demo -> `GET /api/meta` -> [`docs/executive-one-pager.md`](docs/executive-one-pager.md).
 
 ## Review Flow
 
