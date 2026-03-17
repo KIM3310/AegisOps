@@ -44,7 +44,7 @@ This repo is strongest for multimodal incident operations, runtime trust, and re
 |---|---|---|
 | Frontier / multimodal agents | screenshot + log intake, grounded follow-up, runtime posture switching, structured incident output | `GET /api/live-session-pack`, `GET /api/postmortem-pack`, `GET /api/review-pack`, [`docs/PORTFOLIO_PROOF_SURFACE.md`](docs/PORTFOLIO_PROOF_SURFACE.md) |
 | Big tech / SRE / platform | explicit deployment mode, provider comparison, replay evidence, runtime-to-handoff traceability, and reviewable system design posture | `GET /api/healthz`, `GET /api/system-design-pack`, `GET /api/postmortem-pack`, `GET /api/evals/providers`, `GET /api/schema/report` |
-| Palantir / high-trust ops | operator-ready session history, commander handoff, reviewable trust boundary, export posture | `GET /api/live-sessions`, `GET /api/live-session-pack`, `GET /api/postmortem-pack`, [`docs/solution-architecture.md`](docs/solution-architecture.md) |
+| High-trust ops workflows | operator-ready session history, commander handoff, reviewable trust boundary, export posture | `GET /api/live-sessions`, `GET /api/live-session-pack`, `GET /api/postmortem-pack`, [`docs/solution-architecture.md`](docs/solution-architecture.md) |
 | Field / solutions engineer | fast buyer walkthrough from demo to review pack to architecture without hand-wavy claims | Cloudflare Pages demo, `GET /api/meta`, `GET /api/review-pack` |
 
 ## Product Family
@@ -77,7 +77,7 @@ Companion repo:
 - System design surface: `GET /api/system-design-pack`
 - Incident quality proof: replay suite with 4 scenarios / 32 rubric checks
 - Provider comparison surface: `GET /api/evals/providers`
-- Runtime posture: static demo, demo backend, Gemini live, Ollama local
+- Runtime posture: static demo, demo backend, live provider mode, Ollama local
 - Export posture: JSON, Markdown, Slack, Jira, plus optional Workspace flows
 
 ## Reviewer Front Door
