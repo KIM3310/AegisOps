@@ -1,28 +1,9 @@
 import { GoogleGenAI, Modality, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import type { IncidentReport, ReferenceSource } from "../../types";
 import { extractJsonBlock, tryRepairAndParseJson } from "./json";
-
-type ImageInput = { mimeType: string; data: string };
-
-function clampText(s: string, max: number): string {
-  const t = (s || "").trim();
-  if (t.length <= max) return t;
-  return `${t.slice(0, Math.max(0, max - 20))}\n\n...[truncated ${t.length - max} chars]`;
-}
-
-function clampNumber(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function asMessage(error: unknown): string {
-  if (!error) return "";
-  if (error instanceof Error) return error.message || "";
-  return String(error);
-}
+import { clampText, clampNumber, sleep, asMessage, asString, asStringArray } from "./shared/llm-utils";
+import type { ImageInput } from "./shared/llm-utils";
+import { normalizeTimeline, normalizeActionItems } from "./shared/normalize";
 
 function isRetriableGeminiError(error: unknown): boolean {
   const msg = asMessage(error).toLowerCase();
@@ -47,53 +28,6 @@ function isRetriableGeminiError(error: unknown): boolean {
     "504",
   ];
   return patterns.some((p) => msg.includes(p));
-}
-
-function asString(value: unknown, fallback = "", maxChars = 2_000): string {
-  const v = typeof value === "string" ? value : fallback;
-  return clampText(v, maxChars);
-}
-
-function asStringArray(value: unknown, maxItems = 12, maxChars = 400): string[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .slice(0, maxItems)
-    .map((x) => asString(x, "", maxChars))
-    .filter((x) => x.length > 0);
-}
-
-function normalizeTimeline(value: unknown): IncidentReport["timeline"] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .slice(0, 30)
-    .map((item: any) => {
-      const severity = ["critical", "warning", "info", "success"].includes(item?.severity)
-        ? item.severity
-        : undefined;
-      return {
-        time: asString(item?.time, "Unknown", 32),
-        description: asString(item?.description, "", 400),
-        ...(severity ? { severity } : {}),
-      };
-    })
-    .filter((x) => x.description.length > 0);
-}
-
-function normalizeActionItems(value: unknown): IncidentReport["actionItems"] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .slice(0, 20)
-    .map((item: any) => {
-      const priority = ["HIGH", "MEDIUM", "LOW"].includes(item?.priority) ? item.priority : "MEDIUM";
-      const task = asString(item?.task, "", 500);
-      const owner = asString(item?.owner, "", 120);
-      return {
-        task,
-        priority,
-        ...(owner ? { owner } : {}),
-      };
-    })
-    .filter((x) => x.task.length > 0);
 }
 
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
