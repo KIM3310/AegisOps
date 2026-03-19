@@ -1,6 +1,6 @@
 {
   "name": "AegisOps",
-  "description": "Portfolio-grade multimodal incident copilot for logs, screenshots, replay evaluation, and export-ready incident handoff.",
+  "description": "Multimodal incident copilot for logs, screenshots, replay evaluation, and export-ready incident handoff.",
   "version": "0.1.0",
   "author": "Doeon Kim",
   "features": [

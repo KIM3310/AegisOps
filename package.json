@@ -2,7 +2,7 @@
   "name": "aegisops",
   "version": "0.1.0",
   "private": true,
-  "description": "Portfolio-grade multimodal incident copilot with replay evals, live-session review, and export surfaces.",
+  "description": "Multimodal incident copilot with replay evals, live-session review, and export surfaces.",
   "type": "module",
   "scripts": {
     "dev:web": "vite",

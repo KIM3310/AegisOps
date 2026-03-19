@@ -371,7 +371,7 @@ export function buildAegisOpsSummaryPack(options: ServiceMetaOptions) {
       {
         step: "3. System design surface",
         surface: "/api/system-design-pack",
-        proof: "Inspect topology, hot endpoints, and drill posture before describing big-tech runtime readiness.",
+        proof: "Inspect topology, hot endpoints, and drill posture before describing runtime readiness.",
       },
       {
         step: "4. Contract boundary",

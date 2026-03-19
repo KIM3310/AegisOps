@@ -7,46 +7,6 @@ screenshots, and alerts into a report that someone else can review quickly.
 
 **AegisOps** turns that evidence into a structured incident report, postmortem pack, and handoff path that stays easy to inspect.
 
-## Reviewer quick paths
-
-| Reviewer goal | Fastest path | What it proves |
-|---|---|---|
-| `90-second repo scan` | read this README, then open `docs/PORTFOLIO_PROOF_SURFACE.md` | product story, buyer fit, and proof inventory are explicit |
-| `Deterministic local proof` | `npm install && npm run review:smoke` | review endpoints, schema surface, replay summary, and runtime scorecard all boot locally |
-| `Full engineering verification` | `npm run verify` | typecheck, tests, replay proof, review-surface smoke, and build all pass |
-
-## Portfolio posture
-- Review this repo like an operator console with explicit runtime modes, not like a single always-live incident app.
-- The core story is screenshot and log intake to replay proof to incident handoff, with runtime posture made explicit the whole way through.
-
-
-## Role signals
-- **AI engineer:** multimodal evidence handling, grounding controls, and structured incident output are all first-class.
-- **Solutions architect:** live and demo posture, data routes, and operator-role boundaries are visible in the product surface.
-- **Field / solutions engineer:** the repo is easy to walk from screenshot and logs to incident report to export summary.
-
-
-## Portfolio context
-- **Portfolio family:** AI reliability and incident systems
-- **This repo's role:** flagship multimodal incident operator console in the portfolio.
-- **Related repos:** `Aegis-Air`, `stage-pilot`, `ogx`
-
-## Big-Tech Elevation Track
-
-- Canonical execution plan: [`docs/BIGTECH_ELEVATION_PLAN.md`](docs/BIGTECH_ELEVATION_PLAN.md)
-- Goal: turn this repo from a strong incident demo into a benchmarked multimodal incident operating system proof.
-
-## Best target-team fit
-
-This repo is strongest for multimodal incident operations, runtime trust, and reviewable handoff workflows. For broader data-platform packaging, pair it with `enterprise-llm-adoption-kit`.
-
-| Team lens | What should stand out fast | Start here |
-|---|---|---|
-| Frontier / multimodal agents | screenshot + log intake, grounded follow-up, runtime posture switching, structured incident output | `GET /api/live-session-pack`, `GET /api/postmortem-pack`, `GET /api/summary-pack`, [`docs/PORTFOLIO_PROOF_SURFACE.md`](docs/PORTFOLIO_PROOF_SURFACE.md) |
-| Big tech / SRE / platform | explicit deployment mode, provider comparison, replay evidence, runtime-to-handoff traceability, and reviewable system design posture | `GET /api/healthz`, `GET /api/system-design-pack`, `GET /api/postmortem-pack`, `GET /api/evals/providers`, `GET /api/schema/report` |
-| High-trust ops workflows | operator-ready session history, commander handoff, reviewable trust boundary, export posture | `GET /api/live-sessions`, `GET /api/live-session-pack`, `GET /api/postmortem-pack`, [`docs/solution-architecture.md`](docs/solution-architecture.md) |
-| Field / solutions engineer | fast buyer walkthrough from demo to summary pack to architecture without hand-wavy claims | Cloudflare Pages demo, `GET /api/meta`, `GET /api/summary-pack` |
-
 ## Product Family
 
 AegisOps is the multimodal copilot surface in the broader `Aegis` incident-analysis product family.
@@ -75,22 +35,20 @@ Companion repo:
 - Live session surface: `GET /api/live-session-pack`
 - Postmortem surface: `GET /api/postmortem-pack`
 - System design surface: `GET /api/system-design-pack`
-- Incident quality proof: replay suite with 4 scenarios / 32 rubric checks
+- Incident quality: replay suite with 4 scenarios / 32 rubric checks
 - Provider comparison surface: `GET /api/evals/providers`
 - Runtime posture: static demo, demo backend, live provider mode, Ollama local
 - Export posture: JSON, Markdown, Slack, Jira, plus optional Workspace flows
 
 ## Quick Start
 
-- **Recruiter / hiring manager:** read [`docs/PORTFOLIO_PROOF_SURFACE.md`](docs/PORTFOLIO_PROOF_SURFACE.md), then open `GET /api/summary-pack`.
-- **AI engineer:** open `GET /api/live-session-pack` -> `GET /api/postmortem-pack` -> `GET /api/evals/providers` -> `server/`.
-- **SRE / platform engineer:** open `GET /api/healthz` -> `GET /api/system-design-pack` -> `GET /api/postmortem-pack` -> `GET /api/live-sessions` -> `GET /api/schema/report`.
-- **Solutions / field engineer:** open the Cloudflare Pages demo -> `GET /api/meta` -> [`docs/executive-one-pager.md`](docs/executive-one-pager.md).
+- Open `GET /api/live-session-pack` -> `GET /api/postmortem-pack` -> `GET /api/evals/providers` -> `server/`.
+- Or start from `GET /api/healthz` -> `GET /api/system-design-pack` -> `GET /api/postmortem-pack` -> `GET /api/live-sessions` -> `GET /api/schema/report`.
 
 ## Review Flow
 
 1. `GET /api/healthz` -> confirm deployment mode and backend posture.
-2. `GET /api/system-design-pack` -> inspect topology, hot endpoints, and failure drills before describing big-tech runtime posture.
+2. `GET /api/system-design-pack` -> inspect topology, hot endpoints, and failure drills.
 3. `GET /api/live-session-pack` -> inspect realtime modality, operator roles, and live handoff routes.
 4. `GET /api/postmortem-pack` -> inspect evidence timeline, replay posture, and handoff contract in one surface.
 5. `GET /api/live-sessions` -> verify that live incident loops remain reviewable across multiple requests.
@@ -103,7 +61,6 @@ Companion repo:
 
 ## Further Reading
 
-- Portfolio proof surface: [`docs/PORTFOLIO_PROOF_SURFACE.md`](docs/PORTFOLIO_PROOF_SURFACE.md)
 - Architecture: [`docs/solution-architecture.md`](docs/solution-architecture.md)
 - Overview: [`docs/executive-one-pager.md`](docs/executive-one-pager.md)
 - Discovery notes: [`docs/discovery-guide.md`](docs/discovery-guide.md)
@@ -142,9 +99,9 @@ This repo includes a small replay harness for incident analysis quality:
 The current suite covers 4 scenarios / 32 rubric checks. For the scoring rubric and case design, see
 `docs/INCIDENT_REPLAY_EVALS.md`.
 
-## Service-Grade Surfaces
+## Operator Surfaces
 
-AegisOps now exposes explicit review surfaces for operators and operators:
+AegisOps exposes explicit review surfaces for operators:
 
 - `GET /api/healthz`
   - current deployment mode, provider, limits, cache posture, and next action

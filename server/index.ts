@@ -753,7 +753,7 @@ function buildSystemDesignPack() {
     generatedAt: new Date().toISOString(),
     systemDesignPackId: "aegisops-system-design-pack-v1",
     headline:
-      "System-design pack that turns multimodal incident handling, runtime posture, and commander handoff into one big-tech review surface.",
+      "System-design pack that turns multimodal incident handling, runtime posture, and commander handoff into one review surface.",
     summary: {
       provider: runtimeScorecard.provider,
       mode: runtimeScorecard.mode,
@@ -844,7 +844,7 @@ function buildSystemDesignPack() {
     operatorNotes: [
       "This surface is for reviewable system design and operational drill posture, not a claim of hyperscale fleet traffic.",
       "The strongest public proof is explicit failure handling, visible telemetry, and handoff discipline under bounded load.",
-      "Use this pack together with replay and postmortem evidence before framing AegisOps as a big-tech-ready incident runtime.",
+      "Use this pack together with replay and postmortem evidence before framing AegisOps as a production-ready incident runtime.",
     ],
     links: {
       healthz: "/api/healthz",

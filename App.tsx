@@ -89,9 +89,9 @@ const SAMPLE_PRESETS = [
 ];
 
 const REVIEW_LENSES = {
-  recruiter: {
-    label: 'Recruiter',
-    eyebrow: 'Recruiter lens',
+  quickstart: {
+    label: 'Quick Start',
+    eyebrow: 'Quick start lens',
     headline: 'Show the strongest evidence path without digging through code.',
     description:
       'Lead with the strongest preset, confirm replay quality, then close with a compact export summary.',
@@ -196,7 +196,7 @@ export default function App() {
   const [selectedPresetSlug, setSelectedPresetSlug] = useState<string | null>(
     () => initialReviewUrlState.preset ?? null
   );
-  const [reviewLens, setReviewLens] = useState<'recruiter' | 'commander' | 'platform'>('recruiter');
+  const [reviewLens, setReviewLens] = useState<'quickstart' | 'commander' | 'platform'>('quickstart');
   const [reviewStateHydrated, setReviewStateHydrated] = useState(false);
 
   const imagesRef = useRef(images);
@@ -1354,7 +1354,7 @@ export default function App() {
                       {Object.entries(REVIEW_LENSES).map(([key, lens]) => (
                         <button
                           key={key}
-                          onClick={() => setReviewLens(key as 'recruiter' | 'commander' | 'platform')}
+                          onClick={() => setReviewLens(key as 'quickstart' | 'commander' | 'platform')}
                           className={`h-7 px-3 rounded-full border text-[11px] font-semibold transition-colors ${
                             reviewLens === key
                               ? 'border-accent/40 bg-accent/10 text-accent'

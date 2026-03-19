@@ -95,8 +95,8 @@ export function buildAegisOpsProviderComparison(
       costBand: "none",
       capabilitySummary: "Replay review, schema checks, and frontend walkthroughs.",
       bestFor: [
-        "portfolio review links",
-        "fast recruiter demos",
+        "quick product walkthroughs",
+        "offline demos",
         "zero-secret product walkthroughs",
       ],
       tradeoffs: [
@@ -167,11 +167,11 @@ export function buildAegisOpsProviderComparison(
       latencyBand: "network-dependent",
       costBand: "paid",
       capabilitySummary:
-        "Reviewer-safe live escalation preview without exposing raw upload or full operator mutation flows.",
+        "Bounded live escalation preview without exposing raw upload or full operator mutation flows.",
       bestFor: [
-        "public recruiter demos",
+        "public demos",
         "incident bundle walkthroughs",
-        "bounded live proof for hiring packets",
+        "bounded live evaluation",
       ],
       tradeoffs: [
         "Only fixed incident bundle ids are accepted",

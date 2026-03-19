@@ -217,7 +217,7 @@ describe("service meta endpoints", () => {
     expect(body.links.providerComparison).toBe("/api/evals/providers");
   });
 
-  it("returns a system design pack for big-tech runtime review", async () => {
+  it("returns a system design pack for system design review", async () => {
     await fetch(`${baseUrl}/api/analyze`, {
       method: "POST",
       headers: { "content-type": "application/json" },
