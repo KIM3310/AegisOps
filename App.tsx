@@ -1149,8 +1149,8 @@ export default function App() {
         <LoadingOverlay progress={analysisProgress} status={status} />
       )}
 
-      <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-md border-b border-border transition-all" role="banner">
-        <div className="max-w-4xl mx-auto px-4 h-12 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-md border-b border-border transition-all overflow-x-auto" role="banner">
+        <div className="max-w-4xl mx-auto px-4 h-12 flex items-center justify-between min-w-0">
           <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={handleStartNew} role="button">
             <Shield className="w-5 h-5 text-accent fill-accent/10" aria-hidden="true" />
             <span className="text-sm font-semibold tracking-tight">AegisOps</span>
