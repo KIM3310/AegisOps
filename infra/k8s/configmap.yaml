@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aegisops-config
+  namespace: aegisops
+  labels:
+    app: aegisops
+    component: api
+data:
+  # LLM provider: auto | demo | gemini | ollama
+  LLM_PROVIDER: "auto"
+
+  # Gemini model defaults
+  GEMINI_MODEL_ANALYZE: "gemini-3-pro-preview"
+  GEMINI_MODEL_TTS: "gemini-2.5-flash-preview-tts"
+
+  # Ollama (used when LLM_PROVIDER=ollama)
+  OLLAMA_BASE_URL: "http://ollama-service.aegisops.svc.cluster.local:11434"
+  OLLAMA_MODEL_ANALYZE: "llama3.1:8b"
+  OLLAMA_MODEL_FOLLOWUP: "llama3.1:8b"
+
+  # Gemini request controls
+  GEMINI_TIMEOUT_MS: "45000"
+  GEMINI_RETRY_MAX_ATTEMPTS: "3"
+  GEMINI_RETRY_BASE_DELAY_MS: "400"
+  GROUNDING_DEFAULT: "false"
+
+  # Request limits
+  REQUEST_BODY_LIMIT_MB: "25"
+  MAX_IMAGES: "8"
+  MAX_IMAGE_BYTES: "5000000"
+  MAX_LOG_CHARS: "50000"
+  MAX_QUESTION_CHARS: "4000"
+  MAX_TTS_CHARS: "5000"
+
+  # Cache
+  ANALYZE_CACHE_TTL_SEC: "300"
+  ANALYZE_CACHE_MAX_ENTRIES: "200"
+
+  # AWS region (secrets via Secret resource)
+  AWS_REGION: "us-east-1"
+  AWS_S3_BUCKET: "aegisops-reports"
+  AWS_CLOUDWATCH_LOG_GROUP: "aegisops"
+  AWS_CLOUDWATCH_LOG_STREAM: "api"
+
+  # GCP (credentials path mounted via volume)
+  GCP_STORAGE_BUCKET: "aegisops-reports"
+  GCP_BIGQUERY_DATASET: "aegisops_analytics"
+
+  # Datadog
+  DD_SITE: "datadoghq.com"
+  DD_SERVICE: "aegisops"
+  DD_ENV: "production"
+
+  # Logging
+  LOG_LEVEL: "info"

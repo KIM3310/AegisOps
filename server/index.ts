@@ -53,6 +53,10 @@ import {
   buildIncidentReportSchema,
 } from "./lib/serviceMeta";
 import { normalizeAndValidateImages } from "./lib/validation";
+import { getAwsStatus, isAwsEnabled } from "./lib/aws-adapter";
+import { getGcpStatus, isGcpEnabled } from "./lib/gcp-adapter";
+import { getDatadogStatus, isDatadogEnabled, recordHttpRequest as ddRecordHttp, recordIncidentAnalysis as ddRecordAnalysis, recordFollowUp as ddRecordFollowUp, recordProviderUsage as ddRecordProvider } from "./lib/datadog-adapter";
+import { recordHttpRequest as promRecordHttp, recordAnalysis as promRecordAnalysis, recordProviderUsage as promRecordProvider, recordFollowUp as promRecordFollowUp, recordTts as promRecordTts, serializeMetrics } from "./lib/prometheus";
 
 type AnalyzeBody = {
   logs?: string;
@@ -1264,6 +1268,9 @@ app.use((req, res, next) => {
       method: req.method,
       requestId: req.requestId,
     });
+    const route = classifyEndpoint(req.path || req.originalUrl || "");
+    promRecordHttp({ method: req.method, route, statusCode: res.statusCode, durationSec: elapsedMs / 1000 });
+    ddRecordHttp({ method: req.method, route, statusCode: res.statusCode, latencyMs: elapsedMs });
     logApiEvent(res.statusCode >= 400 || elapsedMs >= 4_000 ? "warn" : "info", "request-finished", {
       elapsedMs,
       method: req.method,
@@ -1540,6 +1547,21 @@ app.get("/api/healthz", (req, res) => {
       meta: "/api/meta",
       reportSchema: "/api/schema/report",
     },
+  });
+});
+
+app.get("/api/metrics", (req, res) => {
+  res.setHeader("content-type", "text/plain; version=0.0.4; charset=utf-8");
+  res.send(serializeMetrics());
+});
+
+app.get("/api/integrations/status", (req, res) => {
+  res.json({
+    ok: true,
+    requestId: req.requestId,
+    aws: getAwsStatus(),
+    gcp: getGcpStatus(),
+    datadog: getDatadogStatus(),
   });
 });
 
