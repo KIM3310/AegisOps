@@ -13,6 +13,16 @@ export const ALLOWED_IMAGE_MIME_TYPES = new Set<string>([
   "image/bmp",
 ]);
 
+/** MIME types that must be rejected before any processing. */
+const DANGEROUS_MIME_TYPES = new Set<string>([
+  "image/svg+xml",
+  "image/svg",
+  "text/html",
+  "text/xml",
+  "application/xml",
+  "application/xhtml+xml",
+]);
+
 function normalizeMimeType(input: string | undefined): string {
   const raw = String(input || "image/png").trim().toLowerCase();
   if (!raw) return "image/png";
@@ -36,8 +46,14 @@ function removeWhitespace(value: string): string {
 export function estimateBase64Bytes(value: string): number {
   const base64 = removeWhitespace(value);
   if (!base64) return 0;
-  const padding = base64.endsWith("==") ? 2 : base64.endsWith("=") ? 1 : 0;
-  return Math.max(0, Math.floor((base64.length * 3) / 4) - padding);
+  // Use Buffer.byteLength for accurate decoded size instead of a formula
+  // that underestimates by 10-20% due to padding assumptions.
+  try {
+    return Buffer.from(base64, "base64").byteLength;
+  } catch {
+    // Fallback: ceiling-based estimate that never underestimates.
+    return Math.ceil((base64.length * 3) / 4);
+  }
 }
 
 export function normalizeAndValidateImages(
@@ -52,7 +68,19 @@ export function normalizeAndValidateImages(
   for (const row of source) {
     if (!row || typeof row.data !== "string" || !row.data.trim()) continue;
 
+    // Reject dangerous MIME types BEFORE any normalization or data processing.
+    const rawMime = String(row.mimeType || "").trim().toLowerCase();
+    if (rawMime && DANGEROUS_MIME_TYPES.has(rawMime)) {
+      throw new Error(`Unsupported image mimeType: ${rawMime}`);
+    }
+
     const stripped = stripDataUrlPrefix(row.data);
+
+    // Also check the MIME type extracted from a data-URL prefix before normalization.
+    if (stripped.mimeType && DANGEROUS_MIME_TYPES.has(stripped.mimeType)) {
+      throw new Error(`Unsupported image mimeType: ${stripped.mimeType}`);
+    }
+
     const mimeType = normalizeMimeType(stripped.mimeType || row.mimeType);
     if (!ALLOWED_IMAGE_MIME_TYPES.has(mimeType)) {
       throw new Error(`Unsupported image mimeType: ${mimeType}`);

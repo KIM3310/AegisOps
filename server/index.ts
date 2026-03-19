@@ -1853,6 +1853,12 @@ app.post("/api/analyze", async (req, res) => {
     }
 
     const body = (req.body || {}) as AnalyzeBody;
+
+    // Per-session rate limit: max 10 requests per minute per session.
+    const sessionKey = String(body.sessionId || "").trim();
+    if (sessionKey && isRateLimited(`analyze:session:${sessionKey}`, 10, 60_000)) {
+      return sendError(req, res, 429, "Too many analyze requests for this session. Please slow down.");
+    }
     const liveSession = resolveLiveSessionContext({
       lane: body.lane,
       requestId: req.requestId,

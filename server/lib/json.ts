@@ -26,7 +26,13 @@ export function tryRepairAndParseJson(jsonStr: string): unknown {
     fixed = fixed.replace(/,(\s*[}\]])/g, "$1");
 
     // Quote unquoted keys: { key: "v" } -> { "key": "v" }
-    fixed = fixed.replace(/([{,]\s*)([a-zA-Z0-9_]+?)\s*:/g, '$1"$2":');
+    // Only match keys that are NOT already inside a quoted string by requiring
+    // the key to appear right after { or , (with optional whitespace/newlines),
+    // and ensuring the key is followed by a colon and a value-start character.
+    fixed = fixed.replace(
+      /([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*(?=["'\d\[{tfn-])/g,
+      '$1"$2": '
+    );
 
     // Remove control chars (preserve newline/tab).
     fixed = fixed.replace(/[\x00-\x1F\x7F]/g, (m) => {
