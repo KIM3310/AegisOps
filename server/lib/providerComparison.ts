@@ -1,13 +1,14 @@
 import type { ServiceMetaDeployment } from "./serviceMeta";
 import { buildIncidentReplayEvalOverview } from "./replayEvals";
 
-type ActiveProvider = "demo" | "gemini" | "ollama" | "openai-review";
+type ActiveProvider = "demo" | "gemini" | "ollama" | "openai-review" | "openai";
 type ProviderCardId =
   | "static-demo"
   | "demo"
   | "gemini"
   | "ollama"
-  | "openai-review";
+  | "openai-review"
+  | "openai";
 type ProviderCostBand = "none" | "local-compute" | "paid";
 type ProviderLatencyBand =
   | "instant"
@@ -74,6 +75,9 @@ function buildHeadline(currentProvider: ProviderCardId, deployment: ServiceMetaD
   }
   if (currentProvider === "ollama") {
     return "Ollama is active: use this view to show where local privacy wins and where Gemini still offers stronger live multimodal coverage.";
+  }
+  if (currentProvider === "openai") {
+    return "OpenAI is active: use this view to compare GPT-based incident analysis against the Gemini and Ollama paths.";
   }
   return "Demo mode is active: use this view to show the jump from deterministic replay proof to live Gemini or Ollama tradeoffs.";
 }
@@ -156,6 +160,30 @@ export function buildAegisOpsProviderComparison(
         qualityDelta: "Adds live multimodal capability on top of replay proof",
         latencyDelta: "Slower than demo lanes due to network round-trips",
         costDelta: "Highest incremental spend",
+      },
+    },
+    {
+      id: "openai",
+      label: "OpenAI live",
+      isCurrent: currentProvider === "openai",
+      qualitySignal: `GPT-based incident analysis using ${options.analyzeModel}. Falls back to rule-based demo analysis on failure.`,
+      latencyBand: "network-dependent",
+      costBand: "paid",
+      capabilitySummary: "Full analyze and follow-up flow via OpenAI Chat Completions API with graceful fallback.",
+      bestFor: [
+        "teams already on the OpenAI platform",
+        "comparing GPT vs Gemini report quality",
+        "screenshot + log incident review",
+      ],
+      tradeoffs: [
+        "Requires OPENAI_API_KEY",
+        "TTS not supported; audioBase64 returns empty",
+        "Falls back to demo analysis on API failure",
+      ],
+      comparison: {
+        qualityDelta: "Live GPT reasoning with the same report schema as Gemini",
+        latencyDelta: "Network-dependent, similar to Gemini",
+        costDelta: "Paid token cost; model choice controls spend",
       },
     },
     {

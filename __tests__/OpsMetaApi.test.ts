@@ -299,7 +299,7 @@ describe("service meta endpoints", () => {
     expect(body.service).toBe("aegisops-provider-comparison");
     expect(body.compareAgainst).toBe("static-demo");
     expect(body.summary.currentProvider).toBeTruthy();
-    expect(body.providers).toHaveLength(5);
+    expect(body.providers).toHaveLength(6);
     expect(body.providers.some((item: { id: string }) => item.id === "gemini")).toBe(true);
     expect(body.providers.some((item: { id: string }) => item.id === "ollama")).toBe(true);
     expect(body.providers.some((item: { id: string }) => item.id === "openai-review")).toBe(true);

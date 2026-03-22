@@ -189,11 +189,16 @@ Copy `.env.example` to `.env` and fill what you need.
 GEMINI_API_KEY=
 
 # LLM provider selection:
-# - auto   : Gemini when key exists, otherwise demo mode
+# - auto   : OpenAI when OPENAI_API_KEY set, then Gemini when GEMINI_API_KEY set, otherwise demo
 # - demo   : always use demo mode
 # - gemini : Gemini mode (falls back to demo when key is missing)
 # - ollama : local Ollama mode (offline)
+# - openai : OpenAI mode (falls back to demo when key is missing)
 LLM_PROVIDER=auto
+
+# Optional: OpenAI (used when LLM_PROVIDER=openai or auto with OPENAI_API_KEY set)
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o-mini
 
 # Optional: Ollama local endpoint + models (used when LLM_PROVIDER=ollama)
 OLLAMA_BASE_URL=http://127.0.0.1:11434
@@ -288,6 +293,30 @@ The Cloudflare Pages deployment also stays usable without a backend. If `/api/*`
 - deterministic local incident analysis in the browser
 - local replay-suite scoring
 - review-only follow-up answers and explicit Workspace export placeholders
+
+## OpenAI Provider
+
+Use this to run incident analysis via the OpenAI API (GPT-4o-mini by default).
+
+1. Set `.env`:
+
+```env
+LLM_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o-mini
+```
+
+2. Start app:
+
+```bash
+npm run dev
+```
+
+Notes:
+- If OpenAI fails (network error, quota exceeded, etc.), the server falls back to rule-based demo analysis automatically.
+- Image screenshots are forwarded as base64 `image_url` parts with `detail: low`.
+- TTS is not supported via OpenAI; the `/api/tts` endpoint returns an empty `audioBase64`.
+- Set `AEGIS_AI_PROVIDER` or `LLM_PROVIDER=openai` — both are equivalent. The env var read by the server is `LLM_PROVIDER`.
 
 ## Ollama Offline Mode (No Cloud LLM)
 

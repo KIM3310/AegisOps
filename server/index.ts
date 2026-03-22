@@ -10,6 +10,7 @@ import { demoAnalyzeIncident, demoFollowUpAnswer } from "./lib/demo";
 import { geminiAnalyzeIncident, geminiFollowUp, geminiTts } from "./lib/gemini";
 import { logger } from "./lib/logger";
 import { ollamaAnalyzeIncident, ollamaFollowUp } from "./lib/ollama";
+import { openaiAnalyzeIncident, openaiFollowUp } from "./lib/openai";
 import {
   getOperatorAuthStatus,
   isOperatorAuthEnabled,
@@ -79,7 +80,7 @@ type TtsBody = { text?: string; lane?: string; sessionId?: string };
 type ApiKeyBody = { apiKey?: string };
 type OperatorSessionBody = { authMode?: string; credential?: string; roles?: string[] | string };
 type KeySource = "runtime" | "env" | "ollama" | "none";
-type ActiveProvider = "demo" | "gemini" | "ollama";
+type ActiveProvider = "demo" | "gemini" | "ollama" | "openai";
 type OpenAiIncidentBundle = {
   concern: string;
   estimatedCostUsd: number;
@@ -1066,8 +1067,11 @@ function getEffectiveGeminiApiKey(): string | undefined {
 function getActiveProvider(): ActiveProvider {
   if (cfg.llmProvider === "demo") return "demo";
   if (cfg.llmProvider === "ollama") return "ollama";
+  if (cfg.llmProvider === "openai") return cfg.openaiApiKey ? "openai" : "demo";
   const hasGeminiKey = Boolean(getEffectiveGeminiApiKey());
   if (cfg.llmProvider === "gemini") return hasGeminiKey ? "gemini" : "demo";
+  // auto: prefer openai if key present, then gemini, else demo
+  if (cfg.openaiApiKey) return "openai";
   return hasGeminiKey ? "gemini" : "demo";
 }
 
@@ -1076,20 +1080,30 @@ function getMode(): "demo" | "live" {
 }
 
 function getAnalyzeModel(): string {
-  return getActiveProvider() === "ollama" ? cfg.ollamaModelAnalyze : cfg.modelAnalyze;
+  const provider = getActiveProvider();
+  if (provider === "ollama") return cfg.ollamaModelAnalyze;
+  if (provider === "openai") return cfg.openaiModel;
+  return cfg.modelAnalyze;
 }
 
 function getFollowUpModel(): string {
-  return getActiveProvider() === "ollama" ? cfg.ollamaModelFollowUp : cfg.modelAnalyze;
+  const provider = getActiveProvider();
+  if (provider === "ollama") return cfg.ollamaModelFollowUp;
+  if (provider === "openai") return cfg.openaiModel;
+  return cfg.modelAnalyze;
 }
 
 function isBackendConfigured(): boolean {
-  if (getActiveProvider() === "ollama") return true;
+  const provider = getActiveProvider();
+  if (provider === "ollama") return true;
+  if (provider === "openai") return Boolean(cfg.openaiApiKey);
   return Boolean(getEffectiveGeminiApiKey());
 }
 
 function getKeySource(): KeySource {
-  if (getActiveProvider() === "ollama") return "ollama";
+  const provider = getActiveProvider();
+  if (provider === "ollama") return "ollama";
+  if (provider === "openai") return cfg.openaiApiKey ? "env" : "none";
   if (runtimeGeminiApiKey.value) return "runtime";
   if (cfg.geminiApiKey) return "env";
   return "none";
@@ -1981,6 +1995,28 @@ app.post("/api/analyze", async (req, res) => {
             retryMaxAttempts: cfg.geminiRetryMaxAttempts,
             retryBaseDelayMs: cfg.geminiRetryBaseDelayMs,
           })
+        : provider === "openai"
+        ? (() => {
+            if (!cfg.openaiApiKey) {
+              throw new Error("Server misconfigured: OPENAI_API_KEY missing.");
+            }
+            return openaiAnalyzeIncident({
+              apiKey: cfg.openaiApiKey,
+              model: modelAnalyze,
+              logs,
+              images,
+              maxLogChars: cfg.maxLogChars,
+              timeoutMs: cfg.openaiTimeoutMs,
+              retryMaxAttempts: cfg.openaiRetryMaxAttempts,
+              retryBaseDelayMs: cfg.openaiRetryBaseDelayMs,
+            }).catch((err: unknown) => {
+              logApiEvent("warn", "openai-analyze-fallback", {
+                error: err instanceof Error ? err.message : String(err),
+                requestId: req.requestId ?? null,
+              });
+              return demoAnalyzeIncident({ logs, imageCount: images.length, maxLogChars: cfg.maxLogChars });
+            });
+          })()
         : (() => {
             const effectiveApiKey = getEffectiveGeminiApiKey();
             if (!effectiveApiKey) {
@@ -2087,6 +2123,28 @@ app.post("/api/followup", async (req, res) => {
             retryMaxAttempts: cfg.geminiRetryMaxAttempts,
             retryBaseDelayMs: cfg.geminiRetryBaseDelayMs,
           })
+        : provider === "openai"
+        ? await (async () => {
+            if (!cfg.openaiApiKey) {
+              throw new Error("Server misconfigured: OPENAI_API_KEY missing.");
+            }
+            return openaiFollowUp({
+              apiKey: cfg.openaiApiKey,
+              model: getFollowUpModel(),
+              report,
+              history,
+              question,
+              timeoutMs: cfg.openaiTimeoutMs,
+              retryMaxAttempts: cfg.openaiRetryMaxAttempts,
+              retryBaseDelayMs: cfg.openaiRetryBaseDelayMs,
+            }).catch((err: unknown) => {
+              logApiEvent("warn", "openai-followup-fallback", {
+                error: err instanceof Error ? err.message : String(err),
+                requestId: req.requestId ?? null,
+              });
+              return demoFollowUpAnswer({ report, question });
+            });
+          })()
         : await (async () => {
             const effectiveApiKey = getEffectiveGeminiApiKey();
             if (!effectiveApiKey) {

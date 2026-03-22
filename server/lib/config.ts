@@ -1,5 +1,5 @@
 export type DemoMode = "demo" | "live";
-export type LlmProvider = "auto" | "demo" | "gemini" | "ollama";
+export type LlmProvider = "auto" | "demo" | "gemini" | "ollama" | "openai";
 
 export type GroundingDefault = boolean;
 
@@ -12,6 +12,11 @@ export interface ServerConfig {
   geminiTimeoutMs: number;
   geminiRetryMaxAttempts: number;
   geminiRetryBaseDelayMs: number;
+  openaiApiKey?: string;
+  openaiModel: string;
+  openaiTimeoutMs: number;
+  openaiRetryMaxAttempts: number;
+  openaiRetryBaseDelayMs: number;
   apiKeySettingsToken?: string;
   allowRemoteApiKeySettings: boolean;
   trustProxy: boolean;
@@ -61,7 +66,7 @@ function readBool(name: string, fallback: boolean): boolean {
 
 function readProvider(name: string, fallback: LlmProvider): LlmProvider {
   const raw = String(process.env[name] || "").trim().toLowerCase();
-  if (raw === "auto" || raw === "demo" || raw === "gemini" || raw === "ollama") return raw;
+  if (raw === "auto" || raw === "demo" || raw === "gemini" || raw === "ollama" || raw === "openai") return raw;
   return fallback;
 }
 
@@ -81,8 +86,17 @@ function readBaseUrl(name: string, fallback: string): string {
 export function loadConfig(): ServerConfig {
   const llmProvider = readProvider("LLM_PROVIDER", "auto");
   const geminiApiKey = process.env.GEMINI_API_KEY?.trim();
+  const openaiApiKey = process.env.OPENAI_API_KEY?.trim();
   const mode: DemoMode =
-    llmProvider === "ollama" ? "live" : llmProvider === "demo" ? "demo" : geminiApiKey ? "live" : "demo";
+    llmProvider === "ollama"
+      ? "live"
+      : llmProvider === "demo"
+      ? "demo"
+      : llmProvider === "openai"
+      ? openaiApiKey ? "live" : "demo"
+      : geminiApiKey
+      ? "live"
+      : "demo";
   const modelAnalyze = (process.env.GEMINI_MODEL_ANALYZE?.trim() || "gemini-3-pro-preview");
   const modelTts = (process.env.GEMINI_MODEL_TTS?.trim() || "gemini-2.5-flash-preview-tts");
   const ollamaModelAnalyze =
@@ -99,6 +113,11 @@ export function loadConfig(): ServerConfig {
     geminiTimeoutMs: readInt("GEMINI_TIMEOUT_MS", 45_000, { min: 5_000, max: 180_000 }),
     geminiRetryMaxAttempts: readInt("GEMINI_RETRY_MAX_ATTEMPTS", 3, { min: 1, max: 6 }),
     geminiRetryBaseDelayMs: readInt("GEMINI_RETRY_BASE_DELAY_MS", 400, { min: 50, max: 5_000 }),
+    openaiApiKey: openaiApiKey || undefined,
+    openaiModel: process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini",
+    openaiTimeoutMs: readInt("OPENAI_TIMEOUT_MS", 45_000, { min: 5_000, max: 180_000 }),
+    openaiRetryMaxAttempts: readInt("OPENAI_RETRY_MAX_ATTEMPTS", 3, { min: 1, max: 6 }),
+    openaiRetryBaseDelayMs: readInt("OPENAI_RETRY_BASE_DELAY_MS", 400, { min: 50, max: 5_000 }),
     apiKeySettingsToken: process.env.API_KEY_SETTINGS_TOKEN?.trim() || undefined,
     allowRemoteApiKeySettings: readBool("ALLOW_REMOTE_API_KEY_SETTINGS", false),
     trustProxy: readBool("TRUST_PROXY", false),
