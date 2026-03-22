@@ -144,7 +144,7 @@ describe("openaiAnalyzeIncident", () => {
       images: [{ mimeType: "image/png", data: "base64encodeddata" }],
     });
 
-    const callArgs = mockCreate.mock.calls[0][0];
+    const callArgs = mockCreate.mock.calls[0]![0];
     const userMessage = callArgs.messages.find((m: any) => m.role === "user");
     expect(Array.isArray(userMessage.content)).toBe(true);
     const imagePart = userMessage.content.find((p: any) => p.type === "image_url");
@@ -219,7 +219,7 @@ describe("openaiFollowUp", () => {
       question: "How long did it last?",
     });
 
-    const callArgs = mockCreate.mock.calls[0][0];
+    const callArgs = mockCreate.mock.calls[0]![0];
     const roles = callArgs.messages.map((m: any) => m.role);
     expect(roles).toContain("system");
     expect(roles).toContain("user");
