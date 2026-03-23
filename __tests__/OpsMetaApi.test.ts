@@ -134,6 +134,9 @@ describe("service meta endpoints", () => {
     expect(body.summary.incidentBundleCount).toBeGreaterThanOrEqual(4);
     expect(body.reviewerFastPath).toContain("/api/resource-pack");
     expect(body.files.incidentBundles).toBe("samples/resource-pack/incident-bundles.json");
+    expect(body.externalData.files.incidentLogCsv).toBe(
+      "samples/external/incident_response_log/incident_event_log.csv"
+    );
   });
 
   it("returns a digest-backed export summary and verification surface", async () => {

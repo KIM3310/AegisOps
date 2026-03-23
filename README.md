@@ -126,7 +126,7 @@ AegisOps exposes explicit review surfaces for operators:
 - `GET /api/postmortem-pack`
   - evidence-first postmortem pack tying live session traces, runtime telemetry, replay posture, and export-safe handoff together
 - `GET /api/resource-pack`
-  - checked-in incident bundles, annotations, operator checks, and validation cases for reviewer-safe demos
+  - checked-in incident bundles, annotations, operator checks, validation cases, and local staged public incident-log data for reviewer-safe demos
 - `GET /api/live-sessions`
   - persisted incident session history with lane-aware summaries and detailed session timelines
 - `GET /api/summary-pack`

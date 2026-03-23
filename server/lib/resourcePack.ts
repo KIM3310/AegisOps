@@ -136,6 +136,14 @@ export function buildAegisOpsResourcePack() {
       operatorCheckCount: OPERATOR_CHECKS.length,
       validationCaseCount: VALIDATION_CASES.length,
     },
+    externalData: {
+      localOnly: true,
+      note: "If local public-incident data is staged, place it under samples/external/incident_response_log/ for operator review.",
+      files: {
+        incidentLogCsv: "samples/external/incident_response_log/incident_event_log.csv",
+        incidentSummaryTxt: "samples/external/incident_response_log/Incident_response.txt",
+      },
+    },
     incidentBundles: INCIDENT_BUNDLES,
     evidenceAnnotations: EVIDENCE_ANNOTATIONS,
     operatorChecks: OPERATOR_CHECKS,
