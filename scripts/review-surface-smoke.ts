@@ -54,12 +54,13 @@ async function main() {
   const baseUrl = `http://127.0.0.1:${address.port}`;
 
   try {
-    const [healthz, meta, summaryPack, liveSessionPack, schema, replaySummary, runtimeScorecard] =
+    const [healthz, meta, summaryPack, liveSessionPack, resourcePack, schema, replaySummary, runtimeScorecard] =
       await Promise.all([
         fetchJson(baseUrl, "/api/healthz"),
         fetchJson(baseUrl, "/api/meta"),
         fetchJson(baseUrl, "/api/summary-pack"),
         fetchJson(baseUrl, "/api/live-session-pack"),
+        fetchJson(baseUrl, "/api/resource-pack"),
         fetchJson(baseUrl, "/api/schema/report"),
         fetchJson(baseUrl, "/api/evals/replays/summary"),
         fetchJson(baseUrl, "/api/runtime/scorecard?focus=quality"),
@@ -68,6 +69,7 @@ async function main() {
     assert(meta?.links?.summaryPack === "/api/summary-pack", "service meta summary-pack link mismatch");
     assert(summaryPack?.summaryPackId, "summary pack id missing");
     assert(liveSessionPack?.liveSessionPackId, "live session pack id missing");
+    assert(resourcePack?.resourcePackId === "aegisops-resource-pack-v1", "resource pack id mismatch");
     assert(schema?.schemaId === "incident-report-v1", "incident report schema id mismatch");
     assert(
       Array.isArray(schema?.requiredFields) && schema.requiredFields.includes("title"),
@@ -93,6 +95,7 @@ async function main() {
       proof: {
         summaryPackId: summaryPack.summaryPackId,
         liveSessionPackId: liveSessionPack.liveSessionPackId,
+        resourcePackId: resourcePack.resourcePackId,
         schemaId: schema.schemaId,
         replaySummaryId: replaySummary.summaryId,
         replayPassRate: replaySummary?.totals?.passRate ?? null,
@@ -103,6 +106,7 @@ async function main() {
       },
       reviewRoutes: {
         healthz: meta?.links?.healthz ?? null,
+        resourcePack: meta?.links?.resourcePack ?? null,
         summaryPack: meta?.links?.summaryPack ?? null,
         liveSessionPack: meta?.links?.liveSessionPack ?? null,
         runtimeScorecard: meta?.links?.runtimeScorecard ?? null,
