@@ -46,6 +46,7 @@ import {
   buildLiveSessionDetail,
   buildLiveSessionList,
   buildLiveSessionStoreSummary,
+  buildSeverityTrendAggregation,
   normalizeLiveSessionId,
   normalizeLiveSessionLane,
 } from "./lib/sessionStore";
@@ -2001,6 +2002,30 @@ app.get("/api/live-sessions/:sessionId", (req, res) => {
     return sendError(req, res, 404, `Unknown live session: ${sessionId}`);
   }
   return res.json(detail);
+});
+
+app.get("/api/live-sessions/:sessionId/export", (req, res) => {
+  const sessionId = normalizeLiveSessionId(
+    String(req.params.sessionId || ""),
+    ""
+  );
+  if (!sessionId) {
+    return sendError(req, res, 400, "Missing sessionId.");
+  }
+  const detail = buildLiveSessionDetail(sessionId);
+  if (!detail) {
+    return sendError(req, res, 404, `Unknown live session: ${sessionId}`);
+  }
+  res.setHeader("Content-Type", "application/json");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="session-${sessionId}.json"`
+  );
+  return res.json(detail);
+});
+
+app.get("/api/analytics/severity-trend", (_req, res) => {
+  return res.json(buildSeverityTrendAggregation());
 });
 
 app.get("/api/escalation-readiness", (req, res) => {

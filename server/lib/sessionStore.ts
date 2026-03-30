@@ -184,6 +184,27 @@ export function buildLiveSessionDetail(sessionId: string) {
   };
 }
 
+export function buildSeverityTrendAggregation() {
+  const events = readLiveSessionEvents();
+  const buckets = { SEV1: 0, SEV2: 0, SEV3: 0, UNKNOWN: 0 };
+  for (const event of events) {
+    const sev = (event.reportSeverity || "").toUpperCase().trim();
+    if (sev === "SEV1" || sev === "SEV2" || sev === "SEV3") {
+      buckets[sev]++;
+    } else if (sev) {
+      buckets.UNKNOWN++;
+    }
+  }
+  return {
+    ok: true,
+    service: "aegisops-severity-trend",
+    generatedAt: new Date().toISOString(),
+    schema: "aegisops-severity-trend-v1",
+    totalEventsScanned: events.length,
+    severityCounts: buckets,
+  };
+}
+
 export function buildLiveSessionStoreSummary(limit = 5) {
   const targetPath = resolveSessionStorePath();
   const events = readLiveSessionEvents();
