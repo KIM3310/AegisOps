@@ -264,53 +264,6 @@ AegisOps/
 
 ---
 
-<details>
-<summary><strong>For AI Engineers / Data Engineers / Solutions Architects</strong></summary>
-
-### Why this project matters for technical interviews
-
-AegisOps demonstrates production-grade patterns across the full stack of an AI-powered operational system:
-
-#### AI Engineering
-
-- **Multimodal input normalization** -- logs (text) and monitoring screenshots (images) are validated, clamped, and fed to models as structured parts. Image payloads are base64-encoded with MIME type enforcement and size limits.
-- **Structured output stabilization** -- LLM responses are parsed through JSON extraction, repair (`tryRepairAndParseJson`), and field-level clamping. The output contract is a strict TypeScript `IncidentReport` interface, not raw model text.
-- **Multi-provider abstraction** -- Gemini, OpenAI, and Ollama share the same input/output interface. Provider selection is env-var gated with automatic fallback chains (e.g., Gemini primary -> Gemini Flash fallback).
-- **Retry and timeout hardening** -- each provider implements exponential backoff with jitter, configurable attempt limits, per-request timeouts, and retriable error classification.
-- **Evaluation-backed quality claims** -- the replay eval harness scores every report against 8 rubric categories with failure bucket aggregation. This is the evidence path shown before any live model claim.
-- **Prompt engineering** -- system instructions enforce SRE domain language, structured reasoning traces (Observations / Hypotheses / Decision Path), and raw JSON output without markdown fences.
-
-#### Data Engineering
-
-- **Schema-first contracts** -- Zod schemas validate every request body. The incident report schema is exposed at `/api/schema/report` so downstream consumers can generate validators.
-- **Persistence pipeline** -- analysis artifacts are persisted to GCS as versioned JSON objects. Analytics rows (severity, latency, provider, image count) are streamed to BigQuery for trend analysis.
-- **Export-ready formats** -- reports export to JSON, Markdown, Slack blocks, and Jira format. Google Workspace integration produces Docs, Slides, Sheets, and Calendar entries from the same report object.
-- **Observability pipeline** -- Prometheus counters/histograms expose HTTP request rates, analysis latency by provider, follow-up counts, and TTS usage. Datadog adapter mirrors the same metrics for enterprise monitoring.
-
-#### Solutions Architecture
-
-- **Trust boundary enforcement** -- provider API keys never reach the browser. The Express API acts as a security boundary between the operator UI and model runtime.
-- **Operator access control** -- supports both static bearer tokens and OIDC JWT (RS256) with configurable role claim paths, audience validation, and JWKS discovery/caching.
-- **IaC-ready deployment** -- Terraform module for Cloud Run with Secret Manager integration, service accounts, startup/liveness probes, and auto-scaling. Kubernetes manifests include HPA with CPU/memory targets.
-- **Runtime mode hierarchy** -- demo mode (deterministic, no keys) -> local mode (Ollama) -> live mode (Gemini/OpenAI). Each mode preserves the evaluation path and review surfaces.
-- **Review-first API surface** -- `/api/summary-pack`, `/api/evals/replays`, `/api/schema/report`, and `/api/meta` are available in every mode, so architectural reviewers can evaluate the system without triggering live model calls.
-
-### Evidence paths for reviewers
-
-| What to verify | How to verify |
-|---|---|
-| Report schema contract | `GET /api/schema/report` |
-| Replay eval quality floor | `GET /api/evals/replays` or `npm run eval:replays` |
-| Runtime posture | `GET /api/healthz` |
-| Trust surface | `GET /api/summary-pack` |
-| Provider comparison | `GET /api/provider-comparison` |
-| Test coverage | `npm test` (29 test files, Vitest) |
-| Full verification | `npm run verify` |
-
-</details>
-
----
-
 ## Testing
 
 ```bash
