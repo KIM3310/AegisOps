@@ -230,7 +230,7 @@ describe('App front door', () => {
 
   it('ships explicit payload guardrail copy in the front-door source', async () => {
     const source = await import('node:fs/promises').then((fs) =>
-      fs.readFile(new URL('../App.tsx', `file://${process.cwd()}/__tests__/`), 'utf8')
+      fs.readFile(new URL('../hooks/useAppState.ts', `file://${process.cwd()}/__tests__/`), 'utf8')
     );
     expect(source).toContain('Payload guardrail');
     expect(source).toContain('Logs exceed the backend limit, so AegisOps will trim the payload unless you tighten the incident slice first.');
