@@ -30,7 +30,7 @@ describe("Datadog Adapter", () => {
     });
 
     it("returns true when DD_API_KEY is set", () => {
-      process.env.DD_API_KEY = "test-api-key-abc123";
+      process.env.DD_API_KEY = "test";
       expect(isDatadogEnabled()).toBe(true);
     });
   });
