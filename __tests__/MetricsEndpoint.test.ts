@@ -48,7 +48,7 @@ describeIfSocketBinding("GET /api/integrations/status", () => {
     expect(res.body.datadog).toHaveProperty("enabled");
   });
 
-  it("returns a compact cloud proof board with reviewer links", async () => {
+  it("returns a compact cloud proof board with operator links", async () => {
     const res = await request(server).get("/api/cloud-proof");
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);

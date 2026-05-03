@@ -20,7 +20,7 @@ That maps directly to Datadog-style incident dashboards, monitors, notebooks, an
 ## Service map
 
 - `aegisops-web`
-  - reviewer UI and operator surface
+  - operator UI and proof surface
 - `aegisops-api`
   - `/api/analyze`, `/api/followup`, `/api/tts`, `/api/healthz`
 - `aegisops-replay-evals`

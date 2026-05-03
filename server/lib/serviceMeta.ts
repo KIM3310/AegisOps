@@ -335,7 +335,7 @@ export function buildAegisOpsSummaryPack(options: ServiceMetaOptions) {
     deployment: options.deployment,
     summaryPackId: SUMMARY_PACK_ID,
     headline:
-      "SEV1 reviewers can verify runtime mode, replay quality, report contract, and export posture before trusting the copilot.",
+      "SEV1 operators can verify runtime mode, replay quality, report contract, and export posture before trusting the copilot.",
     operatorJourney: [
       {
         stage: "Collect",

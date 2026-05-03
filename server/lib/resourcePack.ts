@@ -73,7 +73,7 @@ const OPERATOR_CHECKS = [
     checkId: "confirm-runtime-mode",
     surface: "/api/healthz",
     whyItMatters:
-      "Reviewers should confirm demo, local, or live mode before trusting provider-dependent behavior.",
+      "Operators should confirm demo, local, or live mode before trusting provider-dependent behavior.",
   },
   {
     checkId: "inspect-scorecard",

@@ -723,7 +723,7 @@ export function useAppState() {
         ? topActions
         : ['1. Review current evidence, confirm severity, and assign the first mitigation owner.']),
       '',
-      'Reviewer context',
+      'Operator context',
       ...(strongestJourney
         ? [`- ${strongestJourney.surface}: ${strongestJourney.summary}`]
         : ['- Summary pack unavailable. Start with /api/healthz, /api/meta, and /api/summary-pack.']),

@@ -133,7 +133,7 @@ export function FrontDoorSection({ state }: FrontDoorSectionProps) {
           <div className="space-y-1">
             <div className="text-xs font-semibold flex items-center gap-1.5">
               <Shield className="w-3.5 h-3.5 text-accent" />
-              Reviewer / operator framing
+              Operator proof framing
             </div>
             <div className="flex flex-wrap gap-2 pt-1">
               {Object.entries(REVIEW_LENSES).map(([key, lens]) => (

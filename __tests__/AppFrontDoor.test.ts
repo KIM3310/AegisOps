@@ -78,7 +78,7 @@ const {
       { stage: 'collect', summary: 'Load the strongest preset.', surface: '/demo' },
     ],
     trustBoundary: ['Recorded replay proof only.'],
-    reviewSequence: ['Replay proof', 'Provider posture', 'Reviewer handoff'],
+    reviewSequence: ['Replay proof', 'Provider posture', 'Operator handoff'],
     twoMinuteReview: [
       { step: 'Check replay proof', surface: '/api/evals/replays', proof: '100% pass' },
     ],

@@ -58,10 +58,10 @@ Individual check failures are hard to act on at scale. Failure buckets aggregate
 
 ### Positive
 
-- Every CI run produces a replay proof artifact that reviewers can inspect without running the system.
+- Every CI run produces a replay proof artifact that operators can inspect without running the system.
 - The replay suite serves as living documentation of what "good" looks like for each incident class.
 - Adding a new incident scenario automatically increases rubric coverage without modifying the scoring engine.
-- The eval surface (`/api/evals/replays`) is available in every deployment mode, so architectural reviewers can evaluate quality without triggering live model calls.
+- The eval surface (`/api/evals/replays`) is available in every deployment mode, so operators can evaluate quality without triggering live model calls.
 
 ### Negative
 

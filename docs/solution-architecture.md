@@ -50,7 +50,7 @@ flowchart LR
 - runtime modes are explicit: demo, Gemini live, Ollama local
 - export routes are separated from incident reasoning routes
 
-## Reviewer flow
+## Operator flow
 
 1. Open `/api/healthz` to confirm runtime mode.
 2. Open `/api/summary-pack` to inspect replay proof and trust boundary.

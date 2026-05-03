@@ -531,7 +531,7 @@ function buildCloudProofPack() {
     version: 1,
     generatedAt: new Date().toISOString(),
     headline:
-      "Compact cloud proof board showing which external integrations are configured and where the strongest reviewer proof lives.",
+      "Compact cloud proof board showing which external integrations are configured and where the strongest operator proof lives.",
     runtime: {
       provider: getActiveProvider(),
       mode: getMode(),
@@ -557,7 +557,7 @@ function buildCloudProofPack() {
       {
         step: "2. Integration board",
         surface: "/api/cloud-proof -> /api/integrations/status",
-        why: "Confirm which cloud lanes are configured and what the current reviewer-safe proof route is.",
+        why: "Confirm which cloud lanes are configured and what the current operator-safe proof route is.",
       },
       {
         step: "3. Incident proof",
