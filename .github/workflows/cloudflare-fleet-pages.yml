@@ -1,0 +1,129 @@
+name: cloudflare-fleet-pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      site:
+        description: Site to deploy
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - doeon-kim-portfolio
+          - steadytap
+  schedule:
+    - cron: "17 */12 * * *"
+
+concurrency:
+  group: cloudflare-fleet-pages-${{ github.event.inputs.site || 'scheduled' }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - site: doeon-kim-portfolio
+            repository: KIM3310/doeon-kim-portfolio
+            checkout_path: doeon-kim-portfolio
+            project_name: kim3310-doeon-kim-portfolio
+            output_dir: doeon-kim-portfolio/dist
+          - site: steadytap
+            repository: KIM3310/SteadyTap
+            checkout_path: steadytap
+            project_name: kim3310-steadytap
+            output_dir: steadytap/site
+    steps:
+      - name: Select requested site
+        id: selection
+        shell: bash
+        run: |
+          requested="${{ github.event.inputs.site || 'all' }}"
+          if [ "$requested" = "all" ] || [ "$requested" = "${{ matrix.site }}" ]; then
+            echo "selected=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "selected=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check Cloudflare configuration
+        id: cloudflare
+        if: steps.selection.outputs.selected == 'true'
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stop when Cloudflare secrets are missing
+        if: steps.selection.outputs.selected == 'true' && steps.cloudflare.outputs.enabled != 'true'
+        run: |
+          echo "Cloudflare secrets are not configured in AegisOps."
+          exit 1
+
+      - name: Checkout site repository
+        if: steps.selection.outputs.selected == 'true' && steps.cloudflare.outputs.enabled == 'true'
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ matrix.repository }}
+          path: ${{ matrix.checkout_path }}
+
+      - name: Setup Node for portfolio
+        if: steps.selection.outputs.selected == 'true' && matrix.site == 'doeon-kim-portfolio'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: doeon-kim-portfolio/package-lock.json
+
+      - name: Build portfolio
+        if: steps.selection.outputs.selected == 'true' && matrix.site == 'doeon-kim-portfolio'
+        working-directory: doeon-kim-portfolio
+        run: |
+          npm ci
+          npm run typecheck
+          npm run build
+
+      - name: Validate SteadyTap static site
+        if: steps.selection.outputs.selected == 'true' && matrix.site == 'steadytap'
+        run: test -f steadytap/site/index.html
+
+      - name: Ensure Cloudflare Pages project exists
+        if: steps.selection.outputs.selected == 'true' && steps.cloudflare.outputs.enabled == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          if ! npx wrangler@4.71.0 pages project create "${{ matrix.project_name }}" --production-branch=main >/tmp/cf_pages_create.log 2>&1; then
+            grep -qi "already exists" /tmp/cf_pages_create.log || (cat /tmp/cf_pages_create.log && exit 1)
+          fi
+
+      - name: Deploy to Cloudflare Pages
+        if: steps.selection.outputs.selected == 'true' && steps.cloudflare.outputs.enabled == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            echo "Deploying ${{ matrix.site }} attempt $attempt/3"
+            if npx wrangler@4.71.0 pages deploy "${{ matrix.output_dir }}" --project-name="${{ matrix.project_name }}" --branch=main --commit-dirty=true; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              sleep 15
+            fi
+          done
+          echo "Cloudflare deploy failed after retries"
+          exit 1
