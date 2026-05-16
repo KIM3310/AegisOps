@@ -19,6 +19,9 @@ concurrency:
   group: cloudflare-fleet-pages-${{ github.event.inputs.site || 'scheduled' }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
