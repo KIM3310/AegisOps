@@ -24,6 +24,10 @@
 - **Verification:** Run `npm run verify`; it covers typecheck, tests, replay evals, review smoke, and build.
 - **Commercial read:** Position it as an incident review cockpit and tabletop handoff workflow for noisy operations teams.
 
+## Commercialization Playbook
+
+- [Monetization and GTM playbook](docs/monetization-playbook.md) maps the repository to buyer segments, offer ladder, pricing hypotheses, proof gates, and risk boundaries.
+
 ## Live Demo
 
 | Surface | Link |
