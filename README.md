@@ -7,6 +7,16 @@
 
 **AegisOps** turns raw incident logs and monitoring screenshots into structured, decision-ready incident reports -- complete with severity classification, root-cause analysis, timeline reconstruction, and operator handoff artifacts. Every analysis claim is backed by a deterministic replay eval suite before the live model path is trusted.
 
+## Product and Review Surface
+
+| Lens | Current answer |
+|---|---|
+| Buyer or user | SOC, IT operations, managed service, and incident-response teams that need clearer handoff after noisy incidents. |
+| Commercial route | Incident review cockpit, replay exercise, tabletop workflow, and operator handoff setup. |
+| Review signal | Multimodal incident analysis, schema-conformant reports, replay evals, follow-up Q&A, and export paths. |
+| Safety boundary | Browser never receives provider keys; demo mode is deterministic and no-key by default. |
+| Fast proof | `npm run verify`, live Cloudflare Pages demo, replay eval suite, and review smoke script. |
+
 ## Live Demo
 
 | Surface | Link |
