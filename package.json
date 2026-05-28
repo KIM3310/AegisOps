@@ -49,7 +49,9 @@
     "vitest": "^3.2.4"
   },
   "overrides": {
-    "minimatch": "^10.2.1"
+    "minimatch": "^10.2.1",
+    "qs": "^6.15.2",
+    "ws": "^8.20.1"
   },
   "author": "Doeon Kim",
   "homepage": "https://github.com/KIM3310/AegisOps",
