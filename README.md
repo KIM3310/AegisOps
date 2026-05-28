@@ -17,6 +17,13 @@
 | Safety boundary | Browser never receives provider keys; demo mode is deterministic and no-key by default. |
 | Fast proof | `npm run verify`, live Cloudflare Pages demo, replay eval suite, and review smoke script. |
 
+## Reviewer Fast Path
+
+- **First minute:** Open the Cloudflare demo, run one incident scenario, then inspect replay eval coverage.
+- **Local demo:** Run `npm install && npm run dev`; the UI runs on `http://127.0.0.1:3000` and API on `http://127.0.0.1:8787`.
+- **Verification:** Run `npm run verify`; it covers typecheck, tests, replay evals, review smoke, and build.
+- **Commercial read:** Position it as an incident review cockpit and tabletop handoff workflow for noisy operations teams.
+
 ## Live Demo
 
 | Surface | Link |
