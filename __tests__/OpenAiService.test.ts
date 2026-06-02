@@ -5,13 +5,15 @@ import { openaiAnalyzeIncident, openaiFollowUp } from "../server/lib/openai";
 const mockCreate = vi.fn();
 
 vi.mock("openai", () => {
-  const MockOpenAI = vi.fn(() => ({
-    chat: {
-      completions: {
-        create: mockCreate,
+  const MockOpenAI = vi.fn(function () {
+    return {
+      chat: {
+        completions: {
+          create: mockCreate,
+        },
       },
-    },
-  }));
+    };
+  });
   return { default: MockOpenAI };
 });
 
