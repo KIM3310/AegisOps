@@ -7,6 +7,13 @@
 
 **AegisOps** turns raw incident logs and monitoring screenshots into structured, decision-ready incident reports -- complete with severity classification, root-cause analysis, timeline reconstruction, and operator handoff artifacts. Every analysis claim is backed by a deterministic replay eval suite before the live model path is trusted.
 
+## Three-Minute Proof
+
+1. Open the Cloudflare demo or local UI and run one incident scenario.
+2. Inspect the replay eval suite before trusting live model output.
+3. Run `npm run verify` to cover typecheck, tests, replay evals, review smoke, and build.
+4. Review export/handoff artifacts as the buyer-facing proof, not just the chat flow.
+
 ## Product and Review Surface
 
 | Lens | Current answer |
