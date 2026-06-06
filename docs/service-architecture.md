@@ -1,6 +1,6 @@
 # Service Architecture - AegisOps
 
-This document defines the deployment and resource plan for turning this repository into a buyer-reviewable service. It intentionally avoids public public financial assumptions, public financial guesses, or contract assumptions.
+This document defines the deployment and resource plan for turning this repository into a buyer-reviewable service. It intentionally avoids public financial assumptions, public financial guesses, or contract assumptions.
 
 ## Commercial Role
 
@@ -46,6 +46,15 @@ Visitor or operator
 - R2 credentials
 - AUTH_SECRET
 - incident integration tokens later
+
+## Revenue Channel Architecture
+
+- **Primary channel:** B2B managed support retainers
+- **Monetization route:** Operational readiness diagnostic, cockpit pilot, then recurring incident review or reliability support.
+- **Acquisition motion:** Portfolio proof, incident tabletop walkthroughs, MSP/NOC/SOC outreach, and infrastructure-operations case studies.
+- **Activation path:** Define escalation paths, synthetic integrations, report exports, and a handoff rhythm before production operations are involved.
+- **Margin control:** Standardize runbooks, report templates, and dashboards so recurring support time stays bounded.
+- **Public boundary:** Keep revenue, pricing, and contract assumptions in private planning; this repository publishes service structure, resource needs, and technical proof only.
 
 ## Cost and Risk Controls
 
