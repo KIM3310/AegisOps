@@ -56,9 +56,9 @@ Use this page as the short path through the repository. It keeps the review grou
 
 | Possible offer | Working scope assumption |
 |---|---|
-| Incident-review tabletop package | $2k-$5k tabletop workshop |
-| Managed replay/eval setup for customer incidents | $8k-$20k implementation pilot |
-| Monthly incident-quality scorecard and operator handoff review | $1.5k-$6k/month managed review support |
+| Incident-review tabletop package | Scope after buyer intake |
+| Managed replay/eval setup for customer incidents | Scope after buyer intake |
+| Monthly incident-quality scorecard and operator handoff review | Scope after buyer intake |
 
 ## Boundaries
 

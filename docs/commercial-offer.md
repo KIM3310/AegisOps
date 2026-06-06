@@ -12,7 +12,7 @@ This is the buyer-ready version of the repository. It turns the technical proof 
 | Buyer | SOC leads, IT operations managers, MSP incident teams, and infrastructure owners with noisy handoffs. |
 | Pain wedge | A replayable incident review cockpit that turns logs and screenshots into structured handoff evidence. |
 | Front-door offer | Incident-review tabletop package |
-| Entry scope | $2k-$5k tabletop workshop |
+| Entry scope | Scope after buyer intake |
 | Proof before pitch | Replay eval suite passes |
 | Next buyer action | Review one proof artifact, then choose diagnostic, workshop, pilot, support, or revival path. |
 
@@ -20,9 +20,9 @@ This is the buyer-ready version of the repository. It turns the technical proof 
 
 | Offer | Scope assumption | Buyer-facing scope |
 |---|---|---|
-| Incident-review tabletop package | $2k-$5k tabletop workshop | Ship a 3-scenario public demo clip |
-| Managed replay/eval setup for customer incidents | $8k-$20k implementation pilot | Create MSP/SOC discovery checklist |
-| Monthly incident-quality scorecard and operator handoff review | $1.5k-$6k/month managed review support | Offer 3 pilot slots with fixed success criteria |
+| Incident-review tabletop package | Scope after buyer intake | Ship a 3-scenario public demo clip |
+| Managed replay/eval setup for customer incidents | Scope after buyer intake | Create MSP/SOC discovery checklist |
+| Monthly incident-quality scorecard and operator handoff review | Scope after buyer intake | Offer 3 pilot slots with fixed success criteria |
 
 ## Close Path
 

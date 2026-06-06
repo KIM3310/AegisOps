@@ -49,9 +49,9 @@ This note specializes the repository for service launch. It combines product str
 
 ## Conversion Path
 
-- Risk-reversing entry: Incident-review tabletop package ($2k-$5k tabletop workshop) with one acceptance metric.
-- Pilot: Managed replay/eval setup for customer incidents ($8k-$20k implementation pilot) using buyer-approved data and named operators.
-- Recurring layer: Monthly incident-quality scorecard and operator handoff review ($1.5k-$6k/month managed review support) for monitoring, governance, support, or managed review.
+- Risk-reversing entry: Incident-review tabletop package (scope after buyer intake) with one acceptance metric.
+- Pilot: Managed replay/eval setup for customer incidents (scope after buyer intake) using buyer-approved data and named operators.
+- Recurring layer: Monthly incident-quality scorecard and operator handoff review (scope after buyer intake) for monitoring, governance, support, or managed review.
 
 ## Scope Frame
 
