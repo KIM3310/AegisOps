@@ -12,13 +12,13 @@ This is the buyer-ready version of the repository. It turns the technical proof 
 | Buyer | SOC leads, IT operations managers, MSP incident teams, and infrastructure owners with noisy handoffs. |
 | Pain wedge | A replayable incident review cockpit that turns logs and screenshots into structured handoff evidence. |
 | Front-door offer | Incident-review tabletop package |
-| Entry price assumption | $2k-$5k tabletop workshop |
+| Entry scope | $2k-$5k tabletop workshop |
 | Proof before pitch | Replay eval suite passes |
 | Next buyer action | Review one proof artifact, then choose diagnostic, workshop, pilot, support, or revival path. |
 
 ## Packaged Offer Ladder
 
-| Offer | Price assumption | Buyer-facing scope |
+| Offer | Scope assumption | Buyer-facing scope |
 |---|---|---|
 | Incident-review tabletop package | $2k-$5k tabletop workshop | Ship a 3-scenario public demo clip |
 | Managed replay/eval setup for customer incidents | $8k-$20k implementation pilot | Create MSP/SOC discovery checklist |
@@ -35,7 +35,7 @@ This is the buyer-ready version of the repository. It turns the technical proof 
 - Cognitive fluency: one buyer, one painful workflow, one proof artifact, one next step.
 - Attention design: keep the primary CTA visible and remove side quests before the proof moment.
 - Risk reversal: make the first paid step small, time-boxed, and tied to acceptance criteria.
-- Proof before persuasion: show tests, demo output, scorecards, exports, or review packs before pricing.
+- Proof before persuasion: show tests, demo output, scorecards, exports, or review packs before scope discussion.
 - Autonomy: make opt-in, data boundaries, cancellation, and unsupported claims visible.
 - Commitment: end the buyer conversation with a written pilot checklist the buyer can share internally.
 
@@ -61,9 +61,9 @@ This is the buyer-ready version of the repository. It turns the technical proof 
 
 ## Guardrails
 
-- Do not invent customers, revenue, endorsements, logos, or certifications.
+- Do not invent customers, financial outcomes, endorsements, logos, or certifications.
 - Do not claim production readiness without scoped validation, data access, monitoring, and support ownership.
-- Do not use pressure tactics, fake scarcity, hidden continuity, or confusing pricing.
+- Do not use pressure tactics, fake scarcity, hidden continuity, or confusing scope.
 - No production tenant claims without integration
 - Provider keys stay server-side only
 - Customer logs require retention and redaction policy

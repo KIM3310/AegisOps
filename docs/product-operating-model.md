@@ -9,12 +9,12 @@ Multimodal incident copilot with replay evals, live-session review, and export s
 
 This repository is packaged as a concrete system surface, not a loose code sample. The enterprise value is a narrow proof that can be inspected, run, tested, and converted into a paid pilot or implementation motion.
 
-## Buyer And Revenue Path
+## Buyer And Service Path
 
 | Area | Position |
 | --- | --- |
 | Target buyer | Security and operations teams managing incident handoff |
-| Paid wedge | Incident review cockpit for SOC or IT operations |
+| Service wedge | Incident review cockpit for SOC or IT operations |
 | Review signal | Operator UX, replay evals, multimodal incident workflow |
 | Delivery shape | Fixed-scope pilot, integration sprint, and handoff-ready operating pack |
 | Expansion path | Add customer-specific adapters, policy controls, observability, and support SLAs after the pilot proves value |
@@ -45,6 +45,6 @@ This repository is packaged as a concrete system surface, not a loose code sampl
 4. Inspect public demos and homepage metadata before linking the repo from the portfolio.
 5. Record any failing external dependency as an explicit operating limitation instead of hiding it.
 
-## Commercial Next Step
+## Service Next Step
 
 Turn the repo into a customer-facing offer by pairing the proof surface with one discovery question, one measurable success metric, and one paid follow-up package. The smallest viable package should be easy to buy, easy to verify, and bounded enough to deliver without custom platform work.
