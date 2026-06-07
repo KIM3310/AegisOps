@@ -12,14 +12,14 @@
 1. Open the Cloudflare demo or local UI and run one incident scenario.
 2. Inspect the replay eval suite before trusting live model output.
 3. Run `npm run verify` to cover typecheck, tests, replay evals, review smoke, and build.
-4. Review export/handoff artifacts as the buyer-facing proof, not just the chat flow.
+4. Review export/handoff artifacts as the reviewer-facing proof, not just the chat flow.
 
 ## Product and Review Surface
 
 | Lens | Current answer |
 |---|---|
-| Buyer or user | SOC, IT operations, managed service, and incident-response teams that need clearer handoff after noisy incidents. |
-| Commercial route | Incident review cockpit, replay exercise, tabletop workflow, and operator handoff setup. |
+| Audience | SOC, IT operations, managed service, and incident-response teams that need clearer handoff after noisy incidents. |
+| Review path | Validate the demo, README, architecture notes, and quality gate before deeper workflow review. |
 | Review signal | Multimodal incident analysis, schema-conformant reports, replay evals, follow-up Q&A, and export paths. |
 | Safety boundary | Browser never receives provider keys; demo mode is deterministic and no-key by default. |
 | Fast proof | `npm run verify`, live Cloudflare Pages demo, replay eval suite, and review smoke script. |
@@ -29,20 +29,16 @@
 - **First minute:** Open the Cloudflare demo, run one incident scenario, then inspect replay eval coverage.
 - **Local demo:** Run `npm install && npm run dev`; the UI runs on `http://127.0.0.1:3000` and API on `http://127.0.0.1:8787`.
 - **Verification:** Run `npm run verify`; it covers typecheck, tests, replay evals, review smoke, and build.
-- **Commercial read:** Position it as an incident review cockpit and tabletop handoff workflow for noisy operations teams.
 
 ## Service Launch Playbook
 
-- [Service launch playbook](docs/service-launch-playbook.md) maps the repository to buyer segments, offer ladder, proof gates, proof gates, and risk boundaries.
+- [Service launch playbook](docs/service-launch-playbook.md) maps the repository to review audiences, offer ladder, proof gates, proof gates, and risk boundaries.
 
 ## Review Notes
 
 - [Review guide](docs/reviewer-evidence-map.md) summarizes the project angle, first files to inspect, verification commands, and known boundaries.
 - [Quality notes](docs/quality-gate.md) lists the local checks, CI surface, and release expectations for this repository.
-- [Service growth model](docs/service-growth-model.md) maps the project to an ethical service path, activation loop, scope logic, and growth experiments.
 - [Enterprise readiness notes](docs/enterprise-readiness.md) outlines security, data, operations, integration, and handoff expectations.
-- [Conversion UX model](docs/conversion-ux-model.md) maps the buyer path, behavioral design, UI/UX direction, scope frame, and ethical conversion guardrails.
-- [Commercial offer](docs/commercial-offer.md) packages the repository into a buyer-ready offer ladder, proof gate, outreach angle, and close path.
 
 ## Live Demo
 
@@ -347,7 +343,7 @@ This repository includes a neutral cloud and AI engineering blueprint that maps 
 
 ## Enterprise Productization
 
-- [Product operating model](docs/product-operating-model.md) defines the buyer, paid wedge, trust boundary, operating checks, and service path for this repository.
+- [Product operating model](docs/product-operating-model.md) defines the reviewer, trust boundary, trust boundary, operating checks, and service path for this repository.
 
 ## Service Architecture
 

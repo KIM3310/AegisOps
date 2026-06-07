@@ -7,13 +7,13 @@ Last reviewed: 2026-06-03 KST
 
 Multimodal incident copilot with replay evals, live-session review, and export surfaces.
 
-This repository is packaged as a concrete system surface, not a loose code sample. The enterprise value is a narrow proof that can be inspected, run, tested, and converted into a paid pilot or implementation motion.
+This repository is packaged as a concrete system surface, not a loose code sample. The enterprise value is a narrow proof that can be inspected, run, tested, and converted into a reviewed implementation motion.
 
 ## Buyer And Service Path
 
 | Area | Position |
 | --- | --- |
-| Target buyer | Security and operations teams managing incident handoff |
+| Target reviewer | Security and operations teams managing incident handoff |
 | Service wedge | Incident review cockpit for SOC or IT operations |
 | Review signal | Operator UX, replay evals, multimodal incident workflow |
 | Delivery shape | Fixed-scope pilot, integration sprint, and handoff-ready operating pack |
@@ -34,7 +34,7 @@ This repository is packaged as a concrete system surface, not a loose code sampl
 | Local verification | `npm run verify` |
 | Runtime stack | Node/TypeScript, Makefile automation |
 | Demo readiness | README, architecture docs, and proof assets should explain the first five minutes of evaluation. |
-| Support handoff | Capture setup, known limits, recovery steps, and customer-specific extension points before a paid pilot. |
+| Support handoff | Capture setup, known limits, recovery steps, and customer-specific extension points before a production test. |
 | Release discipline | Do not ship dependency mega-bumps, workflow edits, or demo URL changes without rerunning repository validators and project checks. |
 
 ## Debug And Reliability Checklist
@@ -47,4 +47,4 @@ This repository is packaged as a concrete system surface, not a loose code sampl
 
 ## Service Next Step
 
-Turn the repo into a customer-facing offer by pairing the proof surface with one discovery question, one measurable success metric, and one paid follow-up package. The smallest viable package should be easy to buy, easy to verify, and bounded enough to deliver without custom platform work.
+Turn the repo into a customer-facing offer by pairing the proof surface with one discovery question, one measurable success metric, and one bounded follow-up path. The smallest viable package should be easy to verify and bounded enough to deliver without custom platform work.

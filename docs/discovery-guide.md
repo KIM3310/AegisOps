@@ -4,7 +4,7 @@
 
 - incident reviews rely on screenshots, chat snippets, and partial logs
 - on-call teams already have telemetry but handoff quality is weak
-- the buyer wants a safe copilot adoption path instead of immediate autonomy
+- the reviewer wants a safe copilot adoption path instead of immediate autonomy
 
 ## Discovery questions
 

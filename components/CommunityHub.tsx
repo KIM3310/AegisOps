@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, MessageCircle, Send } from 'lucide-react';
-import { AdSenseSlot } from './AdSenseSlot';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -210,11 +209,10 @@ export const CommunityHub: React.FC = () => {
           </ul>
         </div>
         <div className="bg-bg-card border border-border rounded-lg p-4">
-          <h2 className="text-sm font-semibold mb-3">Sponsored Slot</h2>
-          <p className="text-xs text-text-muted mb-2">
-            Ads are enabled only after policy pages and navigation completeness checks pass.
+          <h2 className="text-sm font-semibold mb-3">Operations Readiness</h2>
+          <p className="text-xs text-text-muted leading-relaxed">
+            External embeds stay disabled by default. Reviewers can inspect scope, privacy, contact, and compliance pages before any integration is added.
           </p>
-          <AdSenseSlot />
         </div>
       </div>
     </section>

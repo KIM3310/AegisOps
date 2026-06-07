@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_FILE="$ROOT/tools/cloudflare_pages.env"
-STRICT_ADSENSE_VALUES="${STRICT_ADSENSE_VALUES:-0}"
+STRICT_EXTERNAL_SCRIPT_VALUES="${STRICT_EXTERNAL_SCRIPT_VALUES:-0}"
 
 if [[ -f "$CONFIG_FILE" ]]; then
   # shellcheck disable=SC1090
@@ -36,12 +36,12 @@ usage() {
   cat <<USAGE
 Usage:
   tools/release_ops.sh cloudflare
-  tools/release_ops.sh apply-adsense <ca-pub-xxxxxxxxxxxxxxxx> <slot-id>
+  tools/release_ops.sh apply-external-script <external-account-id> <slot-id>
   tools/release_ops.sh check
-  tools/release_ops.sh report <ca-pub-xxxxxxxxxxxxxxxx> <slot-id>
+  tools/release_ops.sh report <external-account-id> <slot-id>
 
 Environment:
-  STRICT_ADSENSE_VALUES=1  # make placeholder AdSense values fail the check gate
+  STRICT_EXTERNAL_SCRIPT_VALUES=1  # make placeholder external script values fail the check gate
 USAGE
 }
 
@@ -57,7 +57,7 @@ detect_web_root() {
 
   local c
   for c in "${candidates[@]}"; do
-    if [[ -f "$ROOT/$c/ads.txt" && -f "$ROOT/$c/robots.txt" ]]; then
+    if [[ -f "$ROOT/$c/robots.txt" ]]; then
       printf '%s\n' "$c"
       return 0
     fi
@@ -77,29 +77,18 @@ show_cloudflare() {
   fi
 }
 
-apply_adsense() {
+apply_external_script() {
   local client="${1:-}"
   local slot="${2:-}"
 
   if [[ -z "$client" || -z "$slot" ]]; then
-    err "apply-adsense requires <client> <slot>."
+    err "apply-external-script requires <client> <slot>."
     usage
     exit 1
   fi
-
-  if [[ ! "$client" =~ ^ca-pub-[0-9]{16}$ ]]; then
-    err "client must match ca-pub-<16digits>."
-    exit 1
-  fi
-
-  if [[ ! "$slot" =~ ^[0-9]{8,20}$ ]]; then
-    err "slot must be numeric (8-20 digits)."
-    exit 1
-  fi
-
-  local pub="${client#ca-pub-}"
+  local normalized_slot="external-slot-${slot}"
   mapfile -t files < <(
-    rg -l "ca-pub-0000000000000000|ca-pub-xxxxxxxxxxxxxxxx|pub-0000000000000000|1234567890" \
+    rg -l "external-account-id|external-slot-id|EXTERNAL_SCRIPT_PLACEHOLDER" \
       "$ROOT" "${IGNORE_GLOBS[@]}" \
       --glob '!*.md' \
       --glob '!README*'
@@ -112,10 +101,10 @@ apply_adsense() {
 
   local f
   for f in "${files[@]}"; do
-    perl -i -pe "s/ca-pub-0000000000000000/${client}/g; s/ca-pub-xxxxxxxxxxxxxxxx/${client}/g; s/pub-0000000000000000/${pub}/g; s/1234567890/${slot}/g" "$f"
+    perl -i -pe "s/external-account-id/${client}/g; s/external-slot-id/${normalized_slot}/g; s/EXTERNAL_SCRIPT_PLACEHOLDER/configured-external-script/g" "$f"
   done
 
-  log "Updated ${#files[@]} files with AdSense values."
+  log "Updated ${#files[@]} files with external script values."
   git -C "$ROOT" diff --name-only
 }
 
@@ -177,30 +166,6 @@ check_robots_quality() {
     return 0
   fi
 
-  return 1
-}
-
-check_ads_txt_quality() {
-  local path="$1"
-  local line
-  line="$(head -n 1 "$path" | tr -d '\r')"
-
-  if [[ "$line" =~ ^google\.com,\ pub-[0-9]{16},\ DIRECT,\ f08c47fec0942fa0$ ]]; then
-    log "OK   ads.txt quality"
-    return 0
-  fi
-
-  if [[ "$STRICT_ADSENSE_VALUES" == "1" ]]; then
-    log "FAIL ads.txt quality (invalid publisher id format)"
-    return 1
-  fi
-
-  if [[ "$line" =~ ^google\.com,\ pub-0000000000000000,\ DIRECT,\ f08c47fec0942fa0$ ]]; then
-    log "WARN ads.txt uses placeholder publisher id (expected before production onboarding)"
-    return 0
-  fi
-
-  log "FAIL ads.txt quality"
   return 1
 }
 
@@ -301,7 +266,7 @@ check_contact_quality() {
   return $fail
 }
 
-check_ad_separation_signal() {
+check_optional_embed_signal() {
   local fail=0
   local scan_targets=()
 
@@ -322,14 +287,14 @@ check_ad_separation_signal() {
   fi
 
   if [[ ${#scan_targets[@]} -eq 0 ]]; then
-    log "WARN ad separation: no scan targets"
+    log "WARN optional embed separation: no scan targets"
     return 0
   fi
 
-  if rg -n -i "sponsored|ad slot|광고" "${scan_targets[@]}" --glob '*.{html,js,jsx,ts,tsx}' >/dev/null; then
-    log "OK   ad separation label signal"
+  if rg -n -i "optional embed" "${scan_targets[@]}" --glob '*.{html,js,jsx,ts,tsx}' >/dev/null; then
+    log "OK   optional embed separation label signal"
   else
-    log "FAIL ad separation label signal"
+    log "FAIL optional embed separation label signal"
     fail=1
   fi
 
@@ -341,15 +306,12 @@ check_review() {
   local web_root
   web_root="$(detect_web_root)"
 
-  log "[AdSense/Cloudflare Review Check]"
+  log "[External Script/Cloudflare Review Check]"
   log "repo: $(basename "$ROOT")"
   log "web_root: $web_root"
-
-  check_one_file "$ROOT/$web_root/ads.txt" "ads.txt" || fail=1
   check_one_file "$ROOT/$web_root/robots.txt" "robots.txt" || fail=1
   check_one_file "$ROOT/$web_root/sitemap.xml" "sitemap.xml" || fail=1
   check_robots_quality "$ROOT/$web_root/robots.txt" || fail=1
-  check_ads_txt_quality "$ROOT/$web_root/ads.txt" || fail=1
 
   if [[ -f "$ROOT/$web_root/_headers" || -f "$ROOT/_headers" ]]; then
     log "OK   _headers"
@@ -364,25 +326,25 @@ check_review() {
   check_policy "about" "$web_root" || fail=1
   check_index_discoverability "$web_root" || fail=1
   check_contact_quality "$web_root" || fail=1
-  check_ad_separation_signal "$web_root" || fail=1
+  check_optional_embed_signal "$web_root" || fail=1
 
-  if rg -n "google-adsense-account" "$ROOT" "${IGNORE_GLOBS[@]}" --glob '!*.md' >/dev/null; then
-    log "OK   adsense account meta"
+  if rg -n "external-script-account" "$ROOT" "${IGNORE_GLOBS[@]}" --glob '!*.md' >/dev/null; then
+    log "OK   external script account meta"
   else
-    log "FAIL adsense account meta"
+    log "FAIL external script account meta"
     fail=1
   fi
 
-  if rg -n "ca-pub-0000000000000000|ca-pub-xxxxxxxxxxxxxxxx|pub-0000000000000000|data-ad-slot=\"1234567890\"|VITE_ADSENSE_SLOT=1234567890|NEXT_PUBLIC_ADSENSE_SLOT=1234567890" \
+  if rg -n "external-account-id|external-slot-id|EXTERNAL_SCRIPT_PLACEHOLDER" \
     "$ROOT" "${IGNORE_GLOBS[@]}" --glob '!*.md' --glob '!README*' >/dev/null; then
-    if [[ "$STRICT_ADSENSE_VALUES" == "1" ]]; then
-      log "FAIL placeholder AdSense values remain (STRICT_ADSENSE_VALUES=1)"
+    if [[ "$STRICT_EXTERNAL_SCRIPT_VALUES" == "1" ]]; then
+      log "FAIL placeholder external script values remain (STRICT_EXTERNAL_SCRIPT_VALUES=1)"
       fail=1
     else
-      log "WARN placeholder AdSense values remain (expected before production AdSense onboarding)"
+      log "WARN placeholder external script values remain (expected before production external script onboarding)"
     fi
   else
-    log "OK   no placeholder AdSense values"
+    log "OK   no placeholder external script values"
   fi
 
   show_cloudflare
@@ -401,14 +363,14 @@ case "$cmd" in
   cloudflare)
     show_cloudflare
     ;;
-  apply-adsense)
-    apply_adsense "${2:-}" "${3:-}"
+  apply-external-script)
+    apply_external_script "${2:-}" "${3:-}"
     ;;
   check)
     check_review
     ;;
   report)
-    apply_adsense "${2:-}" "${3:-}"
+    apply_external_script "${2:-}" "${3:-}"
     check_review
     ;;
   help|--help|-h)

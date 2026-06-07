@@ -71,7 +71,7 @@ function buildHeadline(currentProvider: ProviderCardId, deployment: ServiceMetaD
     return "Start with replay proof in the static demo, then switch to Gemini or Ollama only when you need live-provider evidence.";
   }
   if (currentProvider === "gemini") {
-    return "Gemini is active: use this view to explain why paid cloud inference is worth the added latency and cost for multimodal response quality.";
+    return "Gemini is active: use this view to explain why external cloud inference is worth the added latency and cost for multimodal response quality.";
   }
   if (currentProvider === "ollama") {
     return "Ollama is active: use this view to show where local privacy wins and where Gemini still offers stronger live multimodal coverage.";
@@ -122,7 +122,7 @@ export function buildAegisOpsProviderComparison(
         "Same deterministic replay floor plus backend-only runtime routes and operator auth flows.",
       latencyBand: "interactive",
       costBand: "none",
-      capabilitySummary: "Full backend flow without paid provider usage.",
+      capabilitySummary: "Full backend flow without external provider usage.",
       bestFor: [
         "backend smoke tests",
         "operator auth rehearsal",
@@ -209,7 +209,7 @@ export function buildAegisOpsProviderComparison(
       comparison: {
         qualityDelta: "Adds a public live proof lane without widening the raw ingestion surface",
         latencyDelta: "Network-dependent but narrower than the full multimodal path",
-        costDelta: "Low paid token path with hard caps",
+        costDelta: "Low external-token path with hard caps",
       },
     },
     {

@@ -52,13 +52,13 @@ Use this page as the short path through the repository. It keeps the review grou
 - Review smoke script passes
 - Demo mode works without provider keys
 
-## Commercial Notes
+## Review Notes
 
 | Possible offer | Working scope assumption |
 |---|---|
-| Incident-review tabletop package | Scope after buyer intake |
-| Managed replay/eval setup for customer incidents | Scope after buyer intake |
-| Monthly incident-quality scorecard and operator handoff review | Scope after buyer intake |
+| Incident-review tabletop package | Scope after reviewer intake |
+| Managed replay/eval setup for customer incidents | Scope after reviewer intake |
+| Monthly incident-quality scorecard and operator handoff review | Scope after reviewer intake |
 
 ## Boundaries
 
