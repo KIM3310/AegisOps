@@ -34,7 +34,7 @@ Operating model: segmented ingest, least-privilege response services, audit trai
 - bounded retries with explicit failure states
 - health/readiness checks before operator-facing flows are trusted
 - idempotent data or artifact writes where repeat execution is possible
-- cost and quota guardrails for hosted services and model adapters
+- usage and quota guardrails for hosted services and model adapters
 
 ## AI Engineering
 

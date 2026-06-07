@@ -11,7 +11,7 @@ During a SEV1, teams usually have enough telemetry. They do not have enough time
 - keeps provider secrets off the browser
 - separates reasoning, review, and export surfaces
 
-## Buyer value
+## Reviewer value
 
 - faster incident handoff
 - cleaner escalation notes

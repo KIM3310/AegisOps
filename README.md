@@ -347,4 +347,4 @@ This repository includes a neutral cloud and AI engineering blueprint that maps 
 
 ## Service Architecture
 
-- [Service architecture](docs/service-architecture.md) defines the cloud resources, account information, cost controls, and production guardrails needed to turn this repo into a scoped service without publishing public financial assumptions.
+- [Service architecture](docs/service-architecture.md) defines the cloud resources, account information, usage controls, and production guardrails needed to turn this repo into a scoped service without publishing public financial assumptions.

@@ -49,7 +49,7 @@ export const ProviderComparisonCard: React.FC<Props> = ({
           <div className="rounded-lg border border-border bg-bg px-3 py-3 text-2xs text-text-muted">
             <div className="text-xs text-text font-medium">{comparison.summary.headline}</div>
             <div className="mt-2 text-2xs text-text-muted leading-5">
-              Treat the latency, quality, and cost bands below as directional operating posture. They are not per-session live measurements from the current page load.
+              Treat the latency, quality, and usage bands below as directional operating posture. They are not per-session live measurements from the current page load.
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <span className="px-2 py-1 rounded-full border border-border bg-bg-card/70">
@@ -92,7 +92,7 @@ export const ProviderComparisonCard: React.FC<Props> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <Coins className="w-3.5 h-3.5 text-text-dim" />
-                    <span>Cost: <span className="text-text">{provider.costBand}</span></span>
+                    <span>Usage: <span className="text-text">{provider.costBand}</span></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-3.5 h-3.5 text-text-dim" />

@@ -165,7 +165,7 @@ describe("geminiService apiFetch", () => {
             {
               id: "gemini",
               label: "Gemini live",
-              costBand: "paid",
+              costBand: "external-token",
               latencyBand: "network-dependent",
             },
           ],

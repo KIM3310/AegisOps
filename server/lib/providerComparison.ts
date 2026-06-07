@@ -9,7 +9,7 @@ type ProviderCardId =
   | "ollama"
   | "openai-review"
   | "openai";
-type ProviderCostBand = "none" | "local-compute" | "paid";
+type ProviderCostBand = "none" | "local-compute" | "external-token";
 type ProviderLatencyBand =
   | "instant"
   | "interactive"
@@ -71,7 +71,7 @@ function buildHeadline(currentProvider: ProviderCardId, deployment: ServiceMetaD
     return "Start with replay proof in the static demo, then switch to Gemini or Ollama only when you need live-provider evidence.";
   }
   if (currentProvider === "gemini") {
-    return "Gemini is active: use this view to explain why external cloud inference is worth the added latency and cost for multimodal response quality.";
+    return "Gemini is active: use this view to explain why external cloud inference is worth the added latency and usage for multimodal response quality.";
   }
   if (currentProvider === "ollama") {
     return "Ollama is active: use this view to show where local privacy wins and where Gemini still offers stronger live multimodal coverage.";
@@ -111,7 +111,7 @@ export function buildAegisOpsProviderComparison(
       comparison: {
         qualityDelta: "Baseline replay benchmark",
         latencyDelta: "Fastest path",
-        costDelta: "No infra or token cost",
+        costDelta: "No infra or token usage",
       },
     },
     {
@@ -135,7 +135,7 @@ export function buildAegisOpsProviderComparison(
       comparison: {
         qualityDelta: "Same replay quality, richer runtime evidence",
         latencyDelta: "Slightly slower than static demo",
-        costDelta: "Still zero provider spend",
+        costDelta: "Still zero provider usage",
       },
     },
     {
@@ -144,7 +144,7 @@ export function buildAegisOpsProviderComparison(
       isCurrent: currentProvider === "gemini",
       qualitySignal: `Cloud multimodal reasoning and TTS using ${options.analyzeModel} / ${options.ttsModel}.`,
       latencyBand: "network-dependent",
-      costBand: "paid",
+      costBand: "external-token",
       capabilitySummary: "Strongest live multimodal/talkback story for commander workflows.",
       bestFor: [
         "voice briefings",
@@ -153,13 +153,13 @@ export function buildAegisOpsProviderComparison(
       ],
       tradeoffs: [
         "Requires cloud key management",
-        "Adds network latency and paid-token cost",
+        "Adds network latency and hosted-token usage",
         "Needs explicit confidence boundary messaging",
       ],
       comparison: {
         qualityDelta: "Adds live multimodal capability on top of replay proof",
         latencyDelta: "Slower than demo lanes due to network round-trips",
-        costDelta: "Highest incremental spend",
+        costDelta: "Highest hosted-provider usage",
       },
     },
     {
@@ -168,7 +168,7 @@ export function buildAegisOpsProviderComparison(
       isCurrent: currentProvider === "openai",
       qualitySignal: `GPT-based incident analysis using ${options.analyzeModel}. Falls back to rule-based demo analysis on failure.`,
       latencyBand: "network-dependent",
-      costBand: "paid",
+      costBand: "external-token",
       capabilitySummary: "Full analyze and follow-up flow via OpenAI Chat Completions API with graceful fallback.",
       bestFor: [
         "teams already on the OpenAI platform",
@@ -183,7 +183,7 @@ export function buildAegisOpsProviderComparison(
       comparison: {
         qualityDelta: "Live GPT reasoning with the same report schema as Gemini",
         latencyDelta: "Network-dependent, similar to Gemini",
-        costDelta: "Paid token cost; model choice controls spend",
+        costDelta: "Hosted token usage; model choice controls usage",
       },
     },
     {
@@ -193,7 +193,7 @@ export function buildAegisOpsProviderComparison(
       qualitySignal:
         "Bounded public evaluation lane using fixed incident bundles and compact escalation summaries.",
       latencyBand: "network-dependent",
-      costBand: "paid",
+      costBand: "external-token",
       capabilitySummary:
         "Bounded live escalation preview without exposing raw upload or full operator mutation flows.",
       bestFor: [
@@ -209,7 +209,7 @@ export function buildAegisOpsProviderComparison(
       comparison: {
         qualityDelta: "Adds a public live proof lane without widening the raw ingestion surface",
         latencyDelta: "Network-dependent but narrower than the full multimodal path",
-        costDelta: "Low external-token path with hard caps",
+        costDelta: "Bounded external-token path with hard caps",
       },
     },
     {
@@ -233,7 +233,7 @@ export function buildAegisOpsProviderComparison(
       comparison: {
         qualityDelta: "Local live inference with stricter privacy posture",
         latencyDelta: "Varies with local CPU/GPU headroom",
-        costDelta: "Shifts spend from tokens to local compute",
+        costDelta: "Shifts usage from hosted tokens to local compute",
       },
     },
   ];

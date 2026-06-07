@@ -77,4 +77,4 @@ flowchart LR
 - add request-level audit persistence for exports
 - add SSO/RBAC around incident visibility
 - add deployment-specific env profiles and IaC
-- add latency and cost scorecard per runtime mode
+- add latency and usage scorecard per runtime mode
