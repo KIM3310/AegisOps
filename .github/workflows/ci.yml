@@ -65,5 +65,5 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ripgrep
 
-      - name: AdSense/Cloudflare quality gate
+      - name: Deployment quality gate
         run: bash tools/release_ops.sh check
