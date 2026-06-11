@@ -58,6 +58,10 @@ interface ServiceAccountKey {
   token_uri?: string;
 }
 
+function toFetchBody(body: Buffer): BodyInit {
+  return new Uint8Array(body.buffer, body.byteOffset, body.byteLength) as unknown as BodyInit;
+}
+
 function loadServiceAccountKey(path: string): ServiceAccountKey | null {
   try {
     const raw = readFileSync(path, "utf-8");
@@ -227,7 +231,7 @@ export async function gcsUploadObject(
         "Content-Type": contentType,
         "Content-Length": String(bodyBuffer.length),
       },
-      body: bodyBuffer,
+      body: toFetchBody(bodyBuffer),
     });
 
     if (!response.ok) {
