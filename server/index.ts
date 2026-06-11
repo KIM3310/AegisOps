@@ -2613,7 +2613,7 @@ app.post("/api/tts", async (req, res) => {
   }
 });
 
-app.all("/api/*", (req, res) => sendError(req, res, 404, `Not found: ${req.path}`));
+app.all(/^\/api\/.*/, (req, res) => sendError(req, res, 404, `Not found: ${req.path}`));
 
 const maintenanceTimer = setInterval(() => {
   cleanExpiredRateBuckets();
