@@ -79,6 +79,10 @@ function getConfig(): AwsConfig | null {
   return cachedConfig;
 }
 
+function toFetchBody(body: Buffer): BodyInit {
+  return new Uint8Array(body.buffer, body.byteOffset, body.byteLength) as unknown as BodyInit;
+}
+
 /**
  * Build an AWS Signature Version 4 authorization header.
  * This is a minimal implementation covering the subset needed for
@@ -224,7 +228,7 @@ export async function s3PutObject(
     const response = await fetch(url, {
       method: "PUT",
       headers,
-      body: bodyBuffer,
+      body: toFetchBody(bodyBuffer),
     });
 
     if (!response.ok) {
