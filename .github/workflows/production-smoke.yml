@@ -47,13 +47,16 @@ jobs:
           for path in "${paths[@]}"; do
             ok=0
             for attempt in 1 2 3; do
-              code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 20 "$base$path")
+              code=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 8 --max-time 25 "$base$path" || true)
+              if [[ ! "$code" =~ ^[0-9]{3}$ ]]; then
+                code="000"
+              fi
               echo "[$attempt/3] $path -> $code"
               if [ "$code" -ge 200 ] && [ "$code" -lt 400 ]; then
                 ok=1
                 break
               fi
-              sleep 3
+              sleep $((attempt * 5))
             done
             if [ "$ok" -ne 1 ]; then
               echo "Smoke check failed for $path"
