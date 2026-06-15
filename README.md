@@ -20,7 +20,7 @@
 |---|---|
 | Audience | SOC, IT operations, managed service, and incident-response teams that need clearer handoff after noisy incidents. |
 | Review path | Validate the demo, README, architecture notes, and quality gate before deeper workflow review. |
-| Review signal | Multimodal incident analysis, schema-conformant reports, replay evals, follow-up Q&A, and export paths. |
+| Architecture signal | Multimodal incident analysis, schema-conformant reports, replay evals, follow-up Q&A, and export paths. |
 | Safety boundary | Browser never receives provider keys; demo mode is deterministic and no-key by default. |
 | Fast proof | `npm run verify`, live Cloudflare Pages demo, replay eval suite, and review smoke script. |
 
@@ -344,6 +344,10 @@ This repository includes a neutral cloud and AI engineering blueprint that maps 
 ## Enterprise Productization
 
 - [Product operating model](docs/product-operating-model.md) defines the reviewer, trust boundary, trust boundary, operating checks, and service path for this repository.
+
+## System Architecture
+
+- [System architecture](docs/system-architecture.md) maps the runtime boundary, data/control flow, cloud or local deployment surface, and operating assumptions for this repository.
 
 ## Service Architecture
 
