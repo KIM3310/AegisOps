@@ -39,7 +39,7 @@ jobs:
       - name: Replay eval proof
         run: npm run eval:replays -- --json-out artifacts/replay-overview.json
 
-      - name: Review surface smoke
+      - name: Architecture surface smoke
         run: npm run review:smoke -- --json-out artifacts/review-surface-smoke.json
 
       - name: Build

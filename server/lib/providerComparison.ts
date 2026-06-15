@@ -149,7 +149,7 @@ export function buildAegisOpsProviderComparison(
       bestFor: [
         "voice briefings",
         "screenshot + log incident review",
-        "executive-ready live demos",
+        "executive-ready runtime walkthroughs",
       ],
       tradeoffs: [
         "Requires cloud key management",

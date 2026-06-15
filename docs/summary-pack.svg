@@ -2,7 +2,7 @@
   <rect width="960" height="540" fill="#0B1321"/>
   <rect x="24" y="24" width="912" height="492" rx="24" fill="#111827" stroke="#334155"/>
   <text x="48" y="64" fill="#E5E7EB" font-family="Arial, sans-serif" font-size="26" font-weight="700">AegisOps Summary Pack</text>
-  <text x="48" y="92" fill="#93C5FD" font-family="Arial, sans-serif" font-size="14">collect -&gt; reason -&gt; review -&gt; communicate</text>
+  <text x="48" y="92" fill="#93C5FD" font-family="Arial, sans-serif" font-size="14">collect -&gt; reason -&gt; architecture -&gt; communicate</text>
 
   <rect x="48" y="126" width="192" height="116" rx="16" fill="#172033" stroke="#3B82F6"/>
   <text x="66" y="154" fill="#BFDBFE" font-family="Arial, sans-serif" font-size="12" letter-spacing="1.4">COLLECT</text>
@@ -38,7 +38,7 @@
   <rect x="48" y="286" width="398" height="186" rx="16" fill="#0F172A" stroke="#475569"/>
   <text x="68" y="316" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="18" font-weight="700">Trust Boundary</text>
   <text x="68" y="346" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="14">- API keys never ship to the browser.</text>
-  <text x="68" y="372" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="14">- Static demo keeps reviewability when backend controls are absent.</text>
+  <text x="68" y="372" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="14">- Static demo keeps architectureability when backend controls are absent.</text>
   <text x="68" y="398" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="14">- Grounding and references remain advisory, not automatic truth.</text>
   <text x="68" y="438" fill="#93C5FD" font-family="Arial, sans-serif" font-size="13">Evaluation APIs</text>
   <text x="68" y="462" fill="#E5E7EB" font-family="Arial, sans-serif" font-size="14">/api/healthz   /api/meta   /api/summary-pack   /api/schema/report</text>
@@ -48,6 +48,6 @@
   <text x="498" y="346" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="14">Replay telemetry: 4 scenarios / 32 rubric checks</text>
   <text x="498" y="372" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="14">Runtime modes: Static demo, Demo backend, Gemini live, Ollama local</text>
   <text x="498" y="398" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="14">Export posture: JSON, Markdown, Slack, Jira, Workspace demo</text>
-  <text x="498" y="438" fill="#93C5FD" font-family="Arial, sans-serif" font-size="13">Review Sequence</text>
-  <text x="498" y="462" fill="#E5E7EB" font-family="Arial, sans-serif" font-size="14">1. Check runtime mode  2. Inspect replay + schema  3. Review report before handoff</text>
+  <text x="498" y="438" fill="#93C5FD" font-family="Arial, sans-serif" font-size="13">Architecture Sequence</text>
+  <text x="498" y="462" fill="#E5E7EB" font-family="Arial, sans-serif" font-size="14">1. Check runtime mode  2. Inspect replay + schema  3. Architecture report before handoff</text>
 </svg>

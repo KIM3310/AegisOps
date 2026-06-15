@@ -1,4 +1,4 @@
-# AegisOps -- Multimodal Incident Review System
+# AegisOps -- Multimodal Incident Architecture System
 
 [![CI](https://github.com/KIM3310/AegisOps/actions/workflows/ci.yml/badge.svg)](https://github.com/KIM3310/AegisOps/actions)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -11,32 +11,32 @@
 
 1. Open the Cloudflare demo or local UI and run one incident scenario.
 2. Inspect the replay eval suite before trusting live model output.
-3. Run `npm run verify` to cover typecheck, tests, replay evals, review smoke, and build.
-4. Review export/handoff artifacts as the reviewer-facing proof, not just the chat flow.
+3. Run `npm run verify` to cover typecheck, tests, replay evals, architecture smoke, and build.
+4. Architecture export/handoff artifacts as the architecture-facing proof, not just the chat flow.
 
-## Product and Review Surface
+## Product and System Surface
 
 | Lens | Current answer |
 |---|---|
 | Audience | SOC, IT operations, managed service, and incident-response teams that need clearer handoff after noisy incidents. |
-| Review path | Validate the demo, README, architecture notes, and quality gate before deeper workflow review. |
-| Architecture signal | Multimodal incident analysis, schema-conformant reports, replay evals, follow-up Q&A, and export paths. |
+| Architecture path | Validate the demo, README, architecture notes, and quality gate before deeper workflow architecture. |
+| System signal | Multimodal incident analysis, schema-conformant reports, replay evals, follow-up Q&A, and export paths. |
 | Safety boundary | Browser never receives provider keys; demo mode is deterministic and no-key by default. |
-| Fast proof | `npm run verify`, live Cloudflare Pages demo, replay eval suite, and review smoke script. |
+| Fast path | `npm run verify`, live Cloudflare Pages demo, replay eval suite, and architecture smoke script. |
 
-## Reviewer Fast Path
+## System Fast Path
 
 - **First minute:** Open the Cloudflare demo, run one incident scenario, then inspect replay eval coverage.
 - **Local demo:** Run `npm install && npm run dev`; the UI runs on `http://127.0.0.1:3000` and API on `http://127.0.0.1:8787`.
-- **Verification:** Run `npm run verify`; it covers typecheck, tests, replay evals, review smoke, and build.
+- **Verification:** Run `npm run verify`; it covers typecheck, tests, replay evals, architecture smoke, and build.
 
 ## Service Launch Playbook
 
-- [Service launch playbook](docs/service-launch-playbook.md) maps the repository to review audiences, proof gates, operating boundaries, and risk controls.
+- [Service launch playbook](docs/service-launch-playbook.md) maps the repository to architecture audiences, operating gates, operating boundaries, and risk controls.
 
-## Review Notes
+## Architecture Notes
 
-- [Review guide](docs/reviewer-evidence-map.md) summarizes the project angle, first files to inspect, verification commands, and known boundaries.
+- [Architecture guide](docs/architecture-evidence-map.md) summarizes the project angle, first files to inspect, runtime commands, and known boundaries.
 - [Quality notes](docs/quality-gate.md) lists the local checks, CI surface, and release expectations for this repository.
 - [Enterprise readiness notes](docs/enterprise-readiness.md) outlines security, data, operations, integration, and handoff expectations.
 
@@ -140,7 +140,7 @@ If no API key is set, the system runs in **demo mode** -- deterministic output, 
 ### Verify the build
 
 ```bash
-npm run verify   # typecheck + test + replay evals + review smoke + build
+npm run verify   # typecheck + test + replay evals + architecture smoke + build
 ```
 
 ---
@@ -176,7 +176,7 @@ npm run verify   # typecheck + test + replay evals + review smoke + build
 | `/api/live-sessions` | GET | Persisted incident session history |
 | `/api/meta` | GET | Runtime modes, replay summary, operator checklist |
 | `/api/healthz` | GET | Deployment mode, provider, limits |
-| `/api/summary-pack` | GET | Reviewable trust surface with replay proof |
+| `/api/summary-pack` | GET | Inspectable trust surface with replay proof |
 | `/api/schema/report` | GET | Incident report JSON schema contract |
 | `/api/metrics` | GET | Prometheus-format metrics |
 
@@ -264,7 +264,7 @@ Set `GOOGLE_APPLICATION_CREDENTIALS` + `GCP_PROJECT_ID` to persist incident arti
 AegisOps/
   App.tsx                    # React app root
   types.ts                   # Shared TypeScript types
-  constants.ts               # Sample presets, review lenses
+  constants.ts               # Sample presets, architecture lenses
   components/                # React UI components (26 files)
   hooks/                     # React hooks (app state, auth, storage)
   services/                  # Frontend service clients (Google APIs, Gemini, export)
@@ -303,7 +303,7 @@ AegisOps/
 npm test                    # Unit tests (Vitest, 29 test files)
 npm run typecheck           # TypeScript strict mode check
 npm run eval:replays        # Replay eval suite (4 scenarios / 32 checks)
-npm run review:smoke        # Review surface smoke tests
+npm run architecture:smoke        # Architecture surface smoke tests
 npm run verify              # All of the above + build
 ```
 
@@ -343,7 +343,7 @@ This repository includes a neutral cloud and AI engineering blueprint that maps 
 
 ## Enterprise Productization
 
-- [Product operating model](docs/product-operating-model.md) defines the reviewer, trust boundary, trust boundary, operating checks, and service path for this repository.
+- [Product operating model](docs/product-operating-model.md) defines the technical reader, trust boundary, trust boundary, operating checks, and service path for this repository.
 
 ## System Architecture
 

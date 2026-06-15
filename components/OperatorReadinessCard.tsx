@@ -84,7 +84,7 @@ function buildNextMove(props: Props) {
   if (props.health?.deployment === "static-demo") {
     return {
       title: "Prove the replay path, not live runtime",
-      summary: "This build is static-demo, so the strongest next move is analyze the current incident and then use review routes to explain what would change in live mode.",
+      summary: "This build is static-demo, so the strongest next move is analyze the current incident and then use architecture routes to explain what would change in live mode.",
       bullets: [
         "Static demo can still prove incident structure and escalation",
         "Provider comparison is guidance, not live telemetry",

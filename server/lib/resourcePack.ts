@@ -82,7 +82,7 @@ const OPERATOR_CHECKS = [
       "Latency, error rates, and replay quality need to stay visible before incident claims are exported.",
   },
   {
-    checkId: "review-resource-pack",
+    checkId: "architecture-resource-pack",
     surface: "/api/resource-pack",
     whyItMatters:
       "Built-in sample evidence keeps the repo reviewable without live credentials or private telemetry.",
@@ -165,7 +165,7 @@ export function buildAegisOpsResourcePack() {
       operatorChecks: "samples/resource-pack/operator-checks.json",
       validationCases: "samples/resource-pack/validation-cases.json",
     },
-    reviewerFastPath: [
+    architectureFastPath: [
       "/api/healthz",
       "/api/runtime/scorecard",
       "/api/resource-pack",

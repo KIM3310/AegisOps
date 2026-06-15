@@ -2,7 +2,7 @@
 
 ## Goal
 
-AegisOps turns multimodal incident evidence into a reviewable incident report without exposing provider secrets to the browser.
+AegisOps turns multimodal incident evidence into a inspectable incident report without exposing provider secrets to the browser.
 
 ## System boundary
 
@@ -39,7 +39,7 @@ flowchart LR
 ## Reliability posture
 
 - Browser never owns the Gemini API key.
-- Review surfaces are available even when the live model is unavailable.
+- Architecture surfaces are available even when the live model is unavailable.
 - Replay evals provide a deterministic quality floor before a confidences the live path.
 - Report schema is explicit, so downstream exports do not depend on loose model formatting.
 
@@ -68,7 +68,7 @@ flowchart LR
 ## What makes this useful for a solutions architect
 
 - clear browser/server/provider boundary
-- review-first API surface
+- architecture-first API surface
 - export and integration boundary separated from inference boundary
 - production hardening path is visible without reading the whole codebase
 

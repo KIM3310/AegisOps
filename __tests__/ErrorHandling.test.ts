@@ -77,7 +77,7 @@ describeIfSocketBinding("error handling and edge cases", () => {
     expect(res.body.mode).toMatch(/^demo|live$/);
     expect(res.body.limits).toBeDefined();
     expect(res.body.models).toBeDefined();
-    expect(res.body.reviewerFastPath).toEqual(
+    expect(res.body.architectureFastPath).toEqual(
       expect.arrayContaining([
         "/api/healthz",
         "/api/runtime/scorecard",

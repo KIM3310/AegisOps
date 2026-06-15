@@ -133,7 +133,7 @@ describeIfSocketBinding("service meta endpoints", () => {
     expect(body.ok).toBe(true);
     expect(body.resourcePackId).toBe("aegisops-resource-pack-v1");
     expect(body.summary.incidentBundleCount).toBeGreaterThanOrEqual(4);
-    expect(body.reviewerFastPath).toContain("/api/resource-pack");
+    expect(body.architectureFastPath).toContain("/api/resource-pack");
     expect(body.files.incidentBundles).toBe("samples/resource-pack/incident-bundles.json");
     expect(body.externalData.files.incidentLogCsv.path).toBe(
       "samples/external/incident_response_log/incident_event_log.csv"

@@ -413,7 +413,7 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
         }
       : focus === "reliability"
         ? {
-            headline: "Latency, slow routes, and error posture show whether backend runtime is fit for live demos.",
+            headline: "Latency, slow routes, and error posture show whether backend runtime is fit for runtime walkthroughs.",
             topEndpoints: endpoints
               .slice()
               .sort((left, right) => right.slowRequests - left.slowRequests || right.errors - left.errors || right.averageMs - left.averageMs)
@@ -426,7 +426,7 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
 
   const recommendations = [
     replaySummary.totals.failingCases > 0 ? "Use /api/evals/replays/summary?status=fail before claiming incident quality is production-ready." : null,
-    runtimeTelemetry.totalSlowRequests > 0 ? "Inspect slow request buckets and keep provider mode explicit before live demos." : null,
+    runtimeTelemetry.totalSlowRequests > 0 ? "Inspect slow request buckets and keep provider mode explicit before runtime walkthroughs." : null,
     runtimeTelemetry.totalErrors > 0 ? "Review erroring routes before adding more frontend complexity on top of the runtime." : null,
     analyzeVolume > 0 && runtimeTelemetry.analyze.cacheHits === 0
       ? "Analyze traffic is bypassing cache reuse; compare repeated incident payloads before scaling the live path."
@@ -837,7 +837,7 @@ function buildSystemDesignPack() {
     generatedAt: new Date().toISOString(),
     systemDesignPackId: "aegisops-system-design-pack-v1",
     headline:
-      "System-design pack that turns multimodal incident handling, runtime posture, and commander handoff into one review surface.",
+      "System-design pack that turns multimodal incident handling, runtime posture, and commander handoff into one architecture surface.",
     summary: {
       provider: runtimeScorecard.provider,
       mode: runtimeScorecard.mode,
@@ -959,11 +959,11 @@ function stableJson(value: unknown): string {
   return JSON.stringify(value);
 }
 
-function buildReviewerBundleDigest(payload: unknown) {
+function buildArchitectureBundleDigest(payload: unknown) {
   return createHash("sha256").update(stableJson(payload)).digest("hex");
 }
 
-function buildReviewerBundle() {
+function buildArchitectureBundle() {
   const summaryPack = buildAegisOpsSummaryPack({
     deployment: "backend",
     maxImages: cfg.maxImages,
@@ -1001,7 +1001,7 @@ function buildReviewerBundle() {
     operatorAuth: runtimeScorecard.operatorAuth,
     reviewRoutes: summaryPack.links,
   };
-  const digest = buildReviewerBundleDigest(digestPayload);
+  const digest = buildArchitectureBundleDigest(digestPayload);
 
   return {
     ok: true,
@@ -1815,7 +1815,7 @@ app.get("/api/healthz", (req, res) => {
       "incident-replay-evals",
       "built-in-resource-pack",
     ],
-    reviewerFastPath: [
+    architectureFastPath: [
       "/api/healthz",
       "/api/runtime/scorecard",
       "/api/cloud-proof",
@@ -2167,12 +2167,12 @@ app.get("/api/meta", (req, res) => {
 });
 
 app.get("/api/export-bundle", (req, res) => {
-  res.json(buildReviewerBundle());
+  res.json(buildArchitectureBundle());
 });
 
 app.get("/api/export-bundle/verify", (req, res) => {
   const providedDigest = String(req.query.digest || "").trim();
-  const bundle = buildReviewerBundle();
+  const bundle = buildArchitectureBundle();
   res.json({
     ok: true,
     service: "aegisops-export-bundle-verify",

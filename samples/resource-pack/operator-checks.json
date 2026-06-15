@@ -2,7 +2,7 @@
   {
     "checkId": "confirm-runtime-mode",
     "surface": "/api/healthz",
-    "whyItMatters": "Reviewers should confirm demo, local, or live mode before trusting provider-dependent behavior."
+    "whyItMatters": "Operators should confirm demo, local, or live mode before trusting provider-dependent behavior."
   },
   {
     "checkId": "inspect-scorecard",
@@ -10,7 +10,7 @@
     "whyItMatters": "Latency, error rates, and replay quality need to stay visible before incident claims are exported."
   },
   {
-    "checkId": "review-resource-pack",
+    "checkId": "architecture-resource-pack",
     "surface": "/api/resource-pack",
     "whyItMatters": "Built-in sample evidence keeps the repo reviewable without live credentials or private telemetry."
   },

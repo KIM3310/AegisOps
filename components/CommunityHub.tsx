@@ -211,7 +211,7 @@ export const CommunityHub: React.FC = () => {
         <div className="bg-bg-card border border-border rounded-lg p-4">
           <h2 className="text-sm font-semibold mb-3">Operations Readiness</h2>
           <p className="text-xs text-text-muted leading-relaxed">
-            External embeds stay disabled by default. Reviewers can inspect scope, privacy, contact, and compliance pages before any integration is added.
+            External embeds stay disabled by default. Operators can inspect scope, privacy, contact, and compliance pages before any integration is added.
           </p>
         </div>
       </div>

@@ -2,15 +2,15 @@
 
 ## Best-fit customer signals
 
-- incident reviews rely on screenshots, chat snippets, and partial logs
+- incident architectures rely on screenshots, chat snippets, and partial logs
 - on-call teams already have telemetry but handoff quality is weak
-- the reviewer wants a safe copilot adoption path instead of immediate autonomy
+- the technical reader wants a safe copilot adoption path instead of immediate autonomy
 
 ## Discovery questions
 
 1. How long does it take to build a usable incident handoff after evidence is collected?
 2. Which systems own the final incident artifact today: Slack, Jira, docs, slides, or ticket comments?
-3. What must stay reviewable even if the model path is degraded?
+3. What must stay inspectable even if the model path is degraded?
 4. Which inputs are most common during active incidents: logs, screenshots, alerts, chat threads?
 5. What export target matters first?
 

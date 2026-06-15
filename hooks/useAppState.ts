@@ -543,7 +543,7 @@ export function useAppState() {
       'Fast links',
       ...(reviewRoutes.length > 0
         ? reviewRoutes.map(([label, href]) => `- ${label}: ${href}`)
-        : ['- Review routes unavailable.']),
+        : ['- Architecture routes unavailable.']),
     ];
 
     await copyLinesToClipboard(lines, 'Export checklist copied');
@@ -551,13 +551,13 @@ export function useAppState() {
 
   const copyReviewRoutes = async () => {
     const lines = [
-      'AegisOps fast review routes',
+      'AegisOps fast architecture routes',
       ...(reviewRoutes.length > 0
         ? reviewRoutes.map(([label, href]) => `- ${label}: ${href}`)
-        : ['- Review routes unavailable. Start with /api/healthz, /api/meta, and /api/summary-pack.']),
+        : ['- Architecture routes unavailable. Start with /api/healthz, /api/meta, and /api/summary-pack.']),
     ];
 
-    await copyLinesToClipboard(lines, 'Review routes copied');
+    await copyLinesToClipboard(lines, 'Architecture routes copied');
   };
 
   const copyReviewStateLink = async () => {
@@ -574,7 +574,7 @@ export function useAppState() {
     await copyTextToClipboard(shareUrl, 'Review state link copied');
   };
 
-  const copyReviewerBundle = async () => {
+  const copyArchitectureBundle = async () => {
     const lines = [
       'AegisOps export summary',
       `Runtime: ${runtimePosture}`,
@@ -587,7 +587,7 @@ export function useAppState() {
       'Fast links',
       ...(reviewRoutes.length > 0
         ? reviewRoutes.map(([label, href]) => `- ${label}: ${href}`)
-        : ['- Review routes unavailable.']),
+        : ['- Architecture routes unavailable.']),
       '',
       'Proof assets',
       ...(summaryPack?.proofAssets?.length
@@ -653,7 +653,7 @@ export function useAppState() {
       'Fast links',
       ...(reviewRoutes.length > 0
         ? reviewRoutes.map(([label, href]) => `- ${label}: ${href}`)
-        : ['- Review routes unavailable. Start with /api/healthz, /api/meta, and /api/summary-pack.']),
+        : ['- Architecture routes unavailable. Start with /api/healthz, /api/meta, and /api/summary-pack.']),
       '',
       'Log excerpt',
       strongestPreset.logs,
@@ -750,7 +750,7 @@ export function useAppState() {
       return;
     }
     if (type === 'bundle') {
-      await copyReviewerBundle();
+      await copyArchitectureBundle();
       return;
     }
     if (type === 'claim') {
@@ -1003,7 +1003,7 @@ export function useAppState() {
         void copyEvidenceSnapshot();
       } else if (key === 'b') {
         e.preventDefault();
-        void copyReviewerBundle();
+        void copyArchitectureBundle();
       } else if (key === 'm') {
         e.preventDefault();
         void copyPayloadBudgetSnapshot();
@@ -1028,7 +1028,7 @@ export function useAppState() {
     copyReviewStateLink,
     copyEscalationBrief,
     copyPayloadBudgetSnapshot,
-    copyReviewerBundle,
+    copyArchitectureBundle,
     images.length,
     logs,
     reportSchema?.schemaId,
@@ -1129,7 +1129,7 @@ export function useAppState() {
     copyReviewChecklist,
     copyReviewRoutes,
     copyReviewStateLink,
-    copyReviewerBundle,
+    copyArchitectureBundle,
     copyEvidenceSnapshot,
     copyPayloadBudgetSnapshot,
     copyStrongestPreset,

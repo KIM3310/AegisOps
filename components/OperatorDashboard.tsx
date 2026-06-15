@@ -23,7 +23,7 @@ export function OperatorDashboard({ state }: OperatorDashboardProps) {
     copyStrongestPreset,
     copyIncidentClaim,
     copyReviewStateLink,
-    copyReviewerBundle,
+    copyArchitectureBundle,
     copyPayloadBudgetSnapshot,
     copyEscalationBrief,
     loadPreset,
@@ -87,7 +87,7 @@ export function OperatorDashboard({ state }: OperatorDashboardProps) {
           Copy Review Link
         </button>
         <button
-          onClick={copyReviewerBundle}
+          onClick={copyArchitectureBundle}
           className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
         >
           Copy Export Summary
@@ -128,7 +128,7 @@ export function OperatorDashboard({ state }: OperatorDashboardProps) {
           <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">Review flow</div>
           <div className="space-y-2">
             {(summaryPack?.twoMinuteReview?.length ? summaryPack.twoMinuteReview : [
-              { step: 'Load summary pack', surface: '/api/summary-pack', proof: 'review route unavailable' },
+              { step: 'Load summary pack', surface: '/api/summary-pack', proof: 'architecture route unavailable' },
             ]).map((item) => (
               <div key={`${item.step}-${item.surface}`} className="rounded-md border border-border bg-bg-card/70 px-3 py-2">
                 <div className="text-xs font-medium text-text">{item.step}</div>
@@ -140,7 +140,7 @@ export function OperatorDashboard({ state }: OperatorDashboardProps) {
         </div>
 
         <div className="rounded-lg border border-border bg-bg/80 p-3 space-y-2">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">Fast review routes</div>
+          <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">Fast architecture routes</div>
           <div className="flex flex-wrap gap-2">
             {reviewRoutes.length > 0 ? (
               reviewRoutes.map(([label, href]) => (
@@ -155,7 +155,7 @@ export function OperatorDashboard({ state }: OperatorDashboardProps) {
                 </a>
               ))
             ) : (
-              <div className="text-2xs text-text-muted">Review routes are still loading.</div>
+              <div className="text-2xs text-text-muted">Architecture routes are still loading.</div>
             )}
           </div>
           <div className="text-2xs text-text-muted">

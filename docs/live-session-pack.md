@@ -7,7 +7,7 @@ Use it when you need to explain:
 - what enters a live incident bridge
 - which human roles stay in the loop
 - how voice, screenshots, logs, and structured handoff stay aligned
-- which review routes must be checked before trusting the live path
+- which architecture routes must be checked before trusting the live path
 
 Core routes:
 

@@ -13,7 +13,7 @@ AegisOps already behaves like an incident workflow product.
 - raw logs and screenshots come in
 - structured RCA and action recommendations come out
 - replay suites score reasoning quality
-- operator handoff stays visible through API routes and review surfaces
+- operator handoff stays visible through API routes and architecture surfaces
 
 That maps directly to Datadog-style incident dashboards, monitors, notebooks, and service health boards.
 

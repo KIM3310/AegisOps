@@ -1,24 +1,24 @@
-# Review Guide - AegisOps -- Multimodal Incident Review System
+# Architecture Guide - AegisOps -- Multimodal Incident Architecture System
 
 Updated: 2026-05-30
 
-Use this page as the short path through the repository. It keeps the review grounded in the code, docs, commands, and boundaries that are already present.
+Use this page as the short path through the repository. It keeps the architecture grounded in the code, docs, commands, and boundaries that are already present.
 
 ## Summary
 
 | Field | Notes |
 |---|---|
 | Lane | B2B incident operations cockpit |
-| Core idea | A replayable incident review cockpit that turns logs and screenshots into structured handoff evidence. |
+| Core idea | A replayable incident architecture cockpit that turns logs and screenshots into structured handoff evidence. |
 | Primary reader | SOC leads, IT operations managers, MSP incident teams, and infrastructure owners with noisy handoffs. |
 | Stack | TypeScript/JavaScript, Terraform, Cloudflare, Docker |
 
 ## Open First
 
 1. Start with the README fast path and architecture section.
-2. Open `docs/service-launch-playbook.md` only when reviewing the product or service angle.
+2. Open `docs/service-launch-playbook.md` only when architectureing the product or service angle.
 3. Check the commands below before making claims about quality.
-4. Skim the CI workflows and fixture data before deeper implementation review.
+4. Skim the CI workflows and fixture data before deeper implementation architecture.
 5. Read the boundaries section before presenting the project externally.
 
 ## Checks
@@ -35,7 +35,7 @@ Use this page as the short path through the repository. It keeps the review grou
 - .github/workflows/architecture-blueprint.yml
 - .github/workflows/ci.yml
 - .github/workflows/cloudflare-fleet-pages.yml
-- .github/workflows/dependency-review.yml
+- .github/workflows/dependency-architecture.yml
 - .github/workflows/pages-auto-deploy.yml
 - .github/workflows/production-smoke.yml
 - .github/workflows/repository-health.yml
@@ -45,20 +45,20 @@ Use this page as the short path through the repository. It keeps the review grou
 ## Evidence
 
 - package scripts and web/runtime checks
-- infrastructure-as-code review surface
+- infrastructure-as-code architecture surface
 - edge deployment configuration
 - containerized delivery path
 - Replay eval suite passes
-- Review smoke script passes
+- Architecture smoke script passes
 - Demo mode works without provider keys
 
-## Review Notes
+## Architecture Notes
 
 | Possible offer | Working scope assumption |
 |---|---|
-| Incident-review tabletop package | Scope after reviewer intake |
-| Managed replay/eval setup for customer incidents | Scope after reviewer intake |
-| Monthly incident-quality scorecard and operator handoff review | Scope after reviewer intake |
+| Incident-architecture tabletop package | Scope after product intake |
+| Managed replay/eval setup for customer incidents | Scope after product intake |
+| Monthly incident-quality scorecard and operator handoff architecture | Scope after product intake |
 
 ## Boundaries
 

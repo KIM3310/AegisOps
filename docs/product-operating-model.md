@@ -1,28 +1,28 @@
 # Product Operating Model
 
 Repository: `AegisOps`
-Last reviewed: 2026-06-03 KST
+Last updated: 2026-06-03 KST
 
 ## Enterprise Product Position
 
-Multimodal incident copilot with replay evals, live-session review, and export surfaces.
+Multimodal incident copilot with replay evals, live-session architecture, and export surfaces.
 
-This repository is packaged as a concrete system surface, not a loose code sample. The enterprise value is a narrow proof that can be inspected, run, tested, and converted into a reviewed implementation motion.
+This repository is packaged as a concrete system surface, not a loose code sample. The enterprise value is a narrow proof that can be inspected, run, tested, and converted into a scoped implementation motion.
 
 ## Audience And Service Path
 
 | Area | Position |
 | --- | --- |
-| Target reviewer | Security and operations teams managing incident handoff |
-| Service wedge | Incident review cockpit for SOC or IT operations |
-| Review signal | Operator UX, replay evals, multimodal incident workflow |
+| Target users | Security and operations teams managing incident handoff |
+| Service wedge | Incident architecture cockpit for SOC or IT operations |
+| System signal | Operator UX, replay evals, multimodal incident workflow |
 | Delivery shape | Fixed-scope pilot, integration sprint, and handoff-ready operating pack |
 | Expansion path | Add customer-specific adapters, policy controls, observability, and support SLAs after the pilot proves value |
 
 ## Enterprise Trust Boundary
 
 - Keep credentials out of the repository and require environment-based configuration for live integrations.
-- Treat generated screenshots, fixtures, and sample data as non-customer proof assets unless explicitly reviewed.
+- Treat generated screenshots, fixtures, and sample data as non-customer proof assets unless explicitly approved.
 - Keep CI, repository-surface validation, architecture manifest checks, and secret scanning green before presenting the repo externally.
 - Use the architecture blueprint as the source of truth for cloud, AI, data, and operational boundaries.
 - Document any unsupported production assumption before a customer or evaluator sees the demo.

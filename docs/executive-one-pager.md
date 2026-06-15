@@ -6,17 +6,17 @@ During a SEV1, teams usually have enough telemetry. They do not have enough time
 
 ## What AegisOps changes
 
-- compresses screenshot + log evidence into a reviewable incident report
-- exposes a deterministic replay evidence path before reviewers trust the live model path
+- compresses screenshot + log evidence into a inspectable incident report
+- exposes a deterministic replay evidence path before technical readers trust the live model path
 - keeps provider secrets off the browser
-- separates reasoning, review, and export surfaces
+- separates reasoning, architecture, and export surfaces
 
-## Reviewer value
+## Technical reader value
 
 - faster incident handoff
 - cleaner escalation notes
 - less manual report formatting during active incidents
-- safer adoption path because review surfaces remain usable in demo or local mode
+- safer adoption path because architecture surfaces remain usable in demo or local mode
 
 ## Metrics that matter
 
@@ -27,7 +27,7 @@ During a SEV1, teams usually have enough telemetry. They do not have enough time
 
 ## Rollout plan
 
-1. `Review-only`
+1. `Architecture-only`
    - use replay pack, schema, and static exports
 2. `Operator assist`
    - use live analyze + follow-up
@@ -37,7 +37,7 @@ During a SEV1, teams usually have enough telemetry. They do not have enough time
 ## Objections
 
 - `Can we trust a live model during a major incident?`
-  - Start with replay-backed review mode and explicit schema checks.
+  - Start with replay-backed architecture mode and explicit schema checks.
 - `What if the provider is unavailable?`
   - Demo and local modes preserve the evaluation path.
 - `How do we keep this from becoming another opaque copilot?`

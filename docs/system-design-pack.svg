@@ -2,7 +2,7 @@
   <rect width="1200" height="760" rx="24" fill="#07111A"/>
   <rect x="36" y="32" width="1128" height="96" rx="18" fill="#0D1F2C" stroke="#2D4A5D"/>
   <text x="64" y="76" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="700">AegisOps System Design Pack</text>
-  <text x="64" y="108" fill="#9FB7C8" font-family="Helvetica, Arial, sans-serif" font-size="18">Multimodal incident intake, runtime telemetry, replay quality, and commander handoff in one review surface.</text>
+  <text x="64" y="108" fill="#9FB7C8" font-family="Helvetica, Arial, sans-serif" font-size="18">Multimodal incident intake, runtime telemetry, replay quality, and commander handoff in one architecture surface.</text>
 
   <rect x="48" y="160" width="220" height="164" rx="18" fill="#102331" stroke="#38566C"/>
   <text x="72" y="198" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="24" font-weight="700">1. Operator UI</text>
@@ -47,14 +47,14 @@
   <text x="76" y="499" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">Auth boundary regression -> verify protected routes and required roles before allowing live operator mutation lanes.</text>
 
   <rect x="48" y="556" width="520" height="156" rx="18" fill="#102331" stroke="#38566C"/>
-  <text x="76" y="596" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="700">Review Path</text>
+  <text x="76" y="596" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="700">Architecture Path</text>
   <text x="76" y="628" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">1. `/api/system-design-pack`</text>
   <text x="76" y="652" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">2. `/api/runtime/scorecard?focus=reliability`</text>
   <text x="76" y="676" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">3. `/api/postmortem-pack` -> `/api/escalation-readiness`</text>
 
   <rect x="608" y="556" width="544" height="156" rx="18" fill="#102331" stroke="#38566C"/>
   <text x="636" y="596" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="700">What This Proves</text>
-  <text x="636" y="628" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">AegisOps is reviewable incident software, not just a chat wrapper over logs.</text>
+  <text x="636" y="628" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">AegisOps is inspectable incident software, not just a chat wrapper over logs.</text>
   <text x="636" y="652" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">Telemetry, replay quality, and handoff contract stay visible in the same operator story.</text>
   <text x="636" y="676" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">The public claim is disciplined runtime design under bounded load, not hyperscale ops mythology.</text>
 </svg>
