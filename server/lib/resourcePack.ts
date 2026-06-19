@@ -85,7 +85,7 @@ const OPERATOR_CHECKS = [
     checkId: "architecture-resource-pack",
     surface: "/api/resource-pack",
     whyItMatters:
-      "Built-in sample evidence keeps the repo reviewable without live credentials or private telemetry.",
+      "Built-in sample evidence keeps the repo inspectable without live credentials or private telemetry.",
   },
   {
     checkId: "lock-schema",
@@ -129,7 +129,7 @@ export function buildAegisOpsResourcePack() {
     version: 1,
     resourcePackId: "aegisops-resource-pack-v1",
     intendedUse:
-      "reviewable incident samples without live providers or private telemetry",
+      "inspectable incident samples without live providers or private telemetry",
     summary: {
       incidentBundleCount: INCIDENT_BUNDLES.length,
       evidenceAnnotationCount: EVIDENCE_ANNOTATIONS.length,

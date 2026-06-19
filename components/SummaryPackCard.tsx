@@ -15,7 +15,7 @@ export const SummaryPackCard: React.FC<Props> = ({ summaryPack }) => {
     return null;
   }
 
-  const twoMinuteReview = Array.isArray(summaryPack.twoMinuteReview) ? summaryPack.twoMinuteReview : [];
+  const twoMinuteArchitecture = Array.isArray(summaryPack.twoMinuteArchitecture) ? summaryPack.twoMinuteArchitecture : [];
   const proofAssets = Array.isArray(summaryPack.proofAssets) ? summaryPack.proofAssets : [];
   const fallbackPosture =
     summaryPack.deployment === "static-demo"
@@ -106,10 +106,10 @@ export const SummaryPackCard: React.FC<Props> = ({ summaryPack }) => {
         <div className="rounded-lg border border-border bg-bg/70 p-3">
           <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-text-dim">
             <ListChecks className="w-3.5 h-3.5" />
-            Review Sequence
+            Architecture Sequence
           </div>
           <div className="mt-2 space-y-2 text-2xs text-text-muted leading-relaxed">
-            {summaryPack.reviewSequence.map((item) => (
+            {summaryPack.architectureSequence.map((item) => (
               <div key={item}>- {item}</div>
             ))}
           </div>
@@ -140,7 +140,7 @@ export const SummaryPackCard: React.FC<Props> = ({ summaryPack }) => {
             Review Flow
           </div>
           <div className="mt-2 space-y-3 text-2xs text-text-muted leading-relaxed">
-            {twoMinuteReview.map((item) => (
+            {twoMinuteArchitecture.map((item) => (
               <div key={item.step}>
                 <div className="text-text">{item.step}</div>
                 <div>{item.surface}</div>

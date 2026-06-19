@@ -306,7 +306,7 @@ check_review() {
   local web_root
   web_root="$(detect_web_root)"
 
-  log "[External Script/Cloudflare Review Check]"
+  log "[External Script/Cloudflare Architecture Check]"
   log "repo: $(basename "$ROOT")"
   log "web_root: $web_root"
   check_one_file "$ROOT/$web_root/robots.txt" "robots.txt" || fail=1

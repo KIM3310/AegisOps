@@ -54,7 +54,7 @@ async function main() {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const skipped = {
-      smoke: "review-surface",
+      smoke: "architecture-surface",
       ok: true,
       skipped: true,
       reason: `local socket binding unavailable: ${message}`,
@@ -94,14 +94,14 @@ async function main() {
       "incident report schema required fields are incomplete"
     );
     assert(
-      Array.isArray(summaryPack?.twoMinuteReview) && summaryPack.twoMinuteReview.length > 0,
-      "summary pack two-minute review is missing"
+      Array.isArray(summaryPack?.twoMinuteArchitecture) && summaryPack.twoMinuteArchitecture.length > 0,
+      "summary pack two-minute architecture is missing"
     );
     assert(replaySummary?.summaryId === "incident-replay-summary-v1", "replay summary id mismatch");
     assert(runtimeScorecard?.summary, "runtime scorecard summary missing");
 
     const artifact = {
-      smoke: "review-surface",
+      smoke: "architecture-surface",
       ok: true,
       baseUrl,
       generatedAt: new Date().toISOString(),
@@ -122,7 +122,7 @@ async function main() {
           ? schema.requiredFields.length
           : 0,
       },
-      reviewRoutes: {
+      architectureRoutes: {
         healthz: meta?.links?.healthz ?? null,
         resourcePack: meta?.links?.resourcePack ?? null,
         summaryPack: meta?.links?.summaryPack ?? null,

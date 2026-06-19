@@ -7,11 +7,11 @@ During a SEV1, teams usually have enough telemetry. They do not have enough time
 ## What AegisOps changes
 
 - compresses screenshot + log evidence into a inspectable incident report
-- exposes a deterministic replay evidence path before technical readers trust the live model path
+- exposes a deterministic replay evidence path before architecture inspection paths trust the live model path
 - keeps provider secrets off the browser
 - separates reasoning, architecture, and export surfaces
 
-## Technical reader value
+## Architecture inspection value
 
 - faster incident handoff
 - cleaner escalation notes

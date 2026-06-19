@@ -222,7 +222,7 @@ export function buildAegisOpsProviderComparison(
       capabilitySummary: "Offline/local inference for privacy-sensitive or air-gapped rehearsal.",
       bestFor: [
         "air-gapped demos",
-        "privacy-first review paths",
+        "privacy-first architecture paths",
         "local experimentation without cloud keys",
       ],
       tradeoffs: [

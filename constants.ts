@@ -55,7 +55,7 @@ export const REVIEW_LENSES = {
     ],
     actions: [
       { label: 'Load Strongest Preset', type: 'load-preset' },
-      { label: 'Copy Review Checklist', type: 'checklist' },
+      { label: 'Copy Architecture Checklist', type: 'checklist' },
       { label: 'Copy Export Summary', type: 'bundle' },
     ],
   },
@@ -73,7 +73,7 @@ export const REVIEW_LENSES = {
     actions: [
       { label: 'Copy Incident Claim', type: 'claim' },
       { label: 'Copy Escalation Brief', type: 'escalation' },
-      { label: 'Copy Review Routes', type: 'routes' },
+      { label: 'Copy Architecture Routes', type: 'routes' },
     ],
   },
   platform: {
@@ -89,8 +89,8 @@ export const REVIEW_LENSES = {
     ],
     actions: [
       { label: 'Copy Payload Budget', type: 'payload' },
-      { label: 'Copy Review Link', type: 'link' },
-      { label: 'Copy Review Routes', type: 'routes' },
+      { label: 'Copy Architecture Link', type: 'link' },
+      { label: 'Copy Architecture Routes', type: 'routes' },
     ],
   },
 } as const;

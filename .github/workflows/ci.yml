@@ -40,7 +40,7 @@ jobs:
         run: npm run eval:replays -- --json-out artifacts/replay-overview.json
 
       - name: Architecture surface smoke
-        run: npm run review:smoke -- --json-out artifacts/review-surface-smoke.json
+        run: npm run architecture:smoke -- --json-out artifacts/architecture-surface-smoke.json
 
       - name: Build
         run: npm run build
@@ -52,7 +52,7 @@ jobs:
           name: aegisops-proof-artifacts
           path: |
             artifacts/replay-overview.json
-            artifacts/review-surface-smoke.json
+            artifacts/architecture-surface-smoke.json
 
   review-gate:
     runs-on: ubuntu-latest

@@ -72,7 +72,7 @@ export function buildIncidentReportSchema(options: Pick<ServiceMetaOptions, "max
       {
         key: "title",
         type: "string",
-        guidance: "Short operator-reviewable incident title with system and failure mode.",
+        guidance: "Short operator-inspectable incident title with system and failure mode.",
       },
       {
         key: "summary",
@@ -152,7 +152,7 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
     product: {
       name: "AegisOps",
       category: "multimodal incident copilot",
-      headline: "Turn logs, screenshots, and alerts into a reviewable incident report.",
+      headline: "Turn logs, screenshots, and alerts into a inspectable incident report.",
     },
     workflow: ["collect", "reason", "decide", "communicate"],
     runtimeModes: [
@@ -285,14 +285,14 @@ export function buildAegisOpsLiveSessionPack(options: ServiceMetaOptions) {
       "Capture operator voice, screenshots, and logs in one incident session without dropping the structured report contract.",
       "Use /api/live-sessions to reopen prior command loops and keep handoff-ready context visible across multiple requests.",
       "Use replay proof and schema guidance before turning the live summary into downstream actions or exports.",
-      "Close the session with a handoff-ready incident report that stays reviewable after the call ends.",
+      "Close the session with a handoff-ready incident report that stays inspectable after the call ends.",
     ],
     reliabilityPosture: {
       replaySummaryId: replaySummary.summaryId,
       replayPassRate: replaySummary.totals.passRate,
       replaySeverityAccuracy: replaySummary.totals.severityAccuracy,
       runtimeModes: serviceMeta.runtimeModes.map((mode) => mode.label),
-      recommendedReviewRoutes: [
+      recommendedArchitectureRoutes: [
         "/api/healthz",
         "/api/runtime/scorecard",
         "/api/resource-pack",
@@ -360,15 +360,15 @@ export function buildAegisOpsSummaryPack(options: ServiceMetaOptions) {
     ],
     trustBoundary: [
       "Gemini API keys stay server-side or in backend runtime memory; the browser never receives raw secrets.",
-      "Static demo mode keeps the UI reviewable even when backend-only controls are unavailable.",
+      "Static demo mode keeps the UI inspectable even when backend-only controls are unavailable.",
       "Grounding and external references are advisory only and require operator verification before action.",
     ],
-    reviewSequence: [
+    architectureSequence: [
       "Check deployment mode and replay pass rate before using the output as an incident benchmark.",
       "Inspect the report contract and payload limits to confirm the current evidence fits the service boundary.",
       "Review the generated report, timeline, and action items before exporting or communicating downstream.",
     ],
-    twoMinuteReview: [
+    twoMinuteArchitecture: [
       {
         step: "1. Runtime posture",
         surface: "/api/healthz -> /api/meta",

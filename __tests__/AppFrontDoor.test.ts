@@ -78,8 +78,8 @@ const {
       { stage: 'collect', summary: 'Load the strongest preset.', surface: '/demo' },
     ],
     trustBoundary: ['Recorded replay proof only.'],
-    reviewSequence: ['Replay proof', 'Provider posture', 'Operator handoff'],
-    twoMinuteReview: [
+    architectureSequence: ['Replay proof', 'Provider posture', 'Operator handoff'],
+    twoMinuteArchitecture: [
       { step: 'Check replay proof', surface: '/api/evals/replays', proof: '100% pass' },
     ],
     evidenceBundle: {
@@ -111,7 +111,7 @@ const {
     product: {
       name: 'AegisOps',
       category: 'incident copilot',
-      headline: 'Turn logs into a reviewable incident story.',
+      headline: 'Turn logs into a inspectable incident story.',
     },
     workflow: ['collect', 'reason', 'decide'],
     runtimeModes: [],

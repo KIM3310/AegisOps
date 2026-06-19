@@ -4,7 +4,7 @@
 
 - incident architectures rely on screenshots, chat snippets, and partial logs
 - on-call teams already have telemetry but handoff quality is weak
-- the technical reader wants a safe copilot adoption path instead of immediate autonomy
+- the architecture inspection wants a safe copilot adoption path instead of immediate autonomy
 
 ## Discovery questions
 

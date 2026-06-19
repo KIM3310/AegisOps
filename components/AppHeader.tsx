@@ -128,7 +128,7 @@ export function AppHeader({ state }: AppHeaderProps) {
           </button>
           <button type="button" onClick={copyReviewStateLink} className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors">
             <FileText className="w-3.5 h-3.5" />
-            Copy Review Link
+            Copy Architecture Link
           </button>
         </div>
       </div>

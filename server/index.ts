@@ -90,7 +90,7 @@ type OpenAiIncidentBundle = {
   concern: string;
   estimatedCostUsd: number;
   id: string;
-  nextReviewPath: string;
+  nextArchitecturePath: string;
   prompt: string;
   severity: string;
   title: string;
@@ -173,7 +173,7 @@ const OPENAI_INCIDENT_BUNDLES: Record<string, OpenAiIncidentBundle> = {
     title: "Checkout latency spike",
     severity: "SEV1",
     concern: "Latency and error bursts on the checkout path need a clear escalation stance.",
-    nextReviewPath: "/api/postmortem-pack",
+    nextArchitecturePath: "/api/postmortem-pack",
     estimatedCostUsd: 0.012,
     prompt:
       "Logs show checkout worker timeouts, rising 5xx rates, and command-bridge pressure. A screenshot highlights API latency, queue depth, and payment retries. Decide the escalation stance, human handoff boundary, and validation data path.",
@@ -183,7 +183,7 @@ const OPENAI_INCIDENT_BUNDLES: Record<string, OpenAiIncidentBundle> = {
     title: "Billing shard degradation",
     severity: "SEV2",
     concern: "Billing remains available but degraded, so commander messaging must stay measured.",
-    nextReviewPath: "/api/escalation-readiness",
+    nextArchitecturePath: "/api/escalation-readiness",
     estimatedCostUsd: 0.011,
     prompt:
       "Logs show connection-pool saturation on the billing shard, delayed async retries, and contained blast radius. Explain whether this should escalate to commander handoff now or stay in bounded review with evidence collection.",
@@ -631,7 +631,7 @@ function buildPostmortemPack() {
     generatedAt: new Date().toISOString(),
     postmortemPackId: "aegisops-postmortem-pack-v1",
     headline:
-      "Evidence-first postmortem pack that ties live incident capture, runtime telemetry, and handoff contract into one reviewable surface.",
+      "Evidence-first postmortem pack that ties live incident capture, runtime telemetry, and handoff contract into one inspectable surface.",
     summary: {
       provider: runtimeScorecard.provider,
       mode: runtimeScorecard.mode,
@@ -778,7 +778,7 @@ function buildEscalationReadiness() {
         "/api/schema/report",
       ],
       approvalRule:
-        "Escalate only after replay quality, evidence timeline, and runtime posture are all visible in the same review path.",
+        "Escalate only after replay quality, evidence timeline, and runtime posture are all visible in the same architecture path.",
       nextAction:
         blockers.length === 0
           ? "Proceed to live commander handoff with the report contract and evidence timeline."
@@ -789,7 +789,7 @@ function buildEscalationReadiness() {
       headline: providerComparison.summary.headline,
       compareAgainst: providerComparison.compareAgainst,
     },
-    reviewActions: [
+    architectureActions: [
       "Read the postmortem pack before sharing a commander-facing narrative.",
       "Use the runtime scorecard to explain whether the backend was stable during the incident bridge.",
       "Keep provider tradeoffs visible so privacy, latency, and multimodal quality are explicit during escalation.",
@@ -898,35 +898,35 @@ function buildSystemDesignPack() {
         drill: "provider degradation",
         trigger: "Slow requests or runtime errors climb during a live bridge.",
         operatorAction: "Use runtime scorecard plus provider comparison before switching provider posture or falling back to bounded demo mode.",
-        reviewSurface: "/api/runtime/scorecard?focus=reliability",
+        architectureSurface: "/api/runtime/scorecard?focus=reliability",
       },
       {
         drill: "evidence gap during commander handoff",
         trigger: "Incident summary exists but screenshots, logs, or timeline evidence are incomplete.",
         operatorAction: "Route through postmortem pack and live session history before escalation.",
-        reviewSurface: "/api/postmortem-pack",
+        architectureSurface: "/api/postmortem-pack",
       },
       {
         drill: "auth or role boundary regression",
         trigger: "Protected analyze/followup/tts routes are exposed without the expected operator session posture.",
         operatorAction: "Verify operator-auth status before allowing live operator mutation routes.",
-        reviewSurface: "/api/runtime/scorecard",
+        architectureSurface: "/api/runtime/scorecard",
       },
       {
         drill: "quality claim outruns replay evidence",
         trigger: "Runtime looks healthy but replay buckets still show failing cases.",
         operatorAction: "Keep replay summary and escalation readiness in the same evaluation path.",
-        reviewSurface: "/api/escalation-readiness",
+        architectureSurface: "/api/escalation-readiness",
       },
     ],
-    reviewPath: [
+    architecturePath: [
       "Start with /api/system-design-pack to explain the system in one pass before diving into implementation details.",
       "Pair it with /api/runtime/scorecard?focus=reliability so topology claims stay grounded in live endpoint telemetry.",
       "Use /api/postmortem-pack and /api/escalation-readiness to show how the design terminates in commander-safe handoff.",
       "Finish on /api/summary-pack and /api/schema/report so architecture and report contract stay aligned.",
     ],
     operatorNotes: [
-      "This surface is for reviewable system design and operational drill posture, not a claim of hyperscale fleet traffic.",
+      "This surface is for inspectable system design and operational drill posture, not a claim of hyperscale fleet traffic.",
       "The strongest public proof is explicit failure handling, visible telemetry, and handoff discipline under bounded load.",
       "Use this pack together with replay and postmortem evidence before framing AegisOps as a production-ready incident runtime.",
     ],
@@ -999,7 +999,7 @@ function buildArchitectureBundle() {
     focus: runtimeScorecard.focus,
     replaySummary: runtimeScorecard.replaySummary,
     operatorAuth: runtimeScorecard.operatorAuth,
-    reviewRoutes: summaryPack.links,
+    architectureRoutes: summaryPack.links,
   };
   const digest = buildArchitectureBundleDigest(digestPayload);
 
@@ -1310,7 +1310,7 @@ function getOpenAiRuntimeContract() {
   return {
     apiKey,
     dailyBudgetUsd,
-    deploymentMode: publicLiveApi ? "public-capped-live" : "review-only-live",
+    deploymentMode: publicLiveApi ? "public-capped-live" : "read-only-live",
     killSwitch,
     lastLiveRunAt: lastOpenAiLiveRunAt,
     liveModel:
@@ -1521,18 +1521,18 @@ function buildFallbackEscalationPreview(
     escalationStance:
       bundle.severity === "SEV1"
         ? "page-incident-commander"
-        : "bounded-review",
+        : "bounded-architecture",
     confidenceBand: "bounded-fallback",
     handoffSummary:
       bundle.severity === "SEV1"
         ? "Escalate with operator review because the public OpenAI lane is unavailable."
         : "Keep the review bounded while operators validate evidence and blast radius.",
-    evaluationEvidence: [bundle.nextReviewPath, "/api/escalation-readiness"],
+    evaluationEvidence: [bundle.nextArchitecturePath, "/api/escalation-readiness"],
     commanderMessage:
       bundle.severity === "SEV1"
-        ? "Escalate now, but keep human review on the evidence bundle."
+        ? "Escalate now, but keep human check on the evidence bundle."
         : "Use the bounded review lane until the live OpenAI preview is configured again.",
-    nextAction: `open ${bundle.nextReviewPath} and confirm the handoff bundle`,
+    nextAction: `open ${bundle.nextArchitecturePath} and confirm the handoff bundle`,
     source: "fallback",
   };
 }
@@ -2079,7 +2079,7 @@ app.post("/api/live-escalation-preview", async (req, res) => {
           capped: true,
           traceId: req.requestId,
           estimatedCostUsd: bundle.estimatedCostUsd,
-          nextReviewPath: bundle.nextReviewPath,
+          nextArchitecturePath: bundle.nextArchitecturePath,
           result: {
             title: bundle.title,
             severity: bundle.severity,
@@ -2103,7 +2103,7 @@ app.post("/api/live-escalation-preview", async (req, res) => {
       capped: true,
       traceId: req.requestId,
       estimatedCostUsd: bundle.estimatedCostUsd,
-      nextReviewPath: bundle.nextReviewPath,
+      nextArchitecturePath: bundle.nextArchitecturePath,
       result: {
         title: bundle.title,
         severity: bundle.severity,
@@ -2133,7 +2133,7 @@ app.post("/api/live-escalation-preview", async (req, res) => {
       capped: true,
       traceId: req.requestId,
       estimatedCostUsd: bundle.estimatedCostUsd,
-      nextReviewPath: bundle.nextReviewPath,
+      nextArchitecturePath: bundle.nextArchitecturePath,
       result: {
         title: bundle.title,
         severity: bundle.severity,

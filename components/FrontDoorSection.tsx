@@ -21,7 +21,7 @@ export function FrontDoorSection({ state }: FrontDoorSectionProps) {
     frontDoorDecisionSupport,
     loadStrongestPreset,
     copyReviewChecklist,
-    copyReviewRoutes,
+    copyArchitectureRoutes,
     reviewLens,
     setReviewLens,
     activeReviewLens,
@@ -92,13 +92,13 @@ export function FrontDoorSection({ state }: FrontDoorSectionProps) {
               onClick={copyReviewChecklist}
               className="h-9 px-4 rounded-md border border-border bg-bg hover:bg-bg-hover text-sm text-text-muted hover:text-text"
             >
-              Copy Review Checklist
+              Copy Architecture Checklist
             </button>
             <button
-              onClick={copyReviewRoutes}
+              onClick={copyArchitectureRoutes}
               className="h-9 px-4 rounded-md border border-border bg-bg hover:bg-bg-hover text-sm text-text-muted hover:text-text"
             >
-              Copy Review Routes
+              Copy Architecture Routes
             </button>
           </div>
         </div>

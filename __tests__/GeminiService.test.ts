@@ -195,7 +195,7 @@ describe("geminiService apiFetch", () => {
           product: {
             name: "AegisOps",
             category: "multimodal incident copilot",
-            headline: "Turn logs, screenshots, and alerts into a reviewable incident report.",
+            headline: "Turn logs, screenshots, and alerts into a inspectable incident report.",
           },
           workflow: ["collect", "reason", "decide", "communicate"],
           runtimeModes: [],
@@ -250,7 +250,7 @@ describe("geminiService apiFetch", () => {
             { stage: "Collect", summary: "Gather logs and screenshots.", surface: "React/Vite UI + /api/analyze" },
           ],
           trustBoundary: ["Keys stay server-side."],
-          reviewSequence: ["Check replay score."],
+          architectureSequence: ["Check replay score."],
           evidenceBundle: {
             replayPassRate: 100,
             severityAccuracy: 100,

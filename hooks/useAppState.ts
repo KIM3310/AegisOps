@@ -105,7 +105,7 @@ export function useAppState() {
   const appliedInitialReviewState = useRef(false);
 
   // Derived state
-  const reviewRoutes = summaryPack
+  const architectureRoutes = summaryPack
     ? Object.entries(summaryPack.links).filter(([, href]) => typeof href === 'string' && href.length > 0)
     : [];
   const runtimePosture = apiHealth
@@ -535,25 +535,25 @@ export function useAppState() {
       `Replay pass rate: ${summaryPack ? `${summaryPack.evidenceBundle.replayPassRate}%` : 'unavailable'}`,
       `Severity accuracy: ${summaryPack ? `${summaryPack.evidenceBundle.severityAccuracy}%` : 'unavailable'}`,
       '',
-      'Review flow',
-      ...(summaryPack?.twoMinuteReview?.map((item) => `- ${item.step}: ${item.surface} (${item.proof})`) ?? [
+      'Architecture flow',
+      ...(summaryPack?.twoMinuteArchitecture?.map((item) => `- ${item.step}: ${item.surface} (${item.proof})`) ?? [
         '- Summary pack unavailable. Start with /api/healthz, /api/summary-pack, and replay evals.',
       ]),
       '',
       'Fast links',
-      ...(reviewRoutes.length > 0
-        ? reviewRoutes.map(([label, href]) => `- ${label}: ${href}`)
+      ...(architectureRoutes.length > 0
+        ? architectureRoutes.map(([label, href]) => `- ${label}: ${href}`)
         : ['- Architecture routes unavailable.']),
     ];
 
     await copyLinesToClipboard(lines, 'Export checklist copied');
   };
 
-  const copyReviewRoutes = async () => {
+  const copyArchitectureRoutes = async () => {
     const lines = [
       'AegisOps fast architecture routes',
-      ...(reviewRoutes.length > 0
-        ? reviewRoutes.map(([label, href]) => `- ${label}: ${href}`)
+      ...(architectureRoutes.length > 0
+        ? architectureRoutes.map(([label, href]) => `- ${label}: ${href}`)
         : ['- Architecture routes unavailable. Start with /api/healthz, /api/meta, and /api/summary-pack.']),
     ];
 
@@ -581,12 +581,12 @@ export function useAppState() {
       `Deployment: ${apiHealth?.deployment ?? summaryPack?.deployment ?? 'unknown'}`,
       `Schema: ${reportSchema?.schemaId ?? 'unavailable'}`,
       '',
-      'Current review state',
+      'Current architecture state',
       ...reviewStateChips.map((chip) => `- ${chip}`),
       '',
       'Fast links',
-      ...(reviewRoutes.length > 0
-        ? reviewRoutes.map(([label, href]) => `- ${label}: ${href}`)
+      ...(architectureRoutes.length > 0
+        ? architectureRoutes.map(([label, href]) => `- ${label}: ${href}`)
         : ['- Architecture routes unavailable.']),
       '',
       'Proof assets',
@@ -651,8 +651,8 @@ export function useAppState() {
       `Screenshots: ${strongestPreset.hasImage ? 'included' : 'not included'}`,
       '',
       'Fast links',
-      ...(reviewRoutes.length > 0
-        ? reviewRoutes.map(([label, href]) => `- ${label}: ${href}`)
+      ...(architectureRoutes.length > 0
+        ? architectureRoutes.map(([label, href]) => `- ${label}: ${href}`)
         : ['- Architecture routes unavailable. Start with /api/healthz, /api/meta, and /api/summary-pack.']),
       '',
       'Log excerpt',
@@ -727,7 +727,7 @@ export function useAppState() {
       ...(strongestJourney
         ? [`- ${strongestJourney.surface}: ${strongestJourney.summary}`]
         : ['- Summary pack unavailable. Start with /api/healthz, /api/meta, and /api/summary-pack.']),
-      ...reviewRoutes.slice(0, 4).map(([label, href]) => `- ${label}: ${href}`),
+      ...architectureRoutes.slice(0, 4).map(([label, href]) => `- ${label}: ${href}`),
       '',
       `Share link: ${shareUrl}`,
     ];
@@ -770,7 +770,7 @@ export function useAppState() {
       return;
     }
     if (type === 'routes') {
-      await copyReviewRoutes();
+      await copyArchitectureRoutes();
     }
   };
 
@@ -994,7 +994,7 @@ export function useAppState() {
         void copyReviewStateLink();
       } else if (key === 'r') {
         e.preventDefault();
-        void copyReviewRoutes();
+        void copyArchitectureRoutes();
       } else if (key === 'k') {
         e.preventDefault();
         void copyReviewChecklist();
@@ -1024,7 +1024,7 @@ export function useAppState() {
     apiHealth?.deployment,
     copyEvidenceSnapshot,
     copyReviewChecklist,
-    copyReviewRoutes,
+    copyArchitectureRoutes,
     copyReviewStateLink,
     copyEscalationBrief,
     copyPayloadBudgetSnapshot,
@@ -1033,7 +1033,7 @@ export function useAppState() {
     logs,
     reportSchema?.schemaId,
     summaryPack,
-    reviewRoutes,
+    architectureRoutes,
     reviewStateChips,
     runtimePosture,
     status,
@@ -1093,7 +1093,7 @@ export function useAppState() {
     setReviewLens,
 
     // Derived
-    reviewRoutes,
+    architectureRoutes,
     runtimePosture,
     strongestPreset,
     proofSummary,
@@ -1127,7 +1127,7 @@ export function useAppState() {
     loadPreset,
     loadStrongestPreset,
     copyReviewChecklist,
-    copyReviewRoutes,
+    copyArchitectureRoutes,
     copyReviewStateLink,
     copyArchitectureBundle,
     copyEvidenceSnapshot,

@@ -12,7 +12,7 @@
   {
     "checkId": "architecture-resource-pack",
     "surface": "/api/resource-pack",
-    "whyItMatters": "Built-in sample evidence keeps the repo reviewable without live credentials or private telemetry."
+    "whyItMatters": "Built-in sample evidence keeps the repo inspectable without live credentials or private telemetry."
   },
   {
     "checkId": "lock-schema",

@@ -139,8 +139,8 @@ export interface SummaryPackResponse {
     surface: string;
   }>;
   trustBoundary: string[];
-  reviewSequence: string[];
-  twoMinuteReview?: Array<{
+  architectureSequence: string[];
+  twoMinuteArchitecture?: Array<{
     step: string;
     surface: string;
     proof: string;

@@ -111,7 +111,7 @@ describeIfSocketBinding("service meta endpoints", () => {
     expect(body.summaryPackId).toBe("aegisops-summary-pack-v1");
     expect(body.operatorJourney).toHaveLength(4);
     expect(body.trustBoundary.length).toBeGreaterThan(0);
-    expect(body.twoMinuteReview.length).toBeGreaterThanOrEqual(5);
+    expect(body.twoMinuteArchitecture.length).toBeGreaterThanOrEqual(5);
     expect(body.proofAssets.length).toBeGreaterThanOrEqual(4);
     expect(body.evidenceBundle.totalChecks).toBe(32);
     expect(body.evidenceBundle.liveSessionPackId).toBe("aegisops-live-session-pack-v1");
@@ -125,7 +125,7 @@ describeIfSocketBinding("service meta endpoints", () => {
     expect(body.links.summaryPack).toBe("/api/summary-pack");
   });
 
-  it("returns a resource pack for review-safe incident walkthroughs", async () => {
+  it("returns a resource pack for inspection-safe incident walkthroughs", async () => {
     const res = await fetch(`${baseUrl}/api/resource-pack`);
     const body = await res.json();
 
@@ -173,8 +173,8 @@ describeIfSocketBinding("service meta endpoints", () => {
     expect(body.liveSessionPackId).toBe("aegisops-live-session-pack-v1");
     expect(body.sessionRoles).toHaveLength(3);
     expect(body.modalities.some((item: { id: string }) => item.id === "voice-briefing")).toBe(true);
-    expect(body.reliabilityPosture.recommendedReviewRoutes).toContain("/api/live-session-pack");
-    expect(body.reliabilityPosture.recommendedReviewRoutes).toContain("/api/postmortem-pack");
+    expect(body.reliabilityPosture.recommendedArchitectureRoutes).toContain("/api/live-session-pack");
+    expect(body.reliabilityPosture.recommendedArchitectureRoutes).toContain("/api/postmortem-pack");
     expect(body.links.liveSessionPack).toBe("/api/live-session-pack");
   });
 
@@ -255,7 +255,7 @@ describeIfSocketBinding("service meta endpoints", () => {
     expect(Array.isArray(body.topology)).toBe(true);
     expect(body.topology.some((item: { node: string }) => item.node === "runtime-telemetry")).toBe(true);
     expect(Array.isArray(body.failureDrills)).toBe(true);
-    expect(body.failureDrills.some((item: { reviewSurface: string }) => item.reviewSurface === "/api/runtime/scorecard?focus=reliability")).toBe(true);
+    expect(body.failureDrills.some((item: { architectureSurface: string }) => item.architectureSurface === "/api/runtime/scorecard?focus=reliability")).toBe(true);
     expect(body.links.systemDesignPack).toBe("/api/system-design-pack");
     expect(body.links.postmortemPack).toBe("/api/postmortem-pack");
   });
@@ -390,7 +390,7 @@ describeIfSocketBinding("service meta endpoints", () => {
     expect(body.mode).toBe("public-capped-live");
     expect(body.model).toBe("gpt-5.2");
     expect(body.scenarioId).toBe("checkout-sev1");
-    expect(body.nextReviewPath).toBe("/api/postmortem-pack");
+    expect(body.nextArchitecturePath).toBe("/api/postmortem-pack");
     expect(body.result.escalationStance).toBe("page-incident-commander");
   });
 
@@ -406,11 +406,11 @@ describeIfSocketBinding("service meta endpoints", () => {
 
     expect(res.status).toBe(200);
     expect(body.schema).toBe("aegisops-live-escalation-preview-v1");
-    expect(body.mode).toBe("review-only-live");
+    expect(body.mode).toBe("read-only-live");
     expect(body.model).toBe("gpt-5.2");
     expect(body.result.source).toBe("fallback");
     expect(body.result.escalationStance).toBe("page-incident-commander");
-    expect(body.nextReviewPath).toBe("/api/postmortem-pack");
+    expect(body.nextArchitecturePath).toBe("/api/postmortem-pack");
   });
 
   it("enforces required operator roles for runtime mutation routes when configured", async () => {

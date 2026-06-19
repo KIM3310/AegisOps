@@ -11,7 +11,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "eval:replays": "NODE_OPTIONS=--disable-warning=ExperimentalWarning node --import tsx scripts/run-incident-replays.ts",
-    "review:smoke": "NODE_OPTIONS=--disable-warning=ExperimentalWarning node --import tsx scripts/review-surface-smoke.ts",
+    "architecture:smoke": "NODE_OPTIONS=--disable-warning=ExperimentalWarning node --import tsx scripts/architecture-surface-smoke.ts",
     "exercise:runtime": "node scripts/exercise-runtime.mjs",
     "load:runtime": "tsx scripts/load-runtime.ts",
     "load:k6": "k6 run scripts/k6-runtime-scorecard.js",
@@ -20,7 +20,7 @@
     "lint": "npm run typecheck",
     "typecheck": "tsc --noEmit",
     "test": "NODE_OPTIONS=--disable-warning=ExperimentalWarning vitest run",
-    "verify": "npm run typecheck && npm test && npm run eval:replays && npm run review:smoke && npm run build"
+    "verify": "npm run typecheck && npm test && npm run eval:replays && npm run architecture:smoke && npm run build"
   },
   "dependencies": {
     "@google/genai": "^1.33.0",

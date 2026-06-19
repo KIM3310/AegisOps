@@ -30,7 +30,7 @@
       "Infrastructure-as-code entrypoint with explicit variables, outputs, and provider boundaries",
       "Containerized runtime path suitable for repeatable local, staging, or managed service deployment",
       "Edge-first deployment model with server-side AI adapters and public-safe secrets handling",
-      "Security control plane with audit logging, isolation boundaries, and response review gates"
+      "Security control plane with audit logging, isolation boundaries, and response architecture gates"
     ],
     "landing_zone_controls": [
       "identity boundary and least-privilege service access",
