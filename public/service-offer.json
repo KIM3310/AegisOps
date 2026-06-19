@@ -1,0 +1,73 @@
+{
+  "name": "AegisOps",
+  "slug": "AegisOps",
+  "canonical_url": "https://aegisops-ai-incident-doctor.pages.dev/",
+  "repository_url": "https://github.com/KIM3310/AegisOps",
+  "architecture_url": "https://github.com/KIM3310/AegisOps/blob/main/docs/system-architecture.md",
+  "revenue_architecture_url": "https://github.com/KIM3310/AegisOps/blob/main/docs/revenue-architecture.md",
+  "lead_capture_url": "mailto:ehdjs1351@gmail.com?subject=AegisOps%20private%20workspace&body=I%20am%20interested%20in%20team%20workspace%20for%20incident%20packs%2C%20replay%20history%2C%20export%20branding%2C%20and%20private%20provider%20keys%20for%20AegisOps.",
+  "productized_offer": "incident replay copilot with evidence capture, runbook drafting, and post-incident summary export",
+  "first_paid_sku": "team workspace for incident packs, replay history, export branding, and private provider keys",
+  "free_lead_magnet": "public replay demo plus downloadable incident-readout template",
+  "search_positioning": {
+    "primary_query": "AegisOps incident replay copilot",
+    "secondary_queries": [
+      "AegisOps demo",
+      "AegisOps system architecture",
+      "AegisOps business tool",
+      "incident replay copilot with evidence capture, runbook drafting, and post-incident summary export service"
+    ],
+    "audience_intent": "Find a runnable demo, inspect the system architecture, and decide whether a private workspace or implementation package is useful."
+  },
+  "monetization_boundary": {
+    "free": "public replay demo plus downloadable incident-readout template",
+    "paid": "team workspace for incident packs, replay history, export branding, and private provider keys",
+    "metering_hooks": [
+      "workspace_id",
+      "plan",
+      "quota_day",
+      "export_count",
+      "lead_source"
+    ],
+    "cost_guardrails": [
+      "static first",
+      "edge functions",
+      "customer API keys",
+      "cached AI outputs",
+      "synthetic public data"
+    ]
+  },
+  "structured_data": {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "AegisOps",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web, serverless, and local development environments",
+    "url": "https://aegisops-ai-incident-doctor.pages.dev/",
+    "codeRepository": "https://github.com/KIM3310/AegisOps",
+    "description": "AegisOps: incident replay copilot with evidence capture, runbook drafting, and post-incident summary export. Free entry point: public replay demo plus downloadable incident-readout template. Paid path: team workspace.",
+    "creator": {
+      "@type": "Person",
+      "name": "KIM3310",
+      "url": "https://github.com/KIM3310"
+    },
+    "offers": [
+      {
+        "@type": "Offer",
+        "name": "public replay demo plus downloadable incident-readout template",
+        "price": "0",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock",
+        "url": "https://aegisops-ai-incident-doctor.pages.dev/"
+      },
+      {
+        "@type": "Offer",
+        "name": "team workspace for incident packs, replay history, export branding, and private provider keys",
+        "availability": "https://schema.org/LimitedAvailability",
+        "url": "https://github.com/KIM3310/AegisOps/blob/main/docs/revenue-architecture.md"
+      }
+    ],
+    "isAccessibleForFree": true,
+    "keywords": "AegisOps, incident, replay, copilot, evidence, capture, runbook, drafting, post-incident, summary, export, packs, history, branding, provider, keys, downloadable, incident-readout, template"
+  }
+}

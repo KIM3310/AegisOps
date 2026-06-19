@@ -1,7 +1,4 @@
-User-agent: Mediapartners-Google
-Allow: /
-
 User-agent: *
 Allow: /
 
-Sitemap: https://aegisops.dev/sitemap.xml
+Sitemap: https://aegisops-ai-incident-doctor.pages.dev/sitemap.xml
