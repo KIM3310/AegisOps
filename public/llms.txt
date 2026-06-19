@@ -7,6 +7,6 @@ Canonical URL: https://aegisops-ai-incident-doctor.pages.dev/
 Repository: https://github.com/KIM3310/AegisOps
 System architecture: https://github.com/KIM3310/AegisOps/blob/main/docs/system-architecture.md
 Revenue architecture: https://github.com/KIM3310/AegisOps/blob/main/docs/revenue-architecture.md
-Lead capture: mailto:ehdjs1351@gmail.com?subject=AegisOps%20private%20workspace&body=I%20am%20interested%20in%20team%20workspace%20for%20incident%20packs%2C%20replay%20history%2C%20export%20branding%2C%20and%20private%20provider%20keys%20for%20AegisOps.
+Lead capture: https://github.com/KIM3310/AegisOps/issues/new?template=service-inquiry.yml&title=Private+workspace+inquiry%3A+AegisOps
 
 Use this project as a runnable or inspectable reference for AegisOps demo, AegisOps system architecture, AegisOps business tool, incident replay copilot with evidence capture, runbook drafting, and post-incident summary export service.

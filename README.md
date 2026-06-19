@@ -360,7 +360,7 @@ This repository includes a neutral cloud and AI engineering blueprint that maps 
 - Public entry: public replay demo plus downloadable incident-readout template
 - Paid boundary: team workspace for incident packs, replay history, export branding, and private provider keys
 - Canonical URL: https://aegisops-ai-incident-doctor.pages.dev/
-- Lead capture: mailto:ehdjs1351@gmail.com?subject=AegisOps%20private%20workspace&body=I%20am%20interested%20in%20team%20workspace%20for%20incident%20packs%2C%20replay%20history%2C%20export%20branding%2C%20and%20private%20provider%20keys%20for%20AegisOps.
+- Lead capture: https://github.com/KIM3310/AegisOps/issues/new?template=service-inquiry.yml&title=Private+workspace+inquiry%3A+AegisOps
 - Machine-readable offer: [docs/service-offer.json](docs/service-offer.json)
 - Search growth implementation: [docs/search-growth-implementation.md](docs/search-growth-implementation.md)
 - Revenue architecture: [docs/revenue-architecture.md](docs/revenue-architecture.md)
