@@ -14,6 +14,9 @@ export interface ServerConfig {
   geminiRetryMaxAttempts: number;
   geminiRetryBaseDelayMs: number;
   openaiApiKey?: string;
+  openaiBaseUrl: string;
+  openaiHttpReferer?: string;
+  openaiAppTitle?: string;
   openaiModel: string;
   openaiTimeoutMs: number;
   openaiRetryMaxAttempts: number;
@@ -87,7 +90,12 @@ function readBaseUrl(name: string, fallback: string): string {
 export function loadConfig(): ServerConfig {
   const llmProvider = readProvider("LLM_PROVIDER", "auto");
   const geminiApiKey = process.env.GEMINI_API_KEY?.trim();
-  const openaiApiKey = process.env.OPENAI_API_KEY?.trim();
+  const openrouterApiKey = process.env.OPENROUTER_API_KEY?.trim();
+  const openaiApiKey = process.env.OPENAI_API_KEY?.trim() || openrouterApiKey;
+  const openaiBaseUrl = readBaseUrl(
+    "OPENAI_BASE_URL",
+    openrouterApiKey ? "https://openrouter.ai/api/v1" : "https://api.openai.com/v1"
+  );
   const mode: DemoMode =
     llmProvider === "ollama"
       ? "live"
@@ -117,7 +125,13 @@ export function loadConfig(): ServerConfig {
     geminiRetryMaxAttempts: readInt("GEMINI_RETRY_MAX_ATTEMPTS", 3, { min: 1, max: 6 }),
     geminiRetryBaseDelayMs: readInt("GEMINI_RETRY_BASE_DELAY_MS", 400, { min: 50, max: 5_000 }),
     openaiApiKey: openaiApiKey || undefined,
-    openaiModel: process.env.OPENAI_MODEL?.trim() || "gpt-5.2",
+    openaiBaseUrl,
+    openaiHttpReferer: process.env.OPENROUTER_HTTP_REFERER?.trim() || undefined,
+    openaiAppTitle: process.env.OPENROUTER_APP_TITLE?.trim() || "AegisOps Incident Doctor",
+    openaiModel:
+      process.env.OPENAI_MODEL?.trim() ||
+      process.env.OPENROUTER_MODEL?.trim() ||
+      (openrouterApiKey ? "anthropic/claude-sonnet-4.6" : "gpt-5.2"),
     openaiTimeoutMs: readInt("OPENAI_TIMEOUT_MS", 45_000, { min: 5_000, max: 180_000 }),
     openaiRetryMaxAttempts: readInt("OPENAI_RETRY_MAX_ATTEMPTS", 3, { min: 1, max: 6 }),
     openaiRetryBaseDelayMs: readInt("OPENAI_RETRY_BASE_DELAY_MS", 400, { min: 50, max: 5_000 }),

@@ -121,6 +121,9 @@ function buildUserContent(
 
 export async function openaiAnalyzeIncident(input: {
   apiKey: string;
+  baseUrl?: string;
+  httpReferer?: string;
+  appTitle?: string;
   model: string;
   logs: string;
   images: ImageInput[];
@@ -129,7 +132,14 @@ export async function openaiAnalyzeIncident(input: {
   retryMaxAttempts: number;
   retryBaseDelayMs: number;
 }): Promise<IncidentReport> {
-  const client = new OpenAI({ apiKey: input.apiKey });
+  const defaultHeaders: Record<string, string> = {};
+  if (input.httpReferer) defaultHeaders["HTTP-Referer"] = input.httpReferer;
+  if (input.appTitle) defaultHeaders["X-OpenRouter-Title"] = input.appTitle;
+  const client = new OpenAI({
+    apiKey: input.apiKey,
+    baseURL: input.baseUrl || undefined,
+    defaultHeaders,
+  });
   const logs = clampText(input.logs, input.maxLogChars);
   const userContent = buildUserContent(logs, input.images);
 
@@ -179,6 +189,9 @@ export async function openaiAnalyzeIncident(input: {
 
 export async function openaiFollowUp(input: {
   apiKey: string;
+  baseUrl?: string;
+  httpReferer?: string;
+  appTitle?: string;
   model: string;
   report: IncidentReport;
   history: { role: "user" | "assistant"; content: string }[];
@@ -187,7 +200,14 @@ export async function openaiFollowUp(input: {
   retryMaxAttempts: number;
   retryBaseDelayMs: number;
 }): Promise<string> {
-  const client = new OpenAI({ apiKey: input.apiKey });
+  const defaultHeaders: Record<string, string> = {};
+  if (input.httpReferer) defaultHeaders["HTTP-Referer"] = input.httpReferer;
+  if (input.appTitle) defaultHeaders["X-OpenRouter-Title"] = input.appTitle;
+  const client = new OpenAI({
+    apiKey: input.apiKey,
+    baseURL: input.baseUrl || undefined,
+    defaultHeaders,
+  });
 
   const contextStr = [
     "[Incident Context]",

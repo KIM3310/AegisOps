@@ -161,7 +161,9 @@ const runtimeTelemetry = {
   },
 };
 const OPENAI_BASE_URL = "https://api.openai.com/v1";
+const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 const OPENAI_PUBLIC_DEFAULT_MODEL = "gpt-5.2";
+const OPENROUTER_PUBLIC_DEFAULT_MODEL = "anthropic/claude-sonnet-4.6";
 const OPENAI_PUBLIC_DEFAULT_DAILY_BUDGET_USD = 4;
 const OPENAI_PUBLIC_DEFAULT_MONTHLY_BUDGET_USD = 120;
 const OPENAI_PUBLIC_DEFAULT_RPM = 6;
@@ -1292,7 +1294,10 @@ function readClampedIntEnv(name: string, fallback: number, min: number, max: num
 }
 
 function getOpenAiRuntimeContract() {
-  const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
+  const openRouterApiKey = String(process.env.OPENROUTER_API_KEY || "").trim();
+  const directOpenAiApiKey = String(process.env.OPENAI_API_KEY || "").trim();
+  const apiKey = openRouterApiKey || directOpenAiApiKey;
+  const usesOpenRouter = Boolean(openRouterApiKey);
   const killSwitch = readBooleanEnv("OPENAI_KILL_SWITCH", false);
   const dailyBudgetUsd = readUsdEnv(
     "OPENAI_PUBLIC_DAILY_BUDGET_USD",
@@ -1309,14 +1314,27 @@ function getOpenAiRuntimeContract() {
     monthlyBudgetUsd > 0;
   return {
     apiKey,
+    appTitle:
+      String(process.env.OPENROUTER_APP_TITLE || "").trim() || "AegisOps",
+    baseUrl: usesOpenRouter
+      ? String(process.env.OPENROUTER_BASE_URL || "").trim() || OPENROUTER_BASE_URL
+      : String(process.env.OPENAI_BASE_URL || "").trim() || OPENAI_BASE_URL,
     dailyBudgetUsd,
     deploymentMode: publicLiveApi ? "public-capped-live" : "read-only-live",
+    gateway: usesOpenRouter ? "openrouter" : "openai",
+    httpReferer:
+      String(process.env.OPENROUTER_HTTP_REFERER || "").trim() ||
+      "https://aegisops.pages.dev",
     killSwitch,
     lastLiveRunAt: lastOpenAiLiveRunAt,
-    liveModel:
-      String(process.env.OPENAI_MODEL_PUBLIC || "").trim() ||
-      OPENAI_PUBLIC_DEFAULT_MODEL,
-    moderationEnabled: readBooleanEnv("OPENAI_MODERATION_ENABLED", true),
+    liveModel: usesOpenRouter
+      ? String(process.env.OPENROUTER_MODEL || "").trim() ||
+        String(process.env.OPENAI_MODEL_PUBLIC || "").trim() ||
+        OPENROUTER_PUBLIC_DEFAULT_MODEL
+      : String(process.env.OPENAI_MODEL_PUBLIC || "").trim() ||
+        OPENAI_PUBLIC_DEFAULT_MODEL,
+    moderationEnabled:
+      !usesOpenRouter && readBooleanEnv("OPENAI_MODERATION_ENABLED", true),
     monthlyBudgetUsd,
     publicLiveApi,
     publicRpm: readClampedIntEnv(
@@ -1364,18 +1382,26 @@ async function callOpenAiModeration(apiKey: string, input: string): Promise<void
 
 async function callOpenAiEscalationPreview(options: {
   apiKey: string;
+  appTitle: string;
+  baseUrl: string;
   model: string;
+  httpReferer: string;
   bundle: OpenAiIncidentBundle;
 }) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
   try {
-    const response = await fetch(`${OPENAI_BASE_URL}/chat/completions`, {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${options.apiKey}`,
+      "Content-Type": "application/json",
+    };
+    if (options.baseUrl.includes("openrouter.ai")) {
+      headers["HTTP-Referer"] = options.httpReferer;
+      headers["X-OpenRouter-Title"] = options.appTitle;
+    }
+    const response = await fetch(`${options.baseUrl}/chat/completions`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${options.apiKey}`,
-        "Content-Type": "application/json",
-      },
+      headers,
       signal: controller.signal,
       body: JSON.stringify({
         model: options.model,
@@ -2119,6 +2145,9 @@ app.post("/api/live-escalation-preview", async (req, res) => {
     }
     const result = await callOpenAiEscalationPreview({
       apiKey: runtime.apiKey,
+      appTitle: runtime.appTitle,
+      baseUrl: runtime.baseUrl,
+      httpReferer: runtime.httpReferer,
       model: runtime.liveModel,
       bundle,
     });
@@ -2129,7 +2158,7 @@ app.post("/api/live-escalation-preview", async (req, res) => {
       mode: runtime.deploymentMode,
       model: runtime.liveModel,
       scenarioId: bundle.id,
-      moderated: true,
+      moderated: runtime.moderationEnabled,
       capped: true,
       traceId: req.requestId,
       estimatedCostUsd: bundle.estimatedCostUsd,
@@ -2359,6 +2388,9 @@ app.post("/api/analyze", async (req, res) => {
             }
             return openaiAnalyzeIncident({
               apiKey: cfg.openaiApiKey,
+              baseUrl: cfg.openaiBaseUrl,
+              httpReferer: cfg.openaiHttpReferer,
+              appTitle: cfg.openaiAppTitle,
               model: modelAnalyze,
               logs,
               images,
@@ -2499,6 +2531,9 @@ app.post("/api/followup", async (req, res) => {
             }
             return openaiFollowUp({
               apiKey: cfg.openaiApiKey,
+              baseUrl: cfg.openaiBaseUrl,
+              httpReferer: cfg.openaiHttpReferer,
+              appTitle: cfg.openaiAppTitle,
               model: getFollowUpModel(),
               report,
               history,
