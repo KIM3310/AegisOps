@@ -1,6 +1,6 @@
 .SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: install dev typecheck test build ci demo-local
+.PHONY: install dev typecheck test build verify ci demo-local
 
 install:
 	npm ci
@@ -17,8 +17,10 @@ test:
 build:
 	npm run build
 
-ci: install typecheck test build
+verify:
+	npm run verify
+
+ci: install verify
 
 demo-local:
 	npm install && npm run dev
-
