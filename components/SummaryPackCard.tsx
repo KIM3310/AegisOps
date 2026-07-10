@@ -106,7 +106,7 @@ export const SummaryPackCard: React.FC<Props> = ({ summaryPack }) => {
         <div className="rounded-lg border border-border bg-bg/70 p-3">
           <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-text-dim">
             <ListChecks className="w-3.5 h-3.5" />
-            Architecture Sequence
+            Review Sequence
           </div>
           <div className="mt-2 space-y-2 text-2xs text-text-muted leading-relaxed">
             {summaryPack.architectureSequence.map((item) => (

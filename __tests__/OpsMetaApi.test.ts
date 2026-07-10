@@ -125,7 +125,7 @@ describeIfSocketBinding("service meta endpoints", () => {
     expect(body.links.summaryPack).toBe("/api/summary-pack");
   });
 
-  it("returns a resource pack for inspection-safe incident walkthroughs", async () => {
+  it("returns a resource pack for review-safe incident walkthroughs", async () => {
     const res = await fetch(`${baseUrl}/api/resource-pack`);
     const body = await res.json();
 

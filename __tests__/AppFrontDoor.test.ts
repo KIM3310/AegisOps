@@ -111,7 +111,7 @@ const {
     product: {
       name: 'AegisOps',
       category: 'incident copilot',
-      headline: 'Turn logs into a inspectable incident story.',
+      headline: 'Turn logs into a reviewable incident story.',
     },
     workflow: ['collect', 'reason', 'decide'],
     runtimeModes: [],

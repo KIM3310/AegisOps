@@ -780,7 +780,7 @@ function buildEscalationReadiness() {
         "/api/schema/report",
       ],
       approvalRule:
-        "Escalate only after replay quality, evidence timeline, and runtime posture are all visible in the same architecture path.",
+        "Escalate only after replay quality, evidence timeline, and runtime posture are all visible in the same review path.",
       nextAction:
         blockers.length === 0
           ? "Proceed to live commander handoff with the report contract and evidence timeline."
@@ -1547,7 +1547,7 @@ function buildFallbackEscalationPreview(
     escalationStance:
       bundle.severity === "SEV1"
         ? "page-incident-commander"
-        : "bounded-architecture",
+        : "bounded-review",
     confidenceBand: "bounded-fallback",
     handoffSummary:
       bundle.severity === "SEV1"
@@ -1556,7 +1556,7 @@ function buildFallbackEscalationPreview(
     evaluationEvidence: [bundle.nextArchitecturePath, "/api/escalation-readiness"],
     commanderMessage:
       bundle.severity === "SEV1"
-        ? "Escalate now, but keep human check on the evidence bundle."
+        ? "Escalate now, but keep human review on the evidence bundle."
         : "Use the bounded review lane until the live OpenAI preview is configured again.",
     nextAction: `open ${bundle.nextArchitecturePath} and confirm the handoff bundle`,
     source: "fallback",

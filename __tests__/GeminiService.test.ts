@@ -195,7 +195,7 @@ describe("geminiService apiFetch", () => {
           product: {
             name: "AegisOps",
             category: "multimodal incident copilot",
-            headline: "Turn logs, screenshots, and alerts into a inspectable incident report.",
+            headline: "Turn logs, screenshots, and alerts into a reviewable incident report.",
           },
           workflow: ["collect", "reason", "decide", "communicate"],
           runtimeModes: [],

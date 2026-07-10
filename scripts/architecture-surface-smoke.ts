@@ -95,7 +95,7 @@ async function main() {
     );
     assert(
       Array.isArray(summaryPack?.twoMinuteArchitecture) && summaryPack.twoMinuteArchitecture.length > 0,
-      "summary pack two-minute architecture is missing"
+      "summary pack two-minute review is missing"
     );
     assert(replaySummary?.summaryId === "incident-replay-summary-v1", "replay summary id mismatch");
     assert(runtimeScorecard?.summary, "runtime scorecard summary missing");

@@ -535,7 +535,7 @@ export function useAppState() {
       `Replay pass rate: ${summaryPack ? `${summaryPack.evidenceBundle.replayPassRate}%` : 'unavailable'}`,
       `Severity accuracy: ${summaryPack ? `${summaryPack.evidenceBundle.severityAccuracy}%` : 'unavailable'}`,
       '',
-      'Architecture flow',
+      'Review flow',
       ...(summaryPack?.twoMinuteArchitecture?.map((item) => `- ${item.step}: ${item.surface} (${item.proof})`) ?? [
         '- Summary pack unavailable. Start with /api/healthz, /api/summary-pack, and replay evals.',
       ]),
@@ -543,7 +543,7 @@ export function useAppState() {
       'Fast links',
       ...(architectureRoutes.length > 0
         ? architectureRoutes.map(([label, href]) => `- ${label}: ${href}`)
-        : ['- Architecture routes unavailable.']),
+        : ['- Review routes unavailable.']),
     ];
 
     await copyLinesToClipboard(lines, 'Export checklist copied');
@@ -551,13 +551,13 @@ export function useAppState() {
 
   const copyArchitectureRoutes = async () => {
     const lines = [
-      'AegisOps fast architecture routes',
+      'AegisOps fast review routes',
       ...(architectureRoutes.length > 0
         ? architectureRoutes.map(([label, href]) => `- ${label}: ${href}`)
-        : ['- Architecture routes unavailable. Start with /api/healthz, /api/meta, and /api/summary-pack.']),
+        : ['- Review routes unavailable. Start with /api/healthz, /api/meta, and /api/summary-pack.']),
     ];
 
-    await copyLinesToClipboard(lines, 'Architecture routes copied');
+    await copyLinesToClipboard(lines, 'Review routes copied');
   };
 
   const copyReviewStateLink = async () => {
@@ -581,13 +581,13 @@ export function useAppState() {
       `Deployment: ${apiHealth?.deployment ?? summaryPack?.deployment ?? 'unknown'}`,
       `Schema: ${reportSchema?.schemaId ?? 'unavailable'}`,
       '',
-      'Current architecture state',
+      'Current review state',
       ...reviewStateChips.map((chip) => `- ${chip}`),
       '',
       'Fast links',
       ...(architectureRoutes.length > 0
         ? architectureRoutes.map(([label, href]) => `- ${label}: ${href}`)
-        : ['- Architecture routes unavailable.']),
+        : ['- Review routes unavailable.']),
       '',
       'Proof assets',
       ...(summaryPack?.proofAssets?.length
@@ -653,7 +653,7 @@ export function useAppState() {
       'Fast links',
       ...(architectureRoutes.length > 0
         ? architectureRoutes.map(([label, href]) => `- ${label}: ${href}`)
-        : ['- Architecture routes unavailable. Start with /api/healthz, /api/meta, and /api/summary-pack.']),
+        : ['- Review routes unavailable. Start with /api/healthz, /api/meta, and /api/summary-pack.']),
       '',
       'Log excerpt',
       strongestPreset.logs,

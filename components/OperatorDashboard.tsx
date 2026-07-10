@@ -38,14 +38,14 @@ export function OperatorDashboard({ state }: OperatorDashboardProps) {
             Operator Dashboard
           </div>
           <p className="text-2xs text-text-muted max-w-2xl">
-            입력 전에 runtime posture, architecture flow, fast links, preset repro path를 한 번에 정리합니다.
+            입력 전에 runtime posture, review flow, fast links, preset repro path를 한 번에 정리합니다.
           </p>
         </div>
         <button
           onClick={copyReviewChecklist}
           className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
         >
-          Copy Architecture Checklist
+          Copy Review Checklist
         </button>
       </div>
 
@@ -54,7 +54,7 @@ export function OperatorDashboard({ state }: OperatorDashboardProps) {
           onClick={copyArchitectureRoutes}
           className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
         >
-          Copy Architecture Routes
+          Copy Review Routes
         </button>
         <button
           onClick={copyEvidenceSnapshot}
@@ -84,7 +84,7 @@ export function OperatorDashboard({ state }: OperatorDashboardProps) {
           onClick={copyReviewStateLink}
           className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
         >
-          Copy Architecture Link
+          Copy Review Link
         </button>
         <button
           onClick={copyArchitectureBundle}
@@ -125,10 +125,10 @@ export function OperatorDashboard({ state }: OperatorDashboardProps) {
 
       <div className="grid gap-3 md:grid-cols-2">
         <div className="rounded-lg border border-border bg-bg/80 p-3 space-y-2">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">Architecture flow</div>
+          <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">Review flow</div>
           <div className="space-y-2">
             {(summaryPack?.twoMinuteArchitecture?.length ? summaryPack.twoMinuteArchitecture : [
-              { step: 'Load summary pack', surface: '/api/summary-pack', proof: 'architecture route unavailable' },
+              { step: 'Load summary pack', surface: '/api/summary-pack', proof: 'review route unavailable' },
             ]).map((item) => (
               <div key={`${item.step}-${item.surface}`} className="rounded-md border border-border bg-bg-card/70 px-3 py-2">
                 <div className="text-xs font-medium text-text">{item.step}</div>
@@ -140,7 +140,7 @@ export function OperatorDashboard({ state }: OperatorDashboardProps) {
         </div>
 
         <div className="rounded-lg border border-border bg-bg/80 p-3 space-y-2">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">Fast architecture routes</div>
+          <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">Fast review routes</div>
           <div className="flex flex-wrap gap-2">
             {architectureRoutes.length > 0 ? (
               architectureRoutes.map(([label, href]) => (
@@ -155,7 +155,7 @@ export function OperatorDashboard({ state }: OperatorDashboardProps) {
                 </a>
               ))
             ) : (
-              <div className="text-2xs text-text-muted">Architecture routes are still loading.</div>
+              <div className="text-2xs text-text-muted">Review routes are still loading.</div>
             )}
           </div>
           <div className="text-2xs text-text-muted">

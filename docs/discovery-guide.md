@@ -2,9 +2,9 @@
 
 ## Best-fit customer signals
 
-- incident architectures rely on screenshots, chat snippets, and partial logs
+- incident reviews rely on screenshots, chat snippets, and partial logs
 - on-call teams already have telemetry but handoff quality is weak
-- the architecture inspection wants a safe copilot adoption path instead of immediate autonomy
+- the security approver wants a safe copilot adoption path instead of immediate autonomy
 
 ## Discovery questions
 

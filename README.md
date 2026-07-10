@@ -1,4 +1,4 @@
-# AegisOps -- Multimodal Incident Architecture System
+# AegisOps -- Multimodal Incident Review System
 
 [![CI](https://github.com/KIM3310/AegisOps/actions/workflows/ci.yml/badge.svg)](https://github.com/KIM3310/AegisOps/actions)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -11,32 +11,32 @@
 
 1. Open the Cloudflare demo or local UI and run one incident scenario.
 2. Inspect the replay eval suite before trusting live model output.
-3. Run `npm run verify` to cover typecheck, tests, replay evals, architecture smoke, and build.
-4. Architecture export/handoff artifacts as the architecture-facing proof, not just the chat flow.
+3. Run `npm run verify` to cover typecheck, tests, replay evals, surface smoke, and build.
+4. Review export and handoff artifacts as operator-facing proof, not just the chat flow.
 
-## Product and System Surface
+## System Overview
 
 | Lens | Current answer |
 |---|---|
-| Audience | SOC, IT operations, managed service, and incident-response teams that need clearer handoff after noisy incidents. |
-| Architecture path | Validate the demo, README, architecture notes, and quality gate before deeper workflow architecture. |
-| System signal | Multimodal incident analysis, schema-conformant reports, replay evals, follow-up Q&A, and export paths. |
-| Safety boundary | Browser never receives provider keys; demo mode is deterministic and no-key by default. |
-| Fast path | `npm run verify`, live Cloudflare Pages demo, replay eval suite, and architecture smoke script. |
+| Users | SOC, IT operations, managed service, and incident-response teams that need clearer handoff after noisy incidents. |
+| Technical path | Validate the demo, README, architecture notes, and quality gate before deeper workflow review. |
+| System scope | Multimodal incident analysis, schema-conformant reports, replay evals, follow-up Q&A, and export paths. |
+| Operating boundary | Browser never receives provider keys; demo mode is deterministic and no-key by default. |
+| Evaluation path | `npm run verify`, live Cloudflare Pages demo, replay eval suite, and surface smoke script. |
 
-## System Fast Path
+## Evaluation Path
 
-- **First minute:** Open the Cloudflare demo, run one incident scenario, then inspect replay eval coverage.
+- **Start here:** Open the Cloudflare demo, run one incident scenario, then inspect replay eval coverage.
 - **Local demo:** Run `npm install && npm run dev`; the UI runs on `http://127.0.0.1:3000` and API on `http://127.0.0.1:8787`.
-- **Verification:** Run `npm run verify`; it covers typecheck, tests, replay evals, architecture smoke, and build.
+- **Checks:** Run `npm run verify`; it covers typecheck, tests, replay evals, surface smoke, and build.
 
 ## Service Launch Playbook
 
-- [Service launch playbook](docs/service-launch-playbook.md) maps the repository to architecture audiences, operating gates, operating boundaries, and risk controls.
+- [Service launch playbook](docs/service-launch-playbook.md) maps the repository to intended audiences, operating gates, operating boundaries, and risk controls.
 
 ## Architecture Notes
 
-- [Architecture guide](docs/architecture-evidence-map.md) summarizes the project angle, first files to inspect, runtime commands, and known boundaries.
+- [Architecture guide](docs/architecture-evidence-map.md) summarizes the system scope, first files to inspect, runtime commands, and known boundaries.
 - [Quality notes](docs/quality-gate.md) lists the local checks, CI surface, and release expectations for this repository.
 - [Enterprise readiness notes](docs/enterprise-readiness.md) outlines security, data, operations, integration, and handoff expectations.
 
@@ -140,7 +140,7 @@ If no API key is set, the system runs in **demo mode** -- deterministic output, 
 ### Verify the build
 
 ```bash
-npm run verify   # typecheck + test + replay evals + architecture smoke + build
+npm run verify   # typecheck + test + replay evals + surface smoke + build
 ```
 
 ---
@@ -264,7 +264,7 @@ Set `GOOGLE_APPLICATION_CREDENTIALS` + `GCP_PROJECT_ID` to persist incident arti
 AegisOps/
   App.tsx                    # React app root
   types.ts                   # Shared TypeScript types
-  constants.ts               # Sample presets, architecture lenses
+  constants.ts               # Sample presets, review lenses
   components/                # React UI components (26 files)
   hooks/                     # React hooks (app state, auth, storage)
   services/                  # Frontend service clients (Google APIs, Gemini, export)
@@ -303,7 +303,7 @@ AegisOps/
 npm test                    # Unit tests (Vitest, 29 test files)
 npm run typecheck           # TypeScript strict mode check
 npm run eval:replays        # Replay eval suite (4 scenarios / 32 checks)
-npm run architecture:smoke        # Architecture surface smoke tests
+npm run architecture:smoke        # Review surface smoke tests
 npm run verify              # All of the above + build
 ```
 
@@ -335,15 +335,13 @@ Built by [Doeon Kim](https://github.com/KIM3310)
 
 ## Cloud + AI Architecture
 
-This repository includes a neutral cloud and AI engineering blueprint that maps the current proof surface to runtime boundaries, data contracts, model-risk controls, deployment posture, and validation hooks.
-
 - [Cloud + AI architecture blueprint](docs/cloud-ai-architecture.md)
 - [Machine-readable architecture manifest](docs/architecture/blueprint.json)
 - Validation command: `python3 scripts/validate_architecture_blueprint.py`
 
 ## Enterprise Productization
 
-- [Product operating model](docs/product-operating-model.md) defines the architecture inspection, trust boundary, trust boundary, operating checks, and service path for this repository.
+- [Product operating model](docs/product-operating-model.md) defines the product scope, trust boundary, operating checks, and service path for this repository.
 
 ## System Architecture
 

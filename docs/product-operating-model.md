@@ -5,7 +5,7 @@ Last updated: 2026-06-03 KST
 
 ## Enterprise Product Position
 
-Multimodal incident copilot with replay evals, live-session architecture, and export surfaces.
+Multimodal incident copilot with replay evals, live-session review, and export surfaces.
 
 This repository is packaged as a concrete system surface, not a loose code sample. The enterprise value is a narrow proof that can be inspected, run, tested, and converted into a scoped implementation motion.
 
@@ -14,7 +14,7 @@ This repository is packaged as a concrete system surface, not a loose code sampl
 | Area | Position |
 | --- | --- |
 | Target users | Security and operations teams managing incident handoff |
-| Service wedge | Incident architecture cockpit for SOC or IT operations |
+| Service wedge | Incident review cockpit for SOC or IT operations |
 | System signal | Operator UX, replay evals, multimodal incident workflow |
 | Delivery shape | Fixed-scope pilot, integration sprint, and handoff-ready operating pack |
 | Expansion path | Add customer-specific adapters, policy controls, observability, and support SLAs after the pilot proves value |
