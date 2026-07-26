@@ -11,6 +11,7 @@ This repository now exposes a search-readable service surface in addition to the
 | System architecture | [docs/system-architecture.md](./system-architecture.md) |
 | Public canonical URL | https://aegisops-ai-incident-doctor.pages.dev/ |
 | Lead capture URL | https://github.com/KIM3310/AegisOps/issues/new?template=service-inquiry.yml&title=Private+workspace+inquiry%3A+AegisOps |
+| Commercial route | https://kim3310-doeon-kim-portfolio.pages.dev/?offer=AegisOps#service-offers |
 
 ## Search Positioning
 

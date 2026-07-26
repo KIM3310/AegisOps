@@ -359,6 +359,7 @@ Built by [Doeon Kim](https://github.com/KIM3310)
 - Paid boundary: team workspace for incident packs, replay history, export branding, and private provider keys
 - Canonical URL: https://aegisops-ai-incident-doctor.pages.dev/
 - Lead capture: https://github.com/KIM3310/AegisOps/issues/new?template=service-inquiry.yml&title=Private+workspace+inquiry%3A+AegisOps
+- Commercial route: https://kim3310-doeon-kim-portfolio.pages.dev/?offer=AegisOps#service-offers
 - Machine-readable offer: [docs/service-offer.json](docs/service-offer.json)
 - Search growth implementation: [docs/search-growth-implementation.md](docs/search-growth-implementation.md)
 - Revenue architecture: [docs/revenue-architecture.md](docs/revenue-architecture.md)

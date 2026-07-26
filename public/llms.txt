@@ -8,5 +8,6 @@ Repository: https://github.com/KIM3310/AegisOps
 System architecture: https://github.com/KIM3310/AegisOps/blob/main/docs/system-architecture.md
 Revenue architecture: https://github.com/KIM3310/AegisOps/blob/main/docs/revenue-architecture.md
 Lead capture: https://github.com/KIM3310/AegisOps/issues/new?template=service-inquiry.yml&title=Private+workspace+inquiry%3A+AegisOps
+Commercial route: https://kim3310-doeon-kim-portfolio.pages.dev/?offer=AegisOps#service-offers
 
 Use this project as a runnable or inspectable reference for AegisOps demo, AegisOps system architecture, AegisOps business tool, incident replay copilot with evidence capture, runbook drafting, and post-incident summary export service.
