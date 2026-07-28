@@ -8,7 +8,7 @@ Free incident-replay checklist and operator handoff glossary for security operat
 
 - Audience: security operations leads and incident commanders
 - Central resource: https://kim3310-doeon-kim-portfolio.pages.dev/resources/AegisOps/
-- Live system: https://aegisops-ai-incident-doctor.pages.dev
+- Live system: https://aegisops-ai-incident-doctor.pages.dev/
 - Advertising boundary: ads allowed only on public incident-readiness articles and resource pages; replay boards, reports, evidence views, and operator handoff flows are ad-free
 - Current ad state: code-ready on the central resource; serving depends on Google AdSense site approval and consent policy.
 

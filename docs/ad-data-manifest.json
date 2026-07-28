@@ -6,7 +6,7 @@
   "audience": "security operations leads and incident commanders",
   "public_resource": {
     "url": "https://kim3310-doeon-kim-portfolio.pages.dev/resources/AegisOps/",
-    "live_demo": "https://aegisops-ai-incident-doctor.pages.dev",
+    "live_demo": "https://aegisops-ai-incident-doctor.pages.dev/",
     "readiness_checklist": [
       "Architecture Summary",
       "Runtime And Data Flow",

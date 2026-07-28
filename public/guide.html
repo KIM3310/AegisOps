@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project Guide | AegisOps</title>
+  <meta name="description" content="Free incident-replay checklist and operator handoff glossary for security operations readers. Source-backed guide for security operations leads and…">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <meta name="google-adsense-account" content="ca-pub-4973160293737562">
+  <link rel="canonical" href="https://aegisops-ai-incident-doctor.pages.dev/guide.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Project Guide | AegisOps">
+  <meta property="og:description" content="Free incident-replay checklist and operator handoff glossary for security operations readers. Source-backed guide for security operations leads and incident commanders.">
+  <meta property="og:url" content="https://aegisops-ai-incident-doctor.pages.dev/guide.html">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Project Guide | AegisOps","description":"Free incident-replay checklist and operator handoff glossary for security operations readers. Source-backed guide for security operations leads and incident commanders.","url":"https://aegisops-ai-incident-doctor.pages.dev/guide.html","dateModified":"2026-07-28","author":{"@type":"Person","name":"KIM3310","url":"https://github.com/KIM3310"},"publisher":{"@type":"Person","name":"KIM3310","url":"https://kim3310-doeon-kim-portfolio.pages.dev"},"isAccessibleForFree":true}</script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4973160293737562" crossorigin="anonymous"></script>
+  <style>
+    :root { color-scheme: light; --ink: #17201f; --muted: #52605d; --line: #cbd2ce; --paper: #ffffff; --ground: #f5f6f4; --green: #126455; --coral: #c94732; --gold: #b67a00; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--ground); color: var(--ink); font: 17px/1.72 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    a { color: var(--green); text-underline-offset: 3px; }
+    .site-header { border-bottom: 1px solid var(--line); background: rgba(245, 246, 244, .97); }
+    .site-nav, .article-shell, .site-footer-inner { width: min(920px, calc(100% - 32px)); margin: 0 auto; }
+    .site-nav { min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .site-nav strong { font-size: .92rem; }
+    .nav-links { display: flex; flex-wrap: wrap; gap: 14px; font-size: .84rem; }
+    .article-shell { padding: 54px 0 72px; }
+    .breadcrumbs { color: var(--muted); font-size: .82rem; }
+    .article-intro { padding: 28px 0 36px; border-bottom: 2px solid var(--ink); }
+    .kicker { color: var(--coral); font-size: .76rem; font-weight: 800; text-transform: uppercase; }
+    h1 { margin: 10px 0 16px; max-width: 18ch; font-size: 3.5rem; line-height: 1.04; letter-spacing: 0; overflow-wrap: anywhere; }
+    .lede { max-width: 68ch; color: var(--muted); font-size: 1.08rem; }
+    .review-note { margin-top: 18px; color: var(--muted); font-size: .84rem; }
+    article { padding-top: 24px; }
+    article h2 { margin: 42px 0 12px; padding-top: 6px; font-size: 1.75rem; line-height: 1.2; letter-spacing: 0; }
+    article h3 { margin: 30px 0 8px; font-size: 1.2rem; letter-spacing: 0; }
+    article h4 { margin: 24px 0 6px; font-size: 1.02rem; letter-spacing: 0; }
+    article p, article li { max-width: 76ch; }
+    article li + li { margin-top: 6px; }
+    pre { max-width: 100%; overflow: auto; border-left: 4px solid var(--gold); background: #1d2423; color: #f6f8f7; padding: 18px; border-radius: 4px; font-size: .86rem; }
+    code { overflow-wrap: anywhere; }
+    :not(pre) > code { border: 1px solid var(--line); background: var(--paper); padding: 1px 5px; border-radius: 3px; font-size: .9em; }
+    .table-scroll { overflow-x: auto; margin: 20px 0; }
+    table { width: 100%; border-collapse: collapse; background: var(--paper); font-size: .9rem; }
+    th, td { border: 1px solid var(--line); padding: 10px; text-align: left; vertical-align: top; }
+    th { background: #e9eeeb; }
+    .boundary-note { margin: 30px 0 4px; border-left: 4px solid var(--coral); background: var(--paper); padding: 18px; }
+    .source-basis { margin-top: 48px; border-top: 1px solid var(--line); padding-top: 22px; color: var(--muted); }
+    .site-footer { border-top: 1px solid var(--line); background: var(--paper); }
+    .site-footer-inner { padding: 28px 0 44px; color: var(--muted); font-size: .84rem; }
+    .site-footer-links { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 12px; }
+    @media (max-width: 720px) {
+      .site-nav { align-items: flex-start; flex-direction: column; padding: 14px 0; }
+      .article-shell { padding-top: 32px; }
+      h1 { font-size: 2.35rem; }
+    }
+  </style>
+</head>
+<body data-ad-surface="editorial">
+  <header class="site-header">
+    <nav class="site-nav" aria-label="Primary">
+      <strong>AegisOps</strong>
+      <div class="nav-links"><a href="/">Home</a><a href="/guide.html">Project guide</a><a href="/architecture.html">Architecture</a><a href="/verification.html">Verification</a><a href="/publisher.html">Publisher</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
+    </nav>
+  </header>
+  <main class="article-shell">
+    <p class="breadcrumbs"><a href="/">Home</a> / Project guide</p>
+    <header class="article-intro">
+      <div class="kicker">Project guide</div>
+      <h1>Project Guide | AegisOps</h1>
+      <p class="lede">Free incident-replay checklist and operator handoff glossary for security operations readers. This guide organizes the repository&#039;s original implementation notes for security operations leads and incident commanders.</p>
+      <p class="review-note">Reviewed 2026-07-28. This page is derived from checked-in repository evidence and links back to its source.</p>
+    </header>
+
+    <article><h2>AegisOps -- Multimodal Incident Review System</h2>
+<p><strong>AegisOps</strong> turns raw incident logs and monitoring screenshots into structured, decision-ready incident reports -- complete with severity classification, root-cause analysis, timeline reconstruction, and operator handoff artifacts. Every analysis claim is backed by a deterministic replay eval suite before the live model path is trusted.</p>
+<h3>Three-Minute Proof</h3>
+<ol><li>Open the Cloudflare demo or local UI and run one incident scenario.</li><li>Inspect the replay eval suite before trusting live model output.</li><li>Run <code>npm run verify</code> to cover typecheck, tests, replay evals, surface smoke, and build.</li><li>Review export and handoff artifacts as operator-facing proof, not just the chat flow.</li></ol>
+<h3>System Overview</h3>
+<div class="table-scroll"><table><thead><tr><th>Lens</th><th>Current answer</th></tr></thead><tbody><tr><td>Users</td><td>SOC, IT operations, managed service, and incident-response teams that need clearer handoff after noisy incidents.</td></tr><tr><td>Technical path</td><td>Validate the demo, README, architecture notes, and quality gate before deeper workflow review.</td></tr><tr><td>System scope</td><td>Multimodal incident analysis, schema-conformant reports, replay evals, follow-up Q&amp;A, and export paths.</td></tr><tr><td>Operating boundary</td><td>Browser never receives provider keys; demo mode is deterministic and no-key by default.</td></tr><tr><td>Evaluation path</td><td><code>npm run verify</code>, live Cloudflare Pages demo, replay eval suite, and surface smoke script.</td></tr></tbody></table></div>
+<h3>Evaluation Path</h3>
+<ul><li><strong>Start here:</strong> Open the Cloudflare demo, run one incident scenario, then inspect replay eval coverage.</li><li><strong>Local demo:</strong> Run <code>npm install &amp;&amp; npm run dev</code>; the UI runs on <code>http://127.0.0.1:3000</code> and API on <code>http://127.0.0.1:8787</code>.</li><li><strong>Checks:</strong> Run <code>npm run verify</code>; it covers typecheck, tests, replay evals, surface smoke, and build.</li></ul>
+<h3>Architecture Notes</h3>
+<ul><li><a href="https://github.com/KIM3310/AegisOps/blob/main/docs/architecture-evidence-map.md" rel="noopener">Architecture guide</a> summarizes the system scope, first files to inspect, runtime commands, and known boundaries.</li><li><a href="https://github.com/KIM3310/AegisOps/blob/main/docs/quality-gate.md" rel="noopener">Quality notes</a> lists the local checks, CI surface, and release expectations for this repository.</li><li><a href="https://github.com/KIM3310/AegisOps/blob/main/docs/enterprise-readiness.md" rel="noopener">Enterprise readiness notes</a> outlines security, data, operations, integration, and handoff expectations.</li></ul>
+<h3>Live Demo</h3>
+<div class="table-scroll"><table><thead><tr><th>Surface</th><th>Link</th></tr></thead><tbody><tr><td>Cloudflare Pages</td><td>https://aegisops-ai-incident-doctor.pages.dev</td></tr><tr><td>Google AI Studio</td><td><a href="https://ai.studio/apps/drive/1nInCvCJjSXy0IQGiDeK9gbsjjhhPqtlg?fullscreenApplet=true" rel="noopener">Open in AI Studio</a></td></tr><tr><td>Demo video</td><td><a href="https://youtu.be/FOcjPcMheIg" rel="noopener">Watch on YouTube</a></td></tr></tbody></table></div>
+<p>---</p>
+<h3>Architecture</h3>
+<pre><code>flowchart LR
+    subgraph Intake [&quot;1 - Intake&quot;]
+        Logs[&quot;Raw Logs&quot;]
+        Screenshots[&quot;Monitoring Screenshots&quot;]
+    end
+
+    subgraph Analysis [&quot;2 - Multimodal Analysis&quot;]
+        API[&quot;Express API\n(server-side key handling)&quot;]
+        Gemini[&quot;Gemini&quot;]
+        OpenAI[&quot;OpenAI&quot;]
+        Ollama[&quot;Ollama (local)&quot;]
+        Demo[&quot;Demo mode\n(no keys)&quot;]
+    end
+
+    subgraph Output [&quot;3 - Structured Output&quot;]
+        Report[&quot;Incident Report\n(JSON schema)&quot;]
+        Postmortem[&quot;Postmortem Pack\nSeverity + RCA + Timeline&quot;]
+        FollowUp[&quot;Follow-Up Q&amp;A\n(grounded on report)&quot;]
+        TTS[&quot;Audio Briefing\n(TTS)&quot;]
+    end
+
+    subgraph Eval [&quot;4 - Replay Evals&quot;]
+        Suite[&quot;4 scenarios\n32 rubric checks&quot;]
+        Buckets[&quot;Failure Buckets\nby category&quot;]
+    end
+
+    subgraph Handoff [&quot;5 - Operator Handoff&quot;]
+        Export[&quot;JSON / Markdown\nSlack / Jira&quot;]
+        Workspace[&quot;Google Workspace\nDocs / Slides / Sheets\nCalendar / Chat&quot;]
+        Persist[&quot;GCS Artifacts\nBigQuery Analytics&quot;]
+    end
+
+    Logs --&gt; API
+    Screenshots --&gt; API
+    API --&gt; Gemini
+    API --&gt; OpenAI
+    API --&gt; Ollama
+    API --&gt; Demo
+    Gemini --&gt; Report
+    OpenAI --&gt; Report
+    Ollama --&gt; Report
+    Demo --&gt; Report
+    Report --&gt; Postmortem
+    Report --&gt; FollowUp
+    Report --&gt; TTS
+    Report --&gt; Suite
+    Suite --&gt; Buckets
+    Report --&gt; Export
+    Report --&gt; Workspace
+    Report --&gt; Persist</code></pre>
+<p><strong>Key design principle:</strong> API keys never reach the browser. The React frontend calls <code>/api/analyze</code>, <code>/api/followup</code>, <code>/api/tts</code> -- the Express API reads provider keys server-side and returns validated, schema-conformant JSON.</p>
+<p>---</p>
+<h4>Prerequisites</h4>
+<ul><li><strong>Node.js &gt;= 20</strong> and npm</li><li>(Optional) A Gemini or OpenAI API key for live analysis</li><li>(Optional) <a href="https://ollama.com" rel="noopener">Ollama</a> for fully offline local analysis</li></ul>
+<h4>Run locally</h4>
+<pre><code>
+## 1. Clone and install
+git clone https://github.com/KIM3310/AegisOps.git
+cd AegisOps
+npm install
+
+
+## 2. Configure (optional -- runs in demo mode without keys)
+cp .env.example .env
+
+## 3. Start both API and UI
+npm run dev
+
+## API: http://127.0.0.1:8787</code></pre>
+<p>If no API key is set, the system runs in <strong>demo mode</strong> -- deterministic output, no external calls, and the full replay eval suite still runs.</p>
+<h4>Verify the build</h4>
+<pre><code>npm run verify   # typecheck + test + replay evals + surface smoke + build</code></pre>
+<p>---</p>
+<h3>Tech Stack</h3>
+<div class="table-scroll"><table><thead><tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr></thead><tbody><tr><td>Frontend</td><td>React 19, Vite 6, Lucide Icons</td><td>Incident input, report rendering, operator dashboard</td></tr><tr><td>Backend</td><td>Express, Node.js 20+</td><td>API routing, key management, payload validation</td></tr><tr><td>LLM Providers</td><td>Gemini (default), OpenAI, Ollama</td><td>Multimodal incident analysis + follow-up Q&amp;A</td></tr><tr><td>Validation</td><td>Zod 4</td><td>Request/response schema enforcement</td></tr><tr><td>Logging</td><td>Pino</td><td>Structured JSON logging</td></tr><tr><td>Eval Framework</td><td>Custom replay harness</td><td>4 scenarios, 32 rubric checks, failure bucket aggregation</td></tr><tr><td>Auth</td><td>Bearer token + OIDC (RS256 JWT)</td><td>Operator access control with role-based gating</td></tr><tr><td>Persistence</td><td>GCS + BigQuery (optional)</td><td>Report artifacts + analytics rows</td></tr><tr><td>Monitoring</td><td>Prometheus + Datadog (optional)</td><td>HTTP metrics, analysis latency, provider usage</td></tr><tr><td>Cloud Infra</td><td>Terraform (Cloud Run), Cloudflare Pages</td><td>IaC deployment, static hosting</td></tr><tr><td>Containers</td><td>Docker, Kubernetes (HPA, Ingress)</td><td>Production container orchestration</td></tr><tr><td>CI/CD</td><td>GitHub Actions</td><td>Typecheck, test, replay proof, build, artifact upload</td></tr><tr><td>Language</td><td>TypeScript 5.8 (strict mode)</td><td>End-to-end type safety</td></tr></tbody></table></div>
+<p>---</p>
+<h3>Core API</h3>
+<div class="table-scroll"><table><thead><tr><th>Endpoint</th><th>Method</th><th>Description</th></tr></thead><tbody><tr><td><code>/api/analyze</code></td><td>POST</td><td>Analyze logs + screenshots, return structured incident report</td></tr><tr><td><code>/api/followup</code></td><td>POST</td><td>Follow-up Q&amp;A grounded on the generated report</td></tr><tr><td><code>/api/tts</code></td><td>POST</td><td>Text-to-speech audio briefing (Gemini TTS)</td></tr><tr><td><code>/api/evals/replays</code></td><td>GET</td><td>Replay eval suite results (4 scenarios / 32 checks)</td></tr><tr><td><code>/api/live-sessions</code></td><td>GET</td><td>Persisted incident session history</td></tr><tr><td><code>/api/meta</code></td><td>GET</td><td>Runtime modes, replay summary, operator checklist</td></tr><tr><td><code>/api/healthz</code></td><td>GET</td><td>Deployment mode, provider, limits</td></tr><tr><td><code>/api/summary-pack</code></td><td>GET</td><td>Inspectable trust surface with replay proof</td></tr><tr><td><code>/api/schema/report</code></td><td>GET</td><td>Incident report JSON schema contract</td></tr><tr><td><code>/api/metrics</code></td><td>GET</td><td>Prometheus-format metrics</td></tr></tbody></table></div>
+<p>---</p>
+<h3>Incident Replay Evals</h3>
+<p>The replay eval suite validates report quality against fixed scenarios with a structured rubric before the live model path is trusted.</p>
+<pre><code>npm run eval:replays</code></pre>
+<h4>Rubric categories</h4>
+<div class="table-scroll"><table><thead><tr><th>Category</th><th>What it checks</th></tr></thead><tbody><tr><td><code>severity_match</code></td><td>Severity classification matches the expected level</td></tr><tr><td><code>title_keywords</code></td><td>Title captures the dominant failure mode</td></tr><tr><td><code>tag_coverage</code></td><td>Operational tags cover the main systems involved</td></tr><tr><td><code>timeline_coverage</code></td><td>Timeline retains enough events for reconstruction</td></tr><tr><td><code>root_cause_coverage</code></td><td>Root causes name the failure mode, not just symptoms</td></tr><tr><td><code>actionability</code></td><td>Action items are concrete and operator-facing</td></tr><tr><td><code>reasoning_trace</code></td><td>Reasoning preserves Observations, Hypotheses, Decision Path</td></tr><tr><td><code>confidence_range</code></td><td>Confidence score stays within the rubric band</td></tr></tbody></table></div>
+<h4>Current scenarios</h4>
+<div class="table-scroll"><table><thead><tr><th>Scenario</th><th>Description</th></tr></thead><tbody><tr><td><code>llm-latency-spike</code></td><td>SLO breach, queue saturation, memory pressure, autoscaling recovery</td></tr><tr><td><code>redis-oom-failover</code></td><td>Redis master OOM, quorum loss, cache miss storm during failover</td></tr><tr><td><code>payments-retry-storm</code></td><td>5xx spike + retry fan-out and request queue growth</td></tr><tr><td><code>search-warning-buildup</code></td><td>Pre-outage warning with latency and queue buildup (no hard outage)</td></tr></tbody></table></div>
+<p>See <code>docs/INCIDENT_REPLAY_EVALS.md</code> for full documentation.</p>
+<p>---</p>
+<h4>Local development</h4>
+<pre><code>npm install &amp;&amp; npm run dev</code></pre>
+<h4>Cloudflare Pages</h4>
+<pre><code>npm run build &amp;&amp; wrangler pages deploy dist/</code></pre>
+<h4>Docker / Cloud Run</h4>
+<pre><code>docker build -t aegisops .
+docker run -e GEMINI_API_KEY=&lt;key&gt; -e HOST=0.0.0.0 -p 8787:8787 aegisops</code></pre>
+<h4>Terraform (GCP Cloud Run)</h4>
+<pre><code>cd infra/terraform
+terraform init
+terraform plan -var=&quot;project_id=&lt;your-project&gt;&quot; -var=&quot;image=&lt;your-image&gt;&quot;
+terraform apply</code></pre>
+<h4>Kubernetes</h4>
+<p>Pre-built manifests in <code>infra/k8s/</code> include Deployment, Service, HPA, Ingress, and ConfigMap.</p>
+<h4>Optional GCP persistence</h4>
+<p>Set <code>GOOGLE_APPLICATION_CREDENTIALS</code> + <code>GCP_PROJECT_ID</code> to persist incident artifacts to GCS and analytics rows to BigQuery.</p>
+<p>---</p>
+<h3>Project Structure</h3>
+<pre><code>AegisOps/
+  App.tsx                    # React app root
+  types.ts                   # Shared TypeScript types
+  constants.ts               # Sample presets, review lenses
+  components/                # React UI components (26 files)
+  hooks/                     # React hooks (app state, auth, storage)
+  services/                  # Frontend service clients (Google APIs, Gemini, export)
+  server/
+    index.ts                 # Express API server (~700 lines, 15+ routes)
+    lib/
+      gemini.ts              # Gemini provider (analyze, follow-up, TTS)
+      openai.ts              # OpenAI provider (analyze, follow-up)
+      ollama.ts              # Ollama provider (analyze, follow-up)
+      demo.ts                # Deterministic demo mode
+      replayEvals.ts         # Replay eval scoring and bucket aggregation
+      schemas.ts             # Zod request validation schemas
+      operatorAccess.ts      # Bearer + OIDC operator auth
+      gcp-persistence.ts     # GCS artifact upload, BigQuery analytics
+      prometheus.ts          # Prometheus metrics
+      datadog-adapter.ts     # Datadog integration
+      aws-adapter.ts         # AWS S3/SQS/CloudWatch integration
+      ...
+  evals/
+    incidentReplays.ts       # 4 replay scenarios with expected rubrics
+  __tests__/                 # 29 test files (Vitest)
+  scripts/                   # CLI tools (replay runner, smoke tests, load tests)
+  infra/
+    terraform/               # GCP Cloud Run IaC
+    k8s/                     # Kubernetes manifests
+  docs/                      # Architecture docs, evidence, SVGs
+  samples/                   # Sample logs, screenshots, resource packs
+  .github/workflows/         # CI pipeline (test, build, artifact upload)</code></pre>
+<p>---</p>
+<h3>Testing</h3>
+<pre><code>npm test                    # Unit tests (Vitest, 29 test files)
+npm run typecheck           # TypeScript strict mode check
+npm run eval:replays        # Replay eval suite (4 scenarios / 32 checks)
+npm run architecture:smoke        # Review surface smoke tests
+npm run verify              # All of the above + build</code></pre>
+<p>---</p>
+<h3>Environment Variables</h3>
+<p>See <code>.env.example</code> for the full list. Key variables:</p>
+<div class="table-scroll"><table><thead><tr><th>Variable</th><th>Required</th><th>Description</th></tr></thead><tbody><tr><td><code>LLM_PROVIDER</code></td><td>No</td><td><code>auto</code> (default), <code>gemini</code>, <code>openai</code>, <code>ollama</code>, <code>demo</code></td></tr><tr><td><code>GEMINI_API_KEY</code></td><td>For live mode</td><td>Google Gemini API key</td></tr><tr><td><code>OPENAI_API_KEY</code></td><td>For OpenAI mode</td><td>OpenAI API key</td></tr><tr><td><code>OLLAMA_BASE_URL</code></td><td>For local mode</td><td>Ollama server URL (default: <code>http://127.0.0.1:11434</code>)</td></tr><tr><td><code>GCP_PROJECT_ID</code></td><td>For persistence</td><td>GCP project for GCS + BigQuery</td></tr><tr><td><code>AEGISOPS_OPERATOR_TOKEN</code></td><td>For auth</td><td>Static operator bearer token</td></tr><tr><td><code>DD_API_KEY</code></td><td>For monitoring</td><td>Datadog API key</td></tr></tbody></table></div>
+<p>---</p>
+<h3>Cloud + AI Architecture</h3>
+<ul><li><a href="https://github.com/KIM3310/AegisOps/blob/main/docs/cloud-ai-architecture.md" rel="noopener">Cloud + AI architecture blueprint</a></li><li><a href="https://github.com/KIM3310/AegisOps/blob/main/docs/architecture/blueprint.json" rel="noopener">Machine-readable architecture manifest</a></li><li>Validation command: <code>python3 scripts/validate_architecture_blueprint.py</code></li></ul>
+<h3>Enterprise Productization</h3>
+<ul><li><a href="https://github.com/KIM3310/AegisOps/blob/main/docs/product-operating-model.md" rel="noopener">Product operating model</a> defines the product scope, trust boundary, operating checks, and service path for this repository.</li></ul>
+<h3>System Architecture</h3>
+<ul><li><a href="https://github.com/KIM3310/AegisOps/blob/main/docs/system-architecture.md" rel="noopener">System architecture</a> maps the runtime boundary, data/control flow, cloud or local deployment surface, and operating assumptions for this repository.</li></ul>
+<h3>Service Architecture</h3>
+<ul><li><a href="https://github.com/KIM3310/AegisOps/blob/main/docs/service-architecture.md" rel="noopener">Service architecture</a> defines the cloud resources, account information, usage controls, and production guardrails needed to turn this repo into a scoped service without publishing public financial assumptions.</li></ul>
+<h3>Search And Service Surface</h3>
+<ul><li>Public entry: public replay demo plus downloadable incident-readout template</li><li>Paid boundary: team workspace for incident packs, replay history, export branding, and private provider keys</li><li>Canonical URL: https://aegisops-ai-incident-doctor.pages.dev/</li><li>Lead capture: https://kim3310-doeon-kim-portfolio.pages.dev/?offer=AegisOps&amp;inquiry=incident-operations-exercise#private-inquiry</li><li>Resource route: https://kim3310-doeon-kim-portfolio.pages.dev/resources/AegisOps/</li><li>Commercial route: https://kim3310-doeon-kim-portfolio.pages.dev/?offer=AegisOps#service-offers</li><li>Machine-readable offer: <a href="https://github.com/KIM3310/AegisOps/blob/main/docs/service-offer.json" rel="noopener">docs/service-offer.json</a></li><li>Search growth implementation: <a href="https://github.com/KIM3310/AegisOps/blob/main/docs/search-growth-implementation.md" rel="noopener">docs/search-growth-implementation.md</a></li><li>Revenue architecture: <a href="https://github.com/KIM3310/AegisOps/blob/main/docs/revenue-architecture.md" rel="noopener">docs/revenue-architecture.md</a></li></ul></article>
+    <aside class="source-basis">
+      <strong>Source basis:</strong> <a href="https://github.com/KIM3310/AegisOps/blob/main/README.md" rel="noopener">README.md</a>. Corrections can be proposed through the public repository without submitting private data.
+    </aside>
+  </main>
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div class="site-footer-links"><a href="/">Home</a><a href="/guide.html">Project guide</a><a href="/architecture.html">Architecture</a><a href="/verification.html">Verification</a><a href="/publisher.html">Publisher</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="https://kim3310-doeon-kim-portfolio.pages.dev/">Resource atlas</a></div>
+      <p>Advertising may appear on this public editorial page after Google approves the site. Ads are not placed inside private, transactional, diagnostic, security-response, or operational workflows.</p>
+    </div>
+  </footer>
+</body>
+</html>
