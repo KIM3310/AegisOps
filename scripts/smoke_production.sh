@@ -77,7 +77,9 @@ check_endpoint \
   "<loc>${canonical_origin}/terms</loc>" \
   "<loc>${canonical_origin}/contact</loc>" \
   "<loc>${canonical_origin}/compliance</loc>" \
-  "<loc>${canonical_origin}/service-offer.json</loc>" \
-  "<loc>${canonical_origin}/llms.txt</loc>"
+  "<loc>${canonical_origin}/guide</loc>" \
+  "<loc>${canonical_origin}/architecture</loc>" \
+  "<loc>${canonical_origin}/verification</loc>" \
+  "<loc>${canonical_origin}/publisher</loc>"
 
 echo "Production policy and search surface smoke passed."
