@@ -6,6 +6,31 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://aegisops-ai-incident-doctor.pages.dev/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://aegisops-ai-incident-doctor.pages.dev/privacy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://aegisops-ai-incident-doctor.pages.dev/terms</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://aegisops-ai-incident-doctor.pages.dev/contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://aegisops-ai-incident-doctor.pages.dev/compliance</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://aegisops-ai-incident-doctor.pages.dev/service-offer.json</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

@@ -29,37 +29,4 @@ jobs:
         run: sleep 30
 
       - name: Smoke test production endpoints
-        run: |
-          set -euo pipefail
-          base="https://aegisops-ai-incident-doctor.pages.dev"
-          paths=(
-            "/"
-            "/about"
-            "/privacy"
-            "/terms"
-            "/contact"
-            "/compliance"
-            "/ads.txt"
-            "/robots.txt"
-            "/sitemap.xml"
-          )
-
-          for path in "${paths[@]}"; do
-            ok=0
-            for attempt in 1 2 3; do
-              code=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 8 --max-time 25 "$base$path" || true)
-              if [[ ! "$code" =~ ^[0-9]{3}$ ]]; then
-                code="000"
-              fi
-              echo "[$attempt/3] $path -> $code"
-              if [ "$code" -ge 200 ] && [ "$code" -lt 400 ]; then
-                ok=1
-                break
-              fi
-              sleep $((attempt * 5))
-            done
-            if [ "$ok" -ne 1 ]; then
-              echo "Smoke check failed for $path"
-              exit 1
-            fi
-          done
+        run: bash scripts/smoke_production.sh

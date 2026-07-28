@@ -5,7 +5,7 @@
   "repository_url": "https://github.com/KIM3310/AegisOps",
   "architecture_url": "https://github.com/KIM3310/AegisOps/blob/main/docs/system-architecture.md",
   "revenue_architecture_url": "https://github.com/KIM3310/AegisOps/blob/main/docs/revenue-architecture.md",
-  "lead_capture_url": "https://github.com/KIM3310/AegisOps/issues/new?template=service-inquiry.yml&title=Private+workspace+inquiry%3A+AegisOps",
+  "lead_capture_url": "https://kim3310-doeon-kim-portfolio.pages.dev/?offer=AegisOps&inquiry=incident-operations-exercise#private-inquiry",
   "productized_offer": "incident replay copilot with evidence capture, runbook drafting, and post-incident summary export",
   "first_paid_sku": "team workspace for incident packs, replay history, export branding, and private provider keys",
   "free_lead_magnet": "public replay demo plus downloadable incident-readout template",
@@ -64,7 +64,7 @@
         "@type": "Offer",
         "name": "team workspace for incident packs, replay history, export branding, and private provider keys",
         "availability": "https://schema.org/LimitedAvailability",
-        "url": "https://github.com/KIM3310/AegisOps/blob/main/docs/revenue-architecture.md"
+        "url": "https://kim3310-doeon-kim-portfolio.pages.dev/?offer=AegisOps&inquiry=incident-operations-exercise#private-inquiry"
       }
     ],
     "isAccessibleForFree": true,
@@ -72,20 +72,20 @@
   },
   "commerce": {
     "gateway_url": "https://kim3310-doeon-kim-portfolio.pages.dev/?offer=AegisOps#service-offers",
-    "lane_id": "aegisops-response-room",
-    "lane_name": "AegisOps Response Room",
-    "billing_mode": "supporter",
-    "price_unit": "recurring tabletop support from USD 200/month after scope review",
-    "fulfillment_kind": "incident replay board, tabletop pack, handoff template, and recurring assurance readout",
+    "lane_id": "incident-operations-exercise",
+    "lane_name": "Incident Operations Exercise",
+    "billing_mode": "one-time",
+    "price_unit": "facilitated exercise from USD 1,800",
+    "fulfillment_kind": "scenario pack, incident replay board, role and handoff map, evidence checklist, and after-action report",
     "risk_bucket": "security-high-trust",
     "checkout": {
-      "provider": "lemon-squeezy",
-      "status": "account-onboarding-required",
-      "fallback_url": "https://kim3310-doeon-kim-portfolio.pages.dev/?offer=AegisOps#service-offers"
+      "provider": null,
+      "status": "not-configured",
+      "fallback_url": "https://kim3310-doeon-kim-portfolio.pages.dev/?offer=AegisOps&inquiry=incident-operations-exercise#private-inquiry"
     },
     "sponsorship": {
       "provider": "github-sponsors",
-      "eligible": true,
+      "eligible": false,
       "status": "sponsors-listing-not-configured"
     },
     "advertising": {
