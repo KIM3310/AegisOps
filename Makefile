@@ -1,6 +1,6 @@
 .SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: install dev typecheck test build verify ci demo-local
+.PHONY: install dev typecheck test build verify ci demo-local deploy-pages
 
 install:
 	npm ci
@@ -24,3 +24,6 @@ ci: install verify
 
 demo-local:
 	npm install && npm run dev
+
+deploy-pages: build
+	npx --yes wrangler@latest pages deploy dist --project-name aegisops-ai-incident-doctor
