@@ -13,8 +13,8 @@ Commercial route: https://kim3310-doeon-kim-portfolio.pages.dev/?offer=AegisOps#
 
 Use this project as a runnable or inspectable reference for AegisOps demo, AegisOps system architecture, AegisOps business tool, incident replay copilot with evidence capture, runbook drafting, and post-incident summary export service.
 # ADSENSE-PUBLICATION:START
-Editorial guide: https://aegisops-ai-incident-doctor.pages.dev/guide.html
-Architecture article: https://aegisops-ai-incident-doctor.pages.dev/architecture.html
-Verification article: https://aegisops-ai-incident-doctor.pages.dev/verification.html
-Publisher information: https://aegisops-ai-incident-doctor.pages.dev/publisher.html
+Editorial guide: https://aegisops-ai-incident-doctor.pages.dev/guide
+Architecture article: https://aegisops-ai-incident-doctor.pages.dev/architecture
+Verification article: https://aegisops-ai-incident-doctor.pages.dev/verification
+Publisher information: https://aegisops-ai-incident-doctor.pages.dev/publisher
 # ADSENSE-PUBLICATION:END

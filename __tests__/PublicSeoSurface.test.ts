@@ -39,10 +39,10 @@ describe('public policy and search surface', () => {
     const locations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
     const expected = [
       `${SITE_ORIGIN}/`,
-      `${SITE_ORIGIN}/guide.html`,
-      `${SITE_ORIGIN}/architecture.html`,
-      `${SITE_ORIGIN}/verification.html`,
-      `${SITE_ORIGIN}/publisher.html`,
+      `${SITE_ORIGIN}/guide`,
+      `${SITE_ORIGIN}/architecture`,
+      `${SITE_ORIGIN}/verification`,
+      `${SITE_ORIGIN}/publisher`,
       ...Object.keys(POLICY_SURFACES).map((route) => `${SITE_ORIGIN}/${route}`),
     ];
 
