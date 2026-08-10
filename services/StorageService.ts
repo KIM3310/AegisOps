@@ -1,15 +1,13 @@
 
 import type { IncidentReport, SavedIncident, DashboardStats, IncidentSeverity } from '../types';
+import { createSecureUuid } from '../utils/secureRandom';
 
 const STORAGE_KEY = 'aegisops_incidents';
 const MAX_STORED_INCIDENTS = 100;
 const QUOTA_RECOVERY_INCIDENTS = 30;
 
 function generateUUID(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return `inc_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  return createSecureUuid();
 }
 
 function isQuotaExceeded(error: unknown): boolean {

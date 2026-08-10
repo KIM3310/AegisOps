@@ -60,6 +60,16 @@ describe('StorageService', () => {
       expect(stored[0].id).toBe(saved.id);
     });
 
+    it('uses a cryptographically secure UUID for incident identifiers', () => {
+      const randomUUID = vi.fn(() => '123e4567-e89b-42d3-a456-426614174000');
+      vi.stubGlobal('crypto', { randomUUID });
+
+      const saved = StorageService.saveIncident(mockReport, "raw logs", 1);
+
+      expect(saved.id).toBe('123e4567-e89b-42d3-a456-426614174000');
+      expect(randomUUID).toHaveBeenCalledOnce();
+    });
+
     it('should limit stored incidents to 100', () => {
       // 105개 데이터 강제 주입
       const manyIncidents = Array.from({ length: 105 }, (_, i) => ({

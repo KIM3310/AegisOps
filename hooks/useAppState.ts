@@ -34,6 +34,8 @@ import {
   replaceReviewUrlSearch,
   slugifyPresetName,
 } from '../utils/urlState';
+import { advanceAnalysisProgress } from '../utils/analysisProgress';
+import { createSecureUuid } from '../utils/secureRandom';
 import {
   DEMO_IMG_BASE64,
   SAMPLE_PRESETS,
@@ -256,15 +258,8 @@ export function useAppState() {
     setEnableGrounding((prev) => prev || apiHealth.defaults?.grounding || false);
   }, [apiHealth]);
 
-  const nextToastId = () => {
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-    return Math.random().toString(36).slice(2, 11);
-  };
-
   const addToast = (type: ToastMessage['type'], message: string) => {
-    const id = nextToastId();
+    const id = createSecureUuid();
     setToasts((prev) => [...prev, { id, type, message }]);
   };
 
@@ -872,7 +867,7 @@ export function useAppState() {
       }
 
       progressInterval = setInterval(() => {
-        setAnalysisProgress((prev) => Math.min(prev + Math.random() * 12, 90));
+        setAnalysisProgress(advanceAnalysisProgress);
       }, 500);
 
       setStatus('ANALYZING');

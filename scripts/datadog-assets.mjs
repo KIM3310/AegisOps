@@ -65,22 +65,31 @@ async function datadogRequest(method, apiPath, body, { requireAppKey = true } = 
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`${method} ${apiPath} failed (${response.status}): ${errorText}`);
+    const requestId = response.headers.get("x-request-id");
+    const requestReference = requestId ? ` (request ID ${requestId})` : "";
+    throw new Error(`${method} ${apiPath} failed (${response.status})${requestReference}`);
   }
 
   return response.status === 204 ? null : response.json();
 }
 
-async function validateCredentials() {
-  const apiValidation = apiKey
-    ? await datadogRequest("GET", "/api/v1/validate", undefined, { requireAppKey: false })
-    : { valid: false, skipped: true };
+async function validateCredentials({ requireApplicationCredential = false } = {}) {
+  if (!apiKey) {
+    throw new Error("DD_API_KEY is required to validate Datadog credentials.");
+  }
+  if (requireApplicationCredential && !appKey) {
+    throw new Error("DD_APP_KEY is required to validate Datadog credentials for asset sync.");
+  }
 
-  return {
-    apiKeyValid: Boolean(apiValidation?.valid),
-    appKeyConfigured: Boolean(appKey),
-  };
+  const apiValidation = await datadogRequest(
+    "GET",
+    "/api/v1/validate",
+    undefined,
+    { requireAppKey: false }
+  );
+  if (apiValidation?.valid !== true) {
+    throw new Error("Datadog rejected the configured API credential.");
+  }
 }
 
 async function syncAssets() {
@@ -130,10 +139,6 @@ async function main() {
           prefix,
           dashboard: assets.dashboard.title,
           monitors: assets.monitors.map((monitor) => monitor.name),
-          credentials: {
-            apiKeyConfigured: Boolean(apiKey),
-            appKeyConfigured: Boolean(appKey),
-          },
         },
         null,
         2
@@ -143,13 +148,16 @@ async function main() {
   }
 
   if (mode === "validate") {
-    console.log(JSON.stringify(await validateCredentials(), null, 2));
+    await validateCredentials();
+    console.log("Datadog credential preflight passed.");
     return;
   }
 
   if (mode === "sync") {
-    console.log(JSON.stringify(await validateCredentials(), null, 2));
-    console.log(JSON.stringify(await syncAssets(), null, 2));
+    await validateCredentials({ requireApplicationCredential: true });
+    const result = await syncAssets();
+    console.log("Datadog credential preflight passed.");
+    console.log(JSON.stringify(result, null, 2));
     return;
   }
 
