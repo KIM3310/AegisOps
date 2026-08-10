@@ -6,6 +6,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import express from "express";
+import { rateLimit } from "express-rate-limit";
 import type { IncidentReport } from "../types";
 import { loadConfig } from "./lib/config";
 import { demoAnalyzeIncident, demoFollowUpAnswer } from "./lib/demo";
@@ -139,6 +140,9 @@ const analyzeCache = createAnalyzeCache<IncidentReport>({
 const analyzeInFlight = new Map<string, Promise<IncidentReport>>();
 const RATE_BUCKET_GC_INTERVAL_MS = 60_000;
 const RATE_BUCKET_MAX_SIZE = 10_000;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const AUTH_SESSION_RATE_LIMIT = 10;
+const HEALTH_CHECK_RATE_LIMIT = 120;
 const startedAt = new Date().toISOString();
 const SLOW_REQUEST_MS = 4_000;
 const LATENCY_BUCKET_LABELS = ["lt250ms", "250msTo1s", "1sTo4s", "ge4s"] as const;
@@ -194,9 +198,26 @@ const OPENAI_INCIDENT_BUNDLES: Record<string, OpenAiIncidentBundle> = {
 let lastOpenAiLiveRunAt: string | null = null;
 
 const app = express();
+const operatorSessionRateLimiter = rateLimit({
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  limit: AUTH_SESSION_RATE_LIMIT,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  handler: (req, res) =>
+    sendError(req, res, 429, "Too many operator session attempts. Please slow down."),
+});
+const healthCheckRateLimiter = rateLimit({
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  limit: HEALTH_CHECK_RATE_LIMIT,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  handler: (req, res) =>
+    sendError(req, res, 429, "Too many health check requests. Please slow down."),
+});
 app.disable("x-powered-by");
 if (cfg.trustProxy) {
-  app.set("trust proxy", true);
+  // Trust one deployment proxy hop without accepting spoofed forwarding chains.
+  app.set("trust proxy", 1);
 }
 app.get("/favicon.ico", (_req, res) => {
   res.status(204).end();
@@ -1668,7 +1689,7 @@ app.get("/api/auth/session", async (req, res) => {
   });
 });
 
-app.post("/api/auth/session", async (req, res) => {
+app.post("/api/auth/session", operatorSessionRateLimiter, async (req, res) => {
   if (!isOperatorAuthEnabled()) {
     return sendError(req, res, 409, "Operator auth is not configured for session login.");
   }
@@ -1766,7 +1787,7 @@ app.delete("/api/auth/session", (req, res) => {
   });
 });
 
-app.get("/api/healthz", (req, res) => {
+app.get("/api/healthz", healthCheckRateLimiter, (req, res) => {
   const provider = getActiveProvider();
   const providerConfigured = isBackendConfigured();
   const cacheEntries = analyzeCache.size();
