@@ -26,6 +26,7 @@
     "@google/genai": "^1.52.0",
     "dotenv": "^17.2.2",
     "express": "^4.22.2",
+    "express-rate-limit": "^8.6.2",
     "lucide-react": "^0.577.0",
     "openai": "^6.49.0",
     "pino": "^10.3.1",
