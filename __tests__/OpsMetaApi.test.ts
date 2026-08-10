@@ -564,6 +564,21 @@ describeIfSocketBinding("service meta endpoints", () => {
 
       expect(allowed.status).toBe(200);
 
+      const unprivileged = createOidcToken({ issuer, audience, roles: [] });
+      process.env.AEGISOPS_OPERATOR_OIDC_JWKS_JSON = unprivileged.jwksJson;
+      const denied = await fetch(`${baseUrl}/api/analyze`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${unprivileged.token}`,
+          "x-operator-role": "incident-commander",
+        },
+        body: JSON.stringify({ logs: "spoofed oidc role", images: [] }),
+      });
+
+      expect(denied.status).toBe(403);
+      process.env.AEGISOPS_OPERATOR_OIDC_JWKS_JSON = jwksJson;
+
       const scorecard = await fetch(`${baseUrl}/api/runtime/scorecard`);
       const scorecardBody = await scorecard.json();
 
