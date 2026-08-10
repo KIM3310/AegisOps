@@ -320,7 +320,9 @@ See `.env.example` for the full list. Key variables:
 | `OPENAI_API_KEY` | For OpenAI mode | OpenAI API key |
 | `OLLAMA_BASE_URL` | For local mode | Ollama server URL (default: `http://127.0.0.1:11434`) |
 | `GCP_PROJECT_ID` | For persistence | GCP project for GCS + BigQuery |
-| `AEGISOPS_OPERATOR_TOKEN` | For auth | Static operator bearer token |
+| `AEGISOPS_OPERATOR_TOKEN` | For token auth | Static operator bearer token |
+| `AEGISOPS_OPERATOR_ALLOWED_ROLES` | No | Comma-separated roles accepted for protected mutation routes |
+| `AEGISOPS_OPERATOR_SESSION_SECRET` | For durable/OIDC sessions | High-entropy server-only cookie signing secret; otherwise sessions use a per-process secret |
 | `DD_API_KEY` | For monitoring | Datadog API key |
 
 ---

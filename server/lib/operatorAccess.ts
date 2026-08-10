@@ -457,9 +457,13 @@ export async function validateOperatorAccess(
     };
   }
 
-  const presentedRoles = Array.from(
-    new Set([...identity.roles, ...readPresentedOperatorRoles(req)])
-  );
+  // Role headers are a convenience for static-token deployments. OIDC roles
+  // must come only from signed claims; otherwise any valid user could elevate
+  // privileges by supplying x-operator-role themselves.
+  const presentedRoles =
+    identity.authMode === "oidc"
+      ? Array.from(new Set(identity.roles))
+      : Array.from(new Set([...identity.roles, ...readPresentedOperatorRoles(req)]));
   if (!hasRequiredRole(presentedRoles)) {
     return {
       ok: false,
