@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import type express from "express";
 
 type OperatorSessionRecord = {
@@ -14,6 +14,10 @@ export type OperatorSessionView = Omit<OperatorSessionRecord, "credential">;
 
 const DEFAULT_COOKIE_NAME = "aegisops_operator_session";
 const DEFAULT_TTL_SEC = 12 * 60 * 60;
+// OIDC-only deployments may not have a static operator token to derive from.
+// Use a per-process secret rather than a public fallback; configure
+// AEGISOPS_OPERATOR_SESSION_SECRET when sessions must survive restarts.
+const EPHEMERAL_SESSION_SECRET = randomBytes(32).toString("base64url");
 
 function toBase64Url(value: string): string {
   return Buffer.from(value, "utf8")
@@ -45,7 +49,7 @@ function getSessionSecret(): string {
   return (
     String(process.env.AEGISOPS_OPERATOR_SESSION_SECRET || "").trim() ||
     String(process.env.AEGISOPS_OPERATOR_TOKEN || "").trim() ||
-    "aegisops-local-session-secret"
+    EPHEMERAL_SESSION_SECRET
   );
 }
 
