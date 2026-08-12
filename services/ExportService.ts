@@ -29,7 +29,7 @@ export function exportReport(report: IncidentReport, format: ExportFormat) {
     return { content: JSON.stringify(blocks, null, 2), filename: `${ts}_slack.json`, mimeType: 'application/json' };
   }
 
-  const jira = `h1. ${report.title}\n\n||Severity|${report.severity}||\n\nh2. Summary\n${report.summary}\n\nh2. Root Causes\n${report.rootCauses.map((r) => `# ${r}`).join('\n')}\n\nh2. Actions\n||Priority||Task||Owner||\n${report.actionItems.map((a) => `|${a.priority}|${a.task}|${a.owner || 'TBD'}|`).join('\n')}`;
+  const jira = `h1. ${report.title}\n\n||Severity|${report.severity}||\n\nh2. Summary\n${report.summary}\n\nh2. Root Causes\n${report.rootCauses.map((r) => `# ${r}`).join('\n')}\n\nh2. Actions\n||Priority||Task||Owner||\n${report.actionItems.map((a) => `|${a.priority}|${a.task}|${a.owner || 'Unassigned'}|`).join('\n')}`;
   return { content: jira, filename: `${ts}_jira.txt`, mimeType: 'text/plain' };
 }
 

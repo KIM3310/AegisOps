@@ -1,11 +1,11 @@
 # AegisOps -- Multimodal Incident Review System
 
 [![CI](https://github.com/KIM3310/AegisOps/actions/workflows/ci.yml/badge.svg)](https://github.com/KIM3310/AegisOps/actions)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-**AegisOps** turns raw incident logs and monitoring screenshots into structured, decision-ready incident reports -- complete with severity classification, root-cause analysis, timeline reconstruction, and operator handoff artifacts. Every analysis claim is backed by a deterministic replay eval suite before the live model path is trusted.
+**AegisOps** turns raw incident logs and monitoring screenshots into structured, decision-ready incident reports -- complete with severity classification, root-cause hypotheses, timeline reconstruction, and operator handoff artifacts. A deterministic replay suite tests schema, rubric, and workflow behavior before live model output is trusted; it does not prove every incident conclusion.
 
 ## Three-Minute Proof
 
@@ -19,7 +19,6 @@
 | Lens | Current answer |
 |---|---|
 | Users | SOC, IT operations, managed service, and incident-response teams that need clearer handoff after noisy incidents. |
-| Technical path | Validate the demo, README, architecture notes, and quality gate before deeper workflow review. |
 | System scope | Multimodal incident analysis, schema-conformant reports, replay evals, follow-up Q&A, and export paths. |
 | Operating boundary | Browser never receives provider keys; demo mode is deterministic and no-key by default. |
 | Evaluation path | `npm run verify`, live Cloudflare Pages demo, replay eval suite, and surface smoke script. |
@@ -149,7 +148,7 @@ npm run verify   # typecheck + test + replay evals + surface smoke + build
 
 | Layer | Technology | Purpose |
 |---|---|---|
-| Frontend | React 19, Vite 6, Lucide Icons | Incident input, report rendering, operator dashboard |
+| Frontend | React 19, Vite 8, Lucide Icons | Incident input, report rendering, operator dashboard |
 | Backend | Express, Node.js 20+ | API routing, key management, payload validation |
 | LLM Providers | Gemini (default), OpenAI, Ollama | Multimodal incident analysis + follow-up Q&A |
 | Validation | Zod 4 | Request/response schema enforcement |
@@ -161,7 +160,7 @@ npm run verify   # typecheck + test + replay evals + surface smoke + build
 | Cloud Infra | Terraform (Cloud Run), Cloudflare Pages | IaC deployment, static hosting |
 | Containers | Docker, Kubernetes (HPA, Ingress) | Production container orchestration |
 | CI/CD | GitHub Actions | Typecheck, test, replay proof, build, artifact upload |
-| Language | TypeScript 5.8 (strict mode) | End-to-end type safety |
+| Language | TypeScript 5.9 (strict mode) | End-to-end type safety |
 
 ---
 
@@ -285,7 +284,7 @@ AegisOps/
       ...
   evals/
     incidentReplays.ts       # 4 replay scenarios with expected rubrics
-  __tests__/                 # 29 test files (Vitest)
+  __tests__/                 # Vitest unit and integration suite
   scripts/                   # CLI tools (replay runner, smoke tests, load tests)
   infra/
     terraform/               # GCP Cloud Run IaC
@@ -300,7 +299,7 @@ AegisOps/
 ## Testing
 
 ```bash
-npm test                    # Unit tests (Vitest, 29 test files)
+npm test                    # Unit and integration tests (Vitest)
 npm run typecheck           # TypeScript strict mode check
 npm run eval:replays        # Replay eval suite (4 scenarios / 32 checks)
 npm run architecture:smoke        # Review surface smoke tests
