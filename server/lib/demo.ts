@@ -115,8 +115,8 @@ export function demoAnalyzeIncident(input: { logs: string; imageCount: number; m
     impact: {
       estimatedUsersAffected: sev === "SEV1" ? "Significant (estimate required)" : "Unknown",
       duration: "Unknown (needs incident window)",
-      peakLatency: tags.includes("latency") ? "Observed in logs (exact value TBD)" : "N/A",
-      peakErrorRate: tags.includes("errors") ? "Observed in logs (exact value TBD)" : "N/A",
+      peakLatency: tags.includes("latency") ? "Latency signal detected; numeric peak not extracted in demo mode" : "N/A",
+      peakErrorRate: tags.includes("errors") ? "Error-rate signal detected; numeric peak not extracted in demo mode" : "N/A",
     },
     tags,
     lessonsLearned: "Even with abundant telemetry, the bottleneck is consolidating evidence into a decision-ready narrative.",

@@ -58,5 +58,17 @@ describe('ExportService', () => {
       expect(result.content).toContain('||Severity|SEV1||');
       expect(result.content).toContain('|HIGH|Fix it|DevOps|');
     });
+
+    it('should label missing Jira owners as unassigned', () => {
+      const reportWithoutOwner: IncidentReport = {
+        ...mockReport,
+        actionItems: [{ task: 'Investigate', priority: 'MEDIUM' }],
+      };
+
+      const result = ExportService.exportReport(reportWithoutOwner, 'jira');
+
+      expect(result.content).toContain('|MEDIUM|Investigate|Unassigned|');
+      expect(result.content).not.toContain('TBD');
+    });
   });
 });
