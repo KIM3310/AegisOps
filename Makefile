@@ -1,4 +1,4 @@
-.SHELLFLAGS := -eu -o pipefail -c
+.SHELLFLAGS := -eu -c
 
 .PHONY: install dev typecheck test build verify ci demo-local deploy-pages
 
