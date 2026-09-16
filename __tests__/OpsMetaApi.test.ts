@@ -1,4 +1,7 @@
 import { createServer } from "node:http";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import type { AddressInfo } from "node:net";
 import { createSign, generateKeyPairSync } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -53,8 +56,11 @@ function createOidcToken(options: {
 describeIfSocketBinding("service meta endpoints", () => {
   const server = createServer(app);
   let baseUrl = "";
+  let runtimeDirectory = "";
 
   beforeAll(async () => {
+    runtimeDirectory = await mkdtemp(path.join(tmpdir(), "aegisops-meta-events-"));
+    vi.stubEnv("AEGISOPS_RUNTIME_STORE_PATH", path.join(runtimeDirectory, "events.jsonl"));
     await new Promise<void>((resolve) => {
       server.listen(0, "127.0.0.1", () => resolve());
     });
@@ -63,15 +69,14 @@ describeIfSocketBinding("service meta endpoints", () => {
   });
 
   afterAll(async () => {
-    await new Promise<void>((resolve, reject) => {
-      server.close((err) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve();
+    try {
+      await new Promise<void>((resolve, reject) => {
+        server.close((err) => err ? reject(err) : resolve());
       });
-    });
+    } finally {
+      vi.unstubAllEnvs();
+      if (runtimeDirectory) await rm(runtimeDirectory, { recursive: true, force: true });
+    }
   });
 
   it("returns service meta that ties workflow, replay suite, and report contract together", async () => {

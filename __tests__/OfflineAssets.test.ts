@@ -14,6 +14,7 @@ describe('local browser assets', () => {
       .map((element) => element.getAttribute('src') ?? element.getAttribute('href') ?? '');
 
     expect(page.querySelector('#root')?.tagName).toBe('DIV');
+    expect(page.documentElement.lang).toBe('ko');
     expect(resources).toContain('./index.tsx');
     expect(resources.filter((resource) => /^(https?:)?\/\//.test(resource))).toEqual([]);
     expect(page.querySelectorAll('script[type="importmap"]').length).toBe(0);

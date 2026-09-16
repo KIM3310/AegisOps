@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config({ quiet: true });
 
 import { createHash, randomUUID } from "node:crypto";
+import { createResponseWorkflowsRouter, RESPONSE_WORKFLOW_MAX_BODY_BYTES } from "./routes/responseWorkflows";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -1637,7 +1638,14 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: `${cfg.requestBodyLimitMb}mb` }));
+const defaultJsonParser = express.json({ limit: `${cfg.requestBodyLimitMb}mb` });
+const responseWorkflowJsonParser = express.json({ limit: RESPONSE_WORKFLOW_MAX_BODY_BYTES });
+app.use((req, res, next) => {
+  const parser = /^\/api\/response-workflows(?:\/|$)/i.test(req.path)
+    ? responseWorkflowJsonParser
+    : defaultJsonParser;
+  return parser(req, res, next);
+});
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   if (err?.type === "entity.too.large") {
     return sendError(req, res, 413, "Payload too large.");
@@ -1667,6 +1675,8 @@ app.use((req, res, next) => {
     return next();
   })().catch(next);
 });
+
+app.use("/api/response-workflows", createResponseWorkflowsRouter());
 
 app.use("/api/settings/api-key", (req, res, next) => {
   if (cfg.llmProvider === "ollama" && req.method !== "GET") {
