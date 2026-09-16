@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-16",
+  "scope": "local synthetic-data prototype; not production or certification evidence",
+  "sourceRevision": "cdc04460e98e0e5d797cb83ed812cd59da404611",
+  "upstreamBase": "db8b0e414388b1e64e1c54664d126b363a2b652a",
+  "branch": "feat/public-sector-response-workbench",
+  "environment": {
+    "os": "macOS",
+    "node": "22.23.2",
+    "npm": "10.9.8",
+    "provider": "demo",
+    "serverOutboundPolicy": "loopback-only sandbox-exec",
+    "browser": "installed Google Chrome via isolated playwright-core harness"
+  },
+  "cleanInstall": {
+    "command": "npm ci",
+    "exitCode": 0
+  },
+  "verify": {
+    "command": "npm run verify",
+    "exitCode": 0,
+    "testFiles": 43,
+    "passedTests": 435,
+    "skippedTests": 0,
+    "typecheck": "passed",
+    "replayCases": 4,
+    "replayChecksPassed": 32,
+    "replayChecksTotal": 32,
+    "architectureSmoke": "real loopback HTTP passed",
+    "build": "passed"
+  },
+  "audit": {
+    "command": "npm audit --json",
+    "exitCode": 0,
+    "reportedVulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    }
+  },
+  "browser": {
+    "keyless": "browser-workflow-results.json",
+    "authenticated": "browser-auth-results.json",
+    "bothRepeatedOnSourceRevision": "cdc04460e98e0e5d797cb83ed812cd59da404611",
+    "pageErrors": 0,
+    "externalPageRequests": 0
+  },
+  "api": "parent-api-results.json",
+  "review": {
+    "method": "separate AI review sessions with source review and focused runtime checks",
+    "codeVerdict": "approve contracted prototype; no open findings",
+    "documentationVerdict": "no open scoped source/contract findings"
+  },
+  "knownBuildWarning": {
+    "description": "single JavaScript chunk exceeds the 500 kB warning threshold; warning not suppressed",
+    "assetBytes": [
+      500377
+    ]
+  },
+  "notVerified": [
+    "production OIDC deployment",
+    "real Google OAuth login",
+    "external LLM quality",
+    "live SIEM/NOC or cloud connectors",
+    "Windows Hancom native document generation",
+    "tenant isolation",
+    "multi-process storage",
+    "tamper-proof audit",
+    "public-sector certification"
+  ],
+  "publication": {
+    "remotePush": false,
+    "deployment": false,
+    "blocker": "GitHub CLI not authenticated; publication confirmation required"
+  }
+}

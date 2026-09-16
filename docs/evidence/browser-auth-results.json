@@ -1,0 +1,13 @@
+{
+  "checks": [
+    "anonymous case, export and legacy session reads denied without evidence leakage",
+    "actual operator login creates HttpOnly session; credential absent from localStorage/sessionStorage",
+    "cookie-authenticated new case and review use shared-token provenance, not a named approver",
+    "cross-origin cookie mutation denied",
+    "removed session cookie cannot keep a trusted-looking reviewed state after refresh"
+  ],
+  "errors": [],
+  "remoteRequests": [],
+  "caseId": "d3ec1026-4015-44a2-861b-7baffc3f3406",
+  "ok": true
+}
