@@ -29,3 +29,5 @@ dist-ssr
 .runtime/
 .omc/
 .wrangler/
+.dev.vars
+.dev.vars.*

@@ -157,7 +157,7 @@ export function renderResponseMarkdown(current: ResponseCase, generatedAt: strin
     '', '## 검토 이력', ...current.reviewEvents.map((event) =>
       `- ${event.at} | ${escaped(actorLabel(event.actor))} | ${event.command.kind} | revision ${event.revision}${event.command.kind !== 'begin' ? ` | ${escaped(event.command.note)}` : ''}`),
     '', '## 다음 담당자 확인사항', '계획 검토와 실제 작업을 구분하고 원본 진위, 추가 관측, 변경 승인 여부를 별도로 확인하세요.',
-    '파일 저장소는 위변조 방지, 다중 프로세스 동시성 또는 기관별 격리를 제공하지 않습니다.', '',
+    '검토 저장소는 위변조 방지나 기관별 격리를 제공하지 않습니다.', '',
   ].join('\n');
 }
 

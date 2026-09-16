@@ -190,7 +190,7 @@ describe('Response workflow Korean interactions', () => {
   it('does not invent successful offline review or trust a persisted ID when its server read fails', async () => {
     await render(); fetchMock.mockRejectedValueOnce(new Error('offline'));
     await click('대응 검토 시작');
-    expect(container.querySelector('[role=alert]')?.textContent).toContain('오프라인 검토 완료는 지원하지 않습니다');
+    expect(container.querySelector('[role=alert]')?.textContent).toContain('저장 결과를 확인할 수 없습니다');
     expect(container.textContent).not.toContain('revision 1');
     localStorage.setItem(lastKey, id);
     await act(async () => root.unmount()); root = ReactDOM.createRoot(container);
@@ -221,6 +221,69 @@ describe('Response workflow Korean interactions', () => {
     await click('보완 요청');
     expect(container.textContent).toContain('보완 필요 · 실행 승인 아님 · revision 3');
     expect(container.textContent).toContain('원본 로그를 보완해 주세요.');
+  });
+
+
+  it.each(['network', 'abort', 'malformed-success', '503'] as const)('preserves the last confirmed view after an unconfirmed %s review, then recovers only on explicit refresh', async (failure) => {
+    await render(); await click('대응 검토 시작');
+    const previousRequests = requests.length;
+    fetchMock.mockImplementationOnce(async (input, options) => {
+      requests.push({ url: String(input), options });
+      saved = applyReviewCommand(saved, { kind: 'begin' }, actor, at);
+      if (failure === 'network') throw new Error('response lost after commit');
+      if (failure === 'abort') throw new DOMException('aborted', 'AbortError');
+      if (failure === 'malformed-success') return json({ ok: true });
+      return json({ error: { message: '저장소 응답 실패' } }, 503);
+    });
+    await click('검토 시작');
+    expect(container.querySelector('[role=alert]')?.textContent).toContain('저장 결과를 확인할 수 없습니다');
+    expect(container.querySelector('[role=alert]')?.textContent).toContain('자동으로 반복하지 마세요');
+    expect(container.textContent).toContain('초안 · 실행 승인 아님 · revision 1');
+    expect(container.textContent).not.toContain('검토 중 · 실행 승인 아님');
+    expect(localStorage.getItem(lastKey)).toBe(id);
+    expect(requests.length).toBe(previousRequests + 1);
+    await click('서버 상태 새로고침');
+    expect(container.textContent).toContain('검토 중 · 실행 승인 아님 · revision 2');
+    expect(requests.at(-1)?.url).toBe(`/api/response-workflows/${id}`);
+  });
+
+  it('keeps the earlier case after a lost new-create response and warns that the new ID may be unavailable', async () => {
+    await render(); await click('대응 검토 시작');
+    const previousRequests = requests.length;
+    fetchMock.mockImplementationOnce(async (input, options) => {
+      requests.push({ url: String(input), options });
+      throw new Error('new create response lost');
+    });
+    await click('새 제출 스냅샷으로 초안 만들기');
+    expect(container.querySelector('[role=alert]')?.textContent).toContain('새 초안의 ID');
+    expect(container.querySelector('[role=alert]')?.textContent).toContain('ID가 없으면 다시 열 수 없습니다');
+    expect(container.textContent).toContain('검토 ID: ' + id);
+    expect(localStorage.getItem(lastKey)).toBe(id);
+    expect(requests.length).toBe(previousRequests + 1);
+  });
+
+  it('shows owner-reset capacity without conflict-reloading the previous case or a timed retry', async () => {
+    await render(); await click('대응 검토 시작');
+    const previousRequests = requests.length;
+    fetchMock.mockImplementationOnce(async (input, options) => {
+      requests.push({ url: String(input), options });
+      return json({ error: { message: '공유 검토 공간이 가득 찼습니다. 소유자의 명시적 초기화가 필요합니다.' } }, 409);
+    });
+    await click('새 제출 스냅샷으로 초안 만들기');
+    expect(container.querySelector('[role=alert]')?.textContent).toContain('소유자의 명시적 초기화');
+    expect(container.querySelector('[role=alert]')?.textContent).not.toContain('최신 상태를 다시 불러왔습니다');
+    expect(container.querySelector('[role=alert]')?.textContent).not.toContain('초 후');
+    expect(container.textContent).toContain('초안 · 실행 승인 아님 · revision 1');
+    expect(requests.length).toBe(previousRequests + 1);
+  });
+
+  it('shows a finite rate delay without retrying or discarding the confirmed case', async () => {
+    await render(); await click('대응 검토 시작');
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ error: { message: '공유 데모의 요청 한도에 도달했습니다.' } }), { status: 429, headers: { 'content-type': 'application/json', 'retry-after': '7' } }));
+    await click('검토 시작');
+    expect(container.querySelector('[role=alert]')?.textContent).toContain('7초');
+    expect(container.textContent).toContain('초안 · 실행 승인 아님 · revision 1');
+    expect(container.textContent).not.toContain('소유자의 명시적 초기화');
   });
 
   it('offers an actionable login on access denial without saving credentials in localStorage or URL', async () => {

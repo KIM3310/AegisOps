@@ -95,7 +95,7 @@ export function AppHeader({ state }: AppHeaderProps) {
               {enableTmVision ? 'ON' : 'OFF'}
             </span>
           </button>
-          {!isOllamaMode && !isStaticDemo && (
+          {apiHealth && !isOllamaMode && !isStaticDemo && (
             <button
               type="button"
               onClick={() => setShowApiKeyPanel((prev) => !prev)}

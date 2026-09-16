@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useResponseWorkflow } from '../hooks/useResponseWorkflow';
 import { REVIEW_STATUS_LABELS, WORKFLOW_NOTICE, type CaseSubmission, type ResponseCase, type ReviewCommand } from '../shared/responseCase';
 import { ResponseWorkflowLogin } from './ResponseWorkflowLogin';
+import type { ResponseWorkflowCapability } from '../shared/responseCapability';
 
 const buttonClass = 'border border-border rounded-lg px-3 py-2 text-sm hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed';
 
@@ -35,24 +36,43 @@ function ReviewControls({ current, busy, onReview }: { current: ResponseCase; bu
   </div>;
 }
 
-export function ResponseWorkflowCard({ submission = null }: { submission?: CaseSubmission | null }) {
-  const workflow = useResponseWorkflow(submission);
+export function ResponseWorkflowCard({ submission = null, capability }: {
+  submission?: CaseSubmission | null;
+  capability?: ResponseWorkflowCapability | null;
+}) {
+  const workflow = useResponseWorkflow(submission, capability);
   const current = workflow.responseCase;
+  const isCloud = capability?.kind === 'cloud-response';
+  const disabled = workflow.busy || !workflow.available;
   return <section aria-label="공공 대응 검토" aria-busy={workflow.busy} className="rounded-xl border border-accent/30 bg-bg-card p-5 space-y-4 text-sm">
     <div className="space-y-2">
       <h2 className="text-xl font-semibold">공공 대응 검토 · 근거에서 인계까지</h2>
       <p>{WORKFLOW_NOTICE}</p>
       <p className="text-text-muted">분석 보고서는 운영자가 제출한 스냅샷입니다. 모델의 제안과 공식 절차를 구분하세요. 원본 진위는 확인하지 않습니다.</p>
+      {isCloud && <p>브라우저 합성 분석과 대응 검토 저장은 별개입니다. 검토는 공유 D1 작업 공간에 저장합니다. 합성 데이터만 제출하세요. 공유 토큰은 개인 승인이 아닙니다.</p>}
+      {capability?.kind === 'unavailable' && <p role="status">{capability.reason === 'static' ? '정적 페이지에서는 대응 검토 저장·열기·내보내기를 사용할 수 없습니다.' : '클라우드 검토 설정이 완료되지 않아 저장·열기·내보내기를 사용할 수 없습니다. 관리자에게 설정 확인을 요청하세요.'} 분석 보고서와 브라우저 로컬 기록은 계속 사용할 수 있습니다.</p>}
+      {capability === null && <p role="status">검토 기능을 확인하고 있습니다. 확인이 계속되지 않으면 페이지를 새로고침하세요.</p>}
+      {capability === undefined && <p className="text-text-muted">{current ? '검토 API 응답을 확인했습니다.' : '검토 API 기능은 아직 확인되지 않았습니다. 실제 요청으로 연결을 확인합니다.'}</p>}
     </div>
+    {workflow.session?.kind === 'checking' && <p role="status">검토 세션 확인 중입니다.</p>}
+    {workflow.session?.kind === 'error' && <div className="space-y-2">
+      <p role="alert" className="text-sev1">{workflow.session.message}</p>
+      <button className={buttonClass} onClick={() => void workflow.refreshSession()}>세션 확인 다시 시도</button>
+    </div>}
+    {workflow.session?.kind === 'active' && <div className="space-y-2">
+      <p>shared-token 로그인 확인 · 개인 승인 아님 · 만료 {workflow.session.session.expiresAt}. 저장이나 열기는 해당 버튼을 눌러 시도하세요.</p>
+      <button className={buttonClass} disabled={workflow.busy} onClick={() => void workflow.logout()}>로그아웃</button>
+    </div>}
     <div className="flex flex-wrap gap-2">
-      {submission && <button disabled={workflow.busy} onClick={() => void workflow.create()} className={buttonClass}>{current ? '새 제출 스냅샷으로 초안 만들기' : '대응 검토 시작'}</button>}
-      {!submission && workflow.lastCaseId && <button disabled={workflow.busy} onClick={() => { if (workflow.lastCaseId) void workflow.reopen(workflow.lastCaseId); }} className={buttonClass}>최근 검토 서버에서 다시 열기</button>}
-      {current && <button disabled={workflow.busy} onClick={() => void workflow.reopen(current.id)} className={buttonClass}>서버 상태 새로고침</button>}
+      {submission && <button disabled={disabled} onClick={() => void workflow.create()} className={buttonClass}>{current ? '새 제출 스냅샷으로 초안 만들기' : '대응 검토 시작'}</button>}
+      {!submission && workflow.lastCaseId && <button disabled={disabled} onClick={() => { if (workflow.lastCaseId) void workflow.reopen(workflow.lastCaseId); }} className={buttonClass}>최근 검토 서버에서 다시 열기</button>}
+      {current && <button disabled={disabled} onClick={() => void workflow.reopen(current.id)} className={buttonClass}>서버 상태 새로고침</button>}
     </div>
     {!submission && !current && <p>로그를 분석한 뒤 대응 검토를 시작하세요. 최근 검토는 ID만 브라우저에 기억하며, 열 때마다 서버에서 확인합니다.</p>}
     {workflow.busy && <p role="status">서버에서 검토를 확인하고 있습니다.</p>}
     {workflow.error && <p role="alert" className="text-sev1">{workflow.error}</p>}
-    {workflow.authNeeded && <ResponseWorkflowLogin initiallyOpen />}
+    {((isCloud && workflow.session?.kind === 'inactive') || (!isCloud && workflow.authNeeded)) &&
+      <ResponseWorkflowLogin initiallyOpen tokenOnly={isCloud} onAuthenticated={isCloud ? workflow.refreshSession : undefined} />}
     {current && <>
       <div className="rounded-lg border border-border p-3 space-y-2">
         <p className="font-semibold" role="status">{REVIEW_STATUS_LABELS[current.state.kind]} · 실행 승인 아님 · revision {current.revision}</p>
@@ -79,7 +99,7 @@ export function ResponseWorkflowCard({ submission = null }: { submission?: CaseS
           <p className="break-all text-xs">{source.authority} · {source.sourceId} / {source.version} / {source.sectionId}<br />{source.sourcePath}<br />출처 SHA-256: {source.contentHash}</p>
         </div>)}
       </article>)}
-      <ReviewControls key={`${current.id}:${current.revision}`} current={current} busy={workflow.busy} onReview={workflow.review} />
+      <ReviewControls key={`${current.id}:${current.revision}`} current={current} busy={disabled} onReview={workflow.review} />
       <details className="border border-border rounded p-3"><summary className="cursor-pointer">제출 로그 및 검토 이력</summary>
         <pre className="whitespace-pre-wrap break-all my-3 text-xs">{current.content.evidence.logs || '(텍스트 근거 없음)'}</pre>
         <ul>{current.reviewEvents.map((event) => <li key={event.revision}>{event.at} · {event.actor.kind} · {event.command.kind} · revision {event.revision}</li>)}</ul>
@@ -87,10 +107,14 @@ export function ResponseWorkflowCard({ submission = null }: { submission?: CaseS
       <div className="space-y-2">
         <h3 className="font-medium">저장된 검토 인계서 다운로드</h3>
         <div className="flex flex-wrap gap-2">{(['markdown', 'json', 'hancom-json'] as const).map((format) =>
-          <button key={format} disabled={workflow.busy} className={buttonClass} onClick={() => void workflow.download(format)}>{format === 'markdown' ? 'Markdown' : format === 'json' ? 'JSON' : '한컴 치환 JSON'} 다운로드</button>)}</div>
+          <button key={format} disabled={disabled} className={buttonClass} onClick={() => void workflow.download(format)}>{format === 'markdown' ? 'Markdown' : format === 'json' ? 'JSON' : '한컴 치환 JSON'} 다운로드</button>)}</div>
         <p className="text-text-muted">초안도 상태와 함께 내보냅니다. 한컴 치환 JSON은 .hwp/.hwpx 파일이 아니며, 기관 서식 검증이나 외부 전송은 하지 않습니다.</p>
       </div>
     </>}
-    <p className="text-xs text-text-muted">이 파일 저장소는 위변조 방지, 다중 프로세스 동시성, 기관별 격리를 제공하지 않습니다. 합성 또는 사용 승인된 로컬 데이터만 사용하세요. 정적·오프라인 페이지에서는 검토 완료를 저장할 수 없습니다.</p>
+    <p className="text-xs text-text-muted">{isCloud
+      ? '공유 D1 저장소는 revision 검사로 동시 변경을 거부합니다. 위변조 방지나 기관별 격리를 제공하지 않습니다. 합성 데이터만 사용하세요. 연결 실패를 저장 성공이나 실패로 단정하지 마세요.'
+      : capability === undefined
+        ? '기존 네이티브 API의 파일 저장소는 위변조 방지, 다중 프로세스 동시성, 기관별 격리를 제공하지 않습니다. 합성 또는 사용 승인된 로컬 데이터만 사용하세요. 정적·오프라인 페이지에서는 검토 완료를 저장할 수 없습니다.'
+        : '대응 검토 저장소를 사용할 수 없습니다. 브라우저 보고서 기록은 서버의 저장된 검토가 아닙니다. 기관별 격리나 위변조 방지를 제공하지 않습니다.'}</p>
   </section>;
 }

@@ -1,3 +1,17 @@
 name = "aegisops-ai-incident-doctor"
 compatibility_date = "2026-07-23"
+compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
+
+# Local-only placeholders. The owner must replace each with a different remote D1 ID.
+[[d1_databases]]
+binding = "RESPONSE_DB"
+database_name = "aegisops-response-production"
+database_id = "00000000-0000-4000-8000-000000000001"
+migrations_dir = "migrations"
+
+[[env.preview.d1_databases]]
+binding = "RESPONSE_DB"
+database_name = "aegisops-response-preview"
+database_id = "00000000-0000-4000-8000-000000000002"
+migrations_dir = "migrations"
