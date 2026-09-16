@@ -88,4 +88,4 @@ npm audit
 - [상세 기존 기능 참고](REFERENCE.md)
 - [기존 엔지니어링 기록](docs/engineering-notes.md) · [기존 구현 결정](docs/IMPLEMENTATION_NOTES.md)
 - [기존 로컬 성능 측정과 방법](docs/LOCAL_BENCHMARK.md)
-- [클라우드 아키텍처](docs/cloud-ai-architecture.md) · [기계 판독 설계](docs/architecture/blueprint.json)
+- [클라우드 아키텍처](docs/cloud-ai-architecture.md) · [기계 판독 설계](docs/architecture/blueprint.json) · [아키텍처 검증기](scripts/validate_architecture_blueprint.py)
