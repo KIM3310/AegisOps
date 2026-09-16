@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
         host: DEV_HOST,
         proxy: {
           // Keep API keys server-side; frontend calls a local API proxy.
-          '/api': 'http://127.0.0.1:8787',
+          '/api': { target: 'http://127.0.0.1:8787', changeOrigin: false },
         },
       },
       plugins: [react()],

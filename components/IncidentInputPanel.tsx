@@ -1,5 +1,7 @@
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { importSecurityEvents } from '../services/securityEventImport';
+import securitySample from '../samples/security-events.synthetic.jsonl?raw';
 import { FileText, Image as ImageIcon, Upload, X } from 'lucide-react';
 import type { AppState } from '../hooks/useAppState';
 
@@ -8,6 +10,13 @@ interface IncidentInputPanelProps {
 }
 
 export function IncidentInputPanel({ state }: IncidentInputPanelProps) {
+  const [importMessage, setImportMessage] = useState('');
+  const [importError, setImportError] = useState('');
+  const [importBusy, setImportBusy] = useState(false);
+  const currentLogs = useRef(state.logs);
+  currentLogs.current = state.logs;
+  const importSequence = useRef(0);
+  useEffect(() => () => { importSequence.current += 1; }, []);
   const {
     logs,
     setLogs,
@@ -45,6 +54,37 @@ export function IncidentInputPanel({ state }: IncidentInputPanelProps) {
             </div>
          </div>
       )}
+
+      <div className="md:col-span-2 rounded-lg border border-border bg-bg-card p-3 space-y-2 text-sm">
+        <label className="block">보안 이벤트 JSONL 파일 가져오기 (로컬 변환, 최대 100건)
+          <input type="file" accept=".jsonl,application/x-ndjson,application/json" disabled={importBusy}
+            className="block mt-2 text-xs" onChange={async (event) => {
+              const file = event.target.files?.[0]; event.target.value = '';
+              if (!file) return;
+              const request = ++importSequence.current;
+              const previousLogs = currentLogs.current;
+              setImportBusy(true); setImportError(''); setImportMessage('');
+              try {
+                if (file.size > 400000) throw new Error('파일이 너무 큽니다. 100000자 이하 파일을 사용하세요.');
+                const imported = importSecurityEvents(await file.text());
+                if (request !== importSequence.current) return;
+                if (previousLogs !== currentLogs.current) throw new Error('가져오는 동안 로그가 변경되었습니다. 파일을 다시 선택하세요.');
+                setLogs(imported.logs); setSelectedIncidentId(null); setSelectedPresetSlug(null);
+                setImportMessage(`${imported.recordCount}건 가져옴. critical ${imported.severityCounts.critical}, major ${imported.severityCounts.major}, minor ${imported.severityCounts.minor}, info ${imported.severityCounts.info}. ${imported.warnings.join(' ')}`);
+              } catch (error) { if (request === importSequence.current) setImportError(error instanceof Error ? error.message : '파일 가져오기 실패'); }
+              finally { if (request === importSequence.current) setImportBusy(false); }
+            }} />
+        </label>
+        <button className="border border-border rounded px-3 py-2" disabled={importBusy} onClick={() => {
+          const imported = importSecurityEvents(securitySample);
+          setLogs(imported.logs); setSelectedIncidentId(null); setSelectedPresetSlug(null);
+          setImportError(''); setImportMessage(`합성 보안 이벤트 예시 ${imported.recordCount}건. ${imported.warnings.join(' ')}`);
+        }}>합성 보안 이벤트 예시 불러오기</button>
+        <p className="text-xs text-text-muted">업로드한 파일은 합성 데이터로 간주하지 않습니다. 원본 진위와 개인정보 마스킹을 먼저 확인하세요. 기존 로그를 바꾸며 외부 연동이나 조치를 실행하지 않습니다.</p>
+        {importBusy && <p role="status">파일을 로컬에서 변환하고 있습니다.</p>}
+        {importMessage && <p role="status">{importMessage}</p>}
+        {importError && <p role="alert" className="text-sev1">{importError}</p>}
+      </div>
 
       {/* Log Input */}
       <div className="bg-bg-card border border-border rounded-lg p-4 flex flex-col h-[280px] shadow-sm hover:border-border-light transition-colors group">

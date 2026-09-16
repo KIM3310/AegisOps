@@ -60,6 +60,10 @@ async function main() {
   }
 
   await writeJsonArtifact(resolveJsonOutPath(process.argv.slice(2)), artifact);
+
+  if (overview.cases.some((item) => item.status === "fail")) {
+    process.exitCode = 1;
+  }
 }
 
 main().catch((error) => {

@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { scrollbar-width: thin; scrollbar-color: #232329 #09090B; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #09090B; }
+::-webkit-scrollbar-thumb { background: #232329; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a44; }
+
+/* Focus-visible accessibility ring */
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid #8B5CF6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Smooth transitions for interactive elements */
+a, button { transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease; }
+button:active:not(:disabled) { transform: scale(0.97); }
+
+/* Selection style */
+::selection { background: rgba(139, 92, 246, 0.35); color: #fff; }
+
+/* Mobile responsive helpers */
+@media (max-width: 640px) {
+  .grid { gap: 0.75rem !important; }
+  textarea { font-size: 16px !important; /* prevent iOS zoom */ }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.adsense-publication-nav { margin: 0; border-top: 1px solid #cbd2ce; border-bottom: 1px solid #cbd2ce; background: #f5f6f4; color: #17201f; }
+.adsense-publication-nav__inner { width: min(920px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0; }
+.adsense-publication-nav h2 { margin: 0 0 8px; font: 750 1.55rem/1.2 system-ui, sans-serif; letter-spacing: 0; }
+.adsense-publication-nav p { max-width: 72ch; margin: 0; color: #52605d; font: 16px/1.6 system-ui, sans-serif; }
+.adsense-publication-nav nav { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.adsense-publication-nav a { color: #126455; font: 700 14px/1.4 system-ui, sans-serif; text-underline-offset: 3px; }

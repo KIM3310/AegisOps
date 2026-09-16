@@ -105,6 +105,13 @@ export function useAppState() {
   const imagesRef = useRef(images);
   const initialReviewStateRef = useRef(initialReviewUrlState);
   const appliedInitialReviewState = useRef(false);
+  const invalidateAnalysis = useCallback(() => {
+    setSelectedIncidentId(null);
+    setReport(null);
+    setStatus('IDLE');
+    setError(null);
+    setAnalysisProgress(0);
+  }, []);
 
   // Derived state
   const architectureRoutes = summaryPack
@@ -408,7 +415,7 @@ export function useAppState() {
     }));
     const nextImageCount = imagesRef.current.length + newImages.length;
     setImages(prev => [...prev, ...newImages]);
-    setSelectedIncidentId(null);
+    invalidateAnalysis();
     setSelectedPresetSlug(null);
     if (nextImageCount > maxImages) {
       addToast('info', `Only the first ${maxImages} images will be analyzed (payload safeguard).`);
@@ -460,7 +467,7 @@ export function useAppState() {
 
           const mergedLogs = contents.join('\n\n');
           setLogs(prev => prev ? `${prev}\n\n${mergedLogs}` : mergedLogs);
-          setSelectedIncidentId(null);
+          invalidateAnalysis();
           setSelectedPresetSlug(null);
           addToast('info', `${textFiles.length} logs added`);
         } catch (err) {
@@ -487,14 +494,14 @@ export function useAppState() {
       if (target) URL.revokeObjectURL(target.preview);
       return prev.filter((_, i) => i !== index);
     });
-    setSelectedIncidentId(null);
+    invalidateAnalysis();
     setSelectedPresetSlug(null);
   };
 
   const loadPreset = (preset: (typeof SAMPLE_PRESETS)[0]) => {
     setLogs(preset.logs);
     setSelectedPresetSlug(slugifyPresetName(preset.name));
-    setSelectedIncidentId(null);
+    invalidateAnalysis();
     setShowHistory(false);
     images.forEach(img => URL.revokeObjectURL(img.preview));
 
@@ -771,15 +778,13 @@ export function useAppState() {
 
   const handleImportLogs = (importedLogs: string) => {
     setLogs((prev) => (prev ? `${prev}\n\n${importedLogs}` : importedLogs));
-    setSelectedIncidentId(null);
+    invalidateAnalysis();
     setSelectedPresetSlug(null);
     addToast('success', 'Logs imported successfully');
   };
 
   const handleImportImages = (importedImages: File[]) => {
     processAndAddImages(importedImages);
-    setSelectedIncidentId(null);
-    setSelectedPresetSlug(null);
     addToast('success', 'Images imported successfully');
   };
 
@@ -880,7 +885,7 @@ export function useAppState() {
       setAnalysisProgress(100);
 
       const analysisTime = Date.now() - startTime;
-      const saved = StorageService.saveIncident(result, effectiveLogs, images.length, analysisTime);
+      const saved = StorageService.saveIncident(result, effectiveLogs, imagesToAnalyze.length, analysisTime);
       setSavedIncidents((prev) => [saved, ...prev]);
       setSelectedIncidentId(saved.id);
 
@@ -917,11 +922,7 @@ export function useAppState() {
   };
 
   const handleEditInputs = () => {
-    setSelectedIncidentId(null);
-    setReport(null);
-    setStatus('IDLE');
-    setError(null);
-    setAnalysisProgress(0);
+    invalidateAnalysis();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -955,7 +956,7 @@ export function useAppState() {
     StorageService.deleteIncident(id);
     setSavedIncidents((prev) => prev.filter((inc) => inc.id !== id));
     if (selectedIncidentId === id) {
-      setSelectedIncidentId(null);
+      invalidateAnalysis();
     }
     addToast('info', 'Incident deleted');
   };

@@ -12,7 +12,7 @@ interface Props {
 }
 
 export const GoogleImport: React.FC<Props> = ({ onImportLogs, onImportImages, onClose }) => {
-  const { isAuthenticated, user, accessToken, signIn, isLoading: authLoading, isDemoMode } = useGoogleAuth();
+  const { isAuthenticated, user, accessToken, signIn, isLoading: authLoading, isDemoMode, authError, isGoogleConfigured } = useGoogleAuth();
   const [tab, setTab] = useState<'gmail' | 'drive'>('gmail');
   const [searching, setSearching] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -160,10 +160,11 @@ export const GoogleImport: React.FC<Props> = ({ onImportLogs, onImportImages, on
         {!isAuthenticated ? (
           <div className="p-8 text-center">
             <LogIn className="w-10 h-10 text-accent mx-auto mb-4 opacity-50" aria-hidden="true" />
-            <p className="text-xs text-text-muted mb-4">Connect your Google account to access Gmail and Drive.</p>
+            <p className="text-xs text-text-muted mb-4">{isGoogleConfigured ? 'Connect your Google account to access Gmail and Drive.' : 'Preview sample data. No Google account is connected.'}</p>
             <button onClick={signIn} disabled={authLoading} className="h-8 px-4 text-xs bg-accent hover:bg-accent-hover rounded text-white">
-              {authLoading ? 'Connecting...' : 'Connect Google'}
+              {authLoading ? 'Connecting...' : isGoogleConfigured ? 'Connect Google' : 'Try Workspace demo'}
             </button>
+            {authError && <p className="mt-3 text-xs text-sev1" role="alert">{authError}</p>}
           </div>
         ) : (
           <>

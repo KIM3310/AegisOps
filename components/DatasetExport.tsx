@@ -12,7 +12,7 @@ interface Props {
 }
 
 export const DatasetExport: React.FC<Props> = ({ incidents, onClose }) => {
-  const { isAuthenticated, accessToken, signIn, isLoading: authLoading, isDemoMode } = useGoogleAuth();
+  const { isAuthenticated, accessToken, signIn, isLoading: authLoading, isDemoMode, authError, isGoogleConfigured } = useGoogleAuth();
   const [existing, setExisting] = useState<GoogleSheetInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -92,10 +92,11 @@ export const DatasetExport: React.FC<Props> = ({ incidents, onClose }) => {
           ) : !isAuthenticated ? (
             <div className="text-center py-4">
               <LogIn className="w-10 h-10 text-accent mx-auto mb-4 opacity-50" aria-hidden="true" />
-              <p className="text-xs text-text-muted mb-4">Connect Google to export your dataset</p>
+              <p className="text-xs text-text-muted mb-4">{isGoogleConfigured ? 'Connect Google to export your dataset' : 'Preview sample data. No Google account is connected.'}</p>
               <button onClick={signIn} disabled={authLoading} className="h-8 px-4 text-xs bg-accent hover:bg-accent-hover rounded text-white">
-                {authLoading ? 'Connecting...' : 'Connect Google'}
+                {authLoading ? 'Connecting...' : isGoogleConfigured ? 'Connect Google' : 'Try Workspace demo'}
               </button>
+              {authError && <p className="mt-3 text-xs text-sev1" role="alert">{authError}</p>}
             </div>
           ) : (
             <div className="space-y-4">

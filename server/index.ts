@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config({ quiet: true });
 
 import { createHash, randomUUID } from "node:crypto";
+import { createResponseWorkflowsRouter, RESPONSE_WORKFLOW_MAX_BODY_BYTES } from "./routes/responseWorkflows";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -514,7 +515,9 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
     operatorAuth: {
       enabled: operatorAuth.enabled,
       mode: operatorAuth.mode,
-      protectedRoutes: ["/api/analyze", "/api/followup", "/api/tts"],
+      protectedRoutes: operatorAuth.protectedRoutes,
+      publicRoutes: operatorAuth.publicRoutes,
+      publicMethods: operatorAuth.publicMethods,
       acceptedHeaders: operatorAuth.acceptedHeaders,
       sessionCookie: getOperatorSessionCookieName(),
       roleHeaders: operatorAuth.roleHeaders,
@@ -931,8 +934,8 @@ function buildSystemDesignPack() {
       },
       {
         drill: "auth or role boundary regression",
-        trigger: "Protected analyze/followup/tts routes are exposed without the expected operator session posture.",
-        operatorAction: "Verify operator-auth status before allowing live operator mutation routes.",
+        trigger: "Protected API reads and mutations are exposed without the expected operator session posture.",
+        operatorAction: "Verify operator-auth status before allowing protected API reads or mutations.",
         architectureSurface: "/api/runtime/scorecard",
       },
       {
@@ -1367,6 +1370,23 @@ function getOpenAiRuntimeContract() {
   };
 }
 
+function buildOpenAiPublicStatus(runtime: ReturnType<typeof getOpenAiRuntimeContract>) {
+  return {
+    configured: Boolean(runtime.apiKey),
+    appTitle: runtime.appTitle,
+    dailyBudgetUsd: runtime.dailyBudgetUsd,
+    deploymentMode: runtime.deploymentMode,
+    gateway: runtime.gateway,
+    killSwitch: runtime.killSwitch,
+    lastLiveRunAt: runtime.lastLiveRunAt,
+    liveModel: runtime.liveModel,
+    moderationEnabled: runtime.moderationEnabled,
+    monthlyBudgetUsd: runtime.monthlyBudgetUsd,
+    publicLiveApi: runtime.publicLiveApi,
+    publicRpm: runtime.publicRpm,
+  };
+}
+
 async function callOpenAiModeration(apiKey: string, input: string): Promise<void> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
@@ -1618,7 +1638,14 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: `${cfg.requestBodyLimitMb}mb` }));
+const defaultJsonParser = express.json({ limit: `${cfg.requestBodyLimitMb}mb` });
+const responseWorkflowJsonParser = express.json({ limit: RESPONSE_WORKFLOW_MAX_BODY_BYTES });
+app.use((req, res, next) => {
+  const parser = /^\/api\/response-workflows(?:\/|$)/i.test(req.path)
+    ? responseWorkflowJsonParser
+    : defaultJsonParser;
+  return parser(req, res, next);
+});
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   if (err?.type === "entity.too.large") {
     return sendError(req, res, 413, "Payload too large.");
@@ -1627,19 +1654,6 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     return sendError(req, res, 400, "Invalid JSON payload.");
   }
   return next(err);
-});
-
-app.use("/api/settings/api-key", (req, res, next) => {
-  if (cfg.llmProvider === "ollama" && req.method !== "GET") {
-    return sendError(req, res, 409, "API key settings are disabled while LLM_PROVIDER=ollama.");
-  }
-  if (!cfg.allowRemoteApiKeySettings && !isLocalRequest(req)) {
-    return sendError(req, res, 403, "API key settings are restricted to local requests.");
-  }
-  if (!hasApiKeySettingsToken(req)) {
-    return sendError(req, res, 403, "Missing or invalid API key settings token.");
-  }
-  return next();
 });
 
 app.use((req, res, next) => {
@@ -1654,12 +1668,27 @@ app.use((req, res, next) => {
         res,
         403,
         authResult.reason === "missing-role"
-          ? "Missing required operator role for runtime mutation route."
-          : "Missing or invalid operator credential for runtime mutation route."
+          ? "Missing required operator role for protected API route."
+          : "Missing or invalid operator credential for protected API route."
       );
     }
     return next();
   })().catch(next);
+});
+
+app.use("/api/response-workflows", createResponseWorkflowsRouter());
+
+app.use("/api/settings/api-key", (req, res, next) => {
+  if (cfg.llmProvider === "ollama" && req.method !== "GET") {
+    return sendError(req, res, 409, "API key settings are disabled while LLM_PROVIDER=ollama.");
+  }
+  if (!cfg.allowRemoteApiKeySettings && !isLocalRequest(req)) {
+    return sendError(req, res, 403, "API key settings are restricted to local requests.");
+  }
+  if (!hasApiKeySettingsToken(req)) {
+    return sendError(req, res, 403, "Missing or invalid API key settings token.");
+  }
+  return next();
 });
 
 app.get("/api/auth/session", async (req, res) => {
@@ -1792,6 +1821,7 @@ app.get("/api/healthz", healthCheckRateLimiter, (req, res) => {
   const providerConfigured = isBackendConfigured();
   const cacheEntries = analyzeCache.size();
   const openAi = getOpenAiRuntimeContract();
+  const operatorAuth = getOperatorAuthStatus();
   res.json({
     ok: true,
     status: "ok",
@@ -1839,14 +1869,17 @@ app.get("/api/healthz", healthCheckRateLimiter, (req, res) => {
           ? "configure Gemini API key or switch to Ollama for live incident analysis."
           : "runtime healthy",
     },
-    openai: openAi,
+    openai: buildOpenAiPublicStatus(openAi),
     auth: {
       operatorTokenEnabled: isOperatorAuthEnabled(),
-      operatorAuthMode: getOperatorAuthStatus().mode,
-      operatorRequiredRoles: getOperatorAuthStatus().requiredRoles,
-      operatorRoleHeaders: getOperatorAuthStatus().roleHeaders,
+      operatorAuthMode: operatorAuth.mode,
+      operatorRequiredRoles: operatorAuth.requiredRoles,
+      operatorRoleHeaders: operatorAuth.roleHeaders,
+      operatorProtectedRoutes: operatorAuth.protectedRoutes,
+      operatorPublicRoutes: operatorAuth.publicRoutes,
+      operatorPublicMethods: operatorAuth.publicMethods,
       operatorSessionCookie: getOperatorSessionCookieName(),
-      operatorOidc: getOperatorAuthStatus().oidc,
+      operatorOidc: operatorAuth.oidc,
       apiKeySettingsTokenEnabled: Boolean(String(cfg.apiKeySettingsToken || "").trim()),
     },
     ops_contract: {
@@ -2211,7 +2244,7 @@ app.get("/api/meta", (req, res) => {
       analyzeModel: getAnalyzeModel(),
       ttsModel: getActiveProvider() === "ollama" ? "unsupported" : cfg.modelTts,
       }),
-      openai: getOpenAiRuntimeContract(),
+      openai: buildOpenAiPublicStatus(getOpenAiRuntimeContract()),
     }
   );
 });

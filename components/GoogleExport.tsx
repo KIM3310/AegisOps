@@ -23,7 +23,7 @@ interface ExportResult {
 }
 
 export const GoogleExport: React.FC<Props> = ({ report, onClose }) => {
-  const { isAuthenticated, accessToken, signIn, isLoading: authLoading, isDemoMode } = useGoogleAuth();
+  const { isAuthenticated, accessToken, signIn, isLoading: authLoading, isDemoMode, authError, isGoogleConfigured } = useGoogleAuth();
   const [exporting, setExporting] = useState<ExportType | null>(null);
   const [results, setResults] = useState<ExportResult[]>([]);
   const [webhookUrl, setWebhookUrl] = useState('');
@@ -121,10 +121,11 @@ export const GoogleExport: React.FC<Props> = ({ report, onClose }) => {
         {!isAuthenticated ? (
           <div className="p-8 text-center">
             <LogIn className="w-10 h-10 text-accent mx-auto mb-4 opacity-50" aria-hidden="true" />
-            <p className="text-xs text-text-muted mb-4">Connect Google to enable exports</p>
+            <p className="text-xs text-text-muted mb-4">{isGoogleConfigured ? 'Connect Google to enable exports' : 'Preview sample data. No Google account is connected.'}</p>
             <button onClick={signIn} disabled={authLoading} className="h-8 px-4 text-xs bg-accent hover:bg-accent-hover rounded text-white">
-              {authLoading ? 'Connecting...' : 'Connect Google'}
+              {authLoading ? 'Connecting...' : isGoogleConfigured ? 'Connect Google' : 'Try Workspace demo'}
             </button>
+            {authError && <p className="mt-3 text-xs text-sev1" role="alert">{authError}</p>}
           </div>
         ) : (
           <div className="p-3 space-y-2">
