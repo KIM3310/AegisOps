@@ -1,6 +1,6 @@
 
-import { useState, useCallback, useEffect } from 'react';
-const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { loadGoogleIdentity } from '../services/googleIdentity';
 const TOKEN_KEY = 'google_access_token';
 const USER_KEY = 'google_user';
 const TOKEN_EXPIRES_AT_KEY = 'google_access_token_expires_at';
@@ -52,6 +52,9 @@ function isExpired(expiresAtMs: number | null): boolean {
 }
 
 export function useGoogleAuth() {
+  const clientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+  const activeSignIn = useRef<symbol | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<GoogleUser | null>(null);
@@ -63,11 +66,11 @@ export function useGoogleAuth() {
     const expiresAtRaw = sessionStorage.getItem(TOKEN_EXPIRES_AT_KEY);
     const expiresAtMs = expiresAtRaw ? Number(expiresAtRaw) : null;
 
-    if (token === DEMO_TOKEN && restoredUser) {
+    if (!clientId && token === DEMO_TOKEN && restoredUser) {
       setAccessToken(DEMO_TOKEN);
       setUser(restoredUser);
       setIsAuthenticated(true);
-    } else if (token && restoredUser && !isExpired(expiresAtMs)) {
+    } else if (clientId && token && token !== DEMO_TOKEN && restoredUser && !isExpired(expiresAtMs)) {
       setAccessToken(token);
       setUser(restoredUser);
       setIsAuthenticated(true);
@@ -76,86 +79,92 @@ export function useGoogleAuth() {
     }
 
     setIsLoading(false);
-  }, []);
+    return () => { activeSignIn.current = null; };
+  }, [clientId]);
 
   const signIn = useCallback(async () => {
+    if (activeSignIn.current) return;
+    const attempt = Symbol();
+    activeSignIn.current = attempt;
+    setAuthError(null);
     setIsLoading(true);
 
-    if (CLIENT_ID && (window as any).google?.accounts?.oauth2) {
-      const client = (window as any).google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
+    const failSignIn = (message: string) => {
+      if (activeSignIn.current !== attempt) return;
+      activeSignIn.current = null;
+      clearStoredAuth();
+      setIsAuthenticated(false);
+      setUser(null);
+      setAccessToken(null);
+      setAuthError(message);
+      setIsLoading(false);
+    };
+    const completeSignIn = (token: string, signedInUser: GoogleUser, expiresAtMs?: number) => {
+      if (activeSignIn.current !== attempt) return;
+      activeSignIn.current = null;
+      sessionStorage.setItem(TOKEN_KEY, token);
+      sessionStorage.setItem(USER_KEY, JSON.stringify(signedInUser));
+      if (expiresAtMs) sessionStorage.setItem(TOKEN_EXPIRES_AT_KEY, String(expiresAtMs));
+      else sessionStorage.removeItem(TOKEN_EXPIRES_AT_KEY);
+      setAccessToken(token);
+      setUser(signedInUser);
+      setIsAuthenticated(true);
+      setIsLoading(false);
+    };
+
+    if (!clientId) {
+      await new Promise((resolve) => setTimeout(resolve, DEMO_SIGN_IN_DELAY_MS));
+      completeSignIn(DEMO_TOKEN, { email: 'demo@aegisops.dev', name: 'Demo SRE' });
+      return;
+    }
+
+    try {
+      const oauth2 = await loadGoogleIdentity();
+      if (activeSignIn.current !== attempt) return;
+      const client = oauth2.initTokenClient({
+        client_id: clientId,
         scope: SCOPES,
-        callback: async (response: any) => {
-          if (response?.error) {
-            clearStoredAuth();
-            setIsAuthenticated(false);
-            setUser(null);
-            setAccessToken(null);
-            setIsLoading(false);
+        callback: async (response) => {
+          if (activeSignIn.current !== attempt) return;
+          const token = response.access_token?.trim();
+          if (response.error || !token) {
+            failSignIn('Google sign-in was not completed. Try again.');
             return;
           }
 
-          if (response.access_token) {
-            const token = String(response.access_token).trim();
-            const expiresInSec = Number(response.expires_in || 0);
-            const expiresAtMs =
-              Number.isFinite(expiresInSec) && expiresInSec > 0
-                ? Date.now() + expiresInSec * 1000
-                : Date.now() + 55 * 60 * 1000;
-
-            setAccessToken(token);
-            sessionStorage.setItem(TOKEN_KEY, token);
-            sessionStorage.setItem(TOKEN_EXPIRES_AT_KEY, String(expiresAtMs));
-
-            try {
-              const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              if (!userRes.ok) {
-                throw new Error(`userinfo failed: ${userRes.status}`);
-              }
-              const userData = await userRes.json();
-              const u: GoogleUser = {
-                email: userData.email,
-                name: userData.name,
-                picture: userData.picture,
-              };
-              setUser(u);
-              setIsAuthenticated(true);
-              sessionStorage.setItem(USER_KEY, JSON.stringify(u));
-            } catch {
-              console.warn('Failed to fetch user profile, but auth is valid');
-              setIsAuthenticated(true);
-              const fallbackUser: GoogleUser = {
-                email: 'authenticated@profile-unavailable.local',
-                name: 'Authenticated (profile unavailable)',
-              };
-              setUser(fallbackUser);
-              sessionStorage.setItem(USER_KEY, JSON.stringify(fallbackUser));
-            }
+          const expiresInSec = Number(response.expires_in || 0);
+          const expiresAtMs =
+            Number.isFinite(expiresInSec) && expiresInSec > 0
+              ? Date.now() + expiresInSec * 1000
+              : Date.now() + 55 * 60 * 1000;
+          let signedInUser: GoogleUser;
+          try {
+            const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!userRes.ok) throw new Error(`userinfo failed: ${userRes.status}`);
+            const userData = await userRes.json();
+            signedInUser = { email: userData.email, name: userData.name, picture: userData.picture };
+          } catch {
+            console.warn('Failed to fetch user profile, but auth is valid');
+            signedInUser = {
+              email: 'authenticated@profile-unavailable.local',
+              name: 'Authenticated (profile unavailable)',
+            };
           }
-          setIsLoading(false);
+          completeSignIn(token, signedInUser, expiresAtMs);
+        },
+        error_callback: (error) => {
+          failSignIn(error.type === 'popup_closed'
+            ? 'Google sign-in was closed. Try again.'
+            : 'Google sign-in could not open. Allow popups and try again.');
         },
       });
       client.requestAccessToken();
-    } else {
-      await new Promise((resolve) => setTimeout(resolve, DEMO_SIGN_IN_DELAY_MS));
-
-      const demoUser: GoogleUser = {
-        email: 'demo@aegisops.dev',
-        name: 'Demo SRE',
-      };
-      
-      setUser(demoUser);
-      setAccessToken(DEMO_TOKEN); 
-      setIsAuthenticated(true);
-      
-      sessionStorage.setItem(USER_KEY, JSON.stringify(demoUser));
-      sessionStorage.setItem(TOKEN_KEY, DEMO_TOKEN);
-      sessionStorage.removeItem(TOKEN_EXPIRES_AT_KEY);
-      setIsLoading(false);
+    } catch (error) {
+      failSignIn(error instanceof Error ? error.message : 'Google sign-in failed. Try again.');
     }
-  }, []);
+  }, [clientId]);
 
   useEffect(() => {
     if (!accessToken || accessToken === DEMO_TOKEN) return;
@@ -180,10 +189,13 @@ export function useGoogleAuth() {
   }, [accessToken]);
 
   const signOut = useCallback(() => {
-    if (accessToken && accessToken !== DEMO_TOKEN && (window as any).google?.accounts?.oauth2) {
-      (window as any).google.accounts.oauth2.revoke(accessToken);
+    activeSignIn.current = null;
+    if (accessToken && accessToken !== DEMO_TOKEN) {
+      window.google?.accounts?.oauth2?.revoke(accessToken);
     }
-    
+
+    setAuthError(null);
+    setIsLoading(false);
     setAccessToken(null);
     setUser(null);
     setIsAuthenticated(false);
@@ -192,5 +204,5 @@ export function useGoogleAuth() {
 
   const isDemoMode = accessToken === DEMO_TOKEN;
 
-  return { isAuthenticated, isLoading, user, accessToken, signIn, signOut, isDemoMode };
+  return { isAuthenticated, isLoading, user, accessToken, signIn, signOut, isDemoMode, authError, isGoogleConfigured: Boolean(clientId) };
 }
