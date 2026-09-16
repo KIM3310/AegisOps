@@ -1,7 +1,7 @@
 import { createPublicKey, verify as verifySignature } from "node:crypto";
 import type express from "express";
 
-const PROTECTED_PREFIXES = ["/api/analyze", "/api/followup", "/api/tts"];
+const PUBLIC_API_PATHS = new Set(["/api/auth/session", "/api/healthz"]);
 const ROLE_HEADERS = ["x-operator-role", "x-operator-roles"] as const;
 const ACCEPTED_HEADERS = ["authorization: Bearer <token>", "x-operator-token"] as const;
 const OIDC_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -72,6 +72,9 @@ export type OperatorAuthStatus = {
   };
   requiredRoles: string[];
   roleHeaders: readonly string[];
+  protectedRoutes: readonly string[];
+  publicRoutes: readonly string[];
+  publicMethods: readonly string[];
 };
 
 export type OperatorAuthorizationResult = {
@@ -161,6 +164,9 @@ export function getOperatorAuthStatus(): OperatorAuthStatus {
     acceptedHeaders: ACCEPTED_HEADERS,
     roleHeaders: ROLE_HEADERS,
     requiredRoles: getOperatorAllowedRoles(),
+    protectedRoutes: ["/api/*"],
+    publicRoutes: Array.from(PUBLIC_API_PATHS),
+    publicMethods: ["OPTIONS"],
     oidc: {
       enabled: isOperatorOidcEnabled(),
       issuer: oidc.issuer || null,
@@ -173,9 +179,10 @@ export function getOperatorAuthStatus(): OperatorAuthStatus {
 
 export function requiresOperatorToken(req: express.Request): boolean {
   const method = String(req.method || "GET").toUpperCase();
-  if (!["POST", "PUT", "PATCH", "DELETE"].includes(method)) return false;
-  const path = String(req.path || req.originalUrl || "");
-  return PROTECTED_PREFIXES.some((prefix) => path.startsWith(prefix));
+  if (method === "OPTIONS") return false;
+  const path = String(req.path || "").toLowerCase().replace(/\/+$/, "");
+  if (PUBLIC_API_PATHS.has(path)) return false;
+  return path === "/api" || path.startsWith("/api/");
 }
 
 function readHeaderToken(req: express.Request): string {
