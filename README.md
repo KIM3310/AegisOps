@@ -48,7 +48,7 @@ LLM_PROVIDER=demo npm run dev
 - 정적 전용 페이지에서는 검토 저장 기능을 비활성화합니다. 별도 Pages Functions + D1 어댑터는 공유 토큰으로 인증한 합성 검토를 저장합니다. 로컬 검증은 원격 배포나 Free 플랜 준비 완료를 뜻하지 않습니다.
 - 기본 검토 저장 경로는 `.runtime/response-cases`입니다. 실제 기관 자료를 넣거나 서버를 외부에 공개하지 마세요.
 
-[클라우드 검토 경계](docs/CLOUD_RESPONSE_WORKSPACE.md) · [로컬 HTTPS/D1 검증과 소유자 배포 절차](docs/CLOUD_RESPONSE_RUNBOOK.md)
+[클라우드 검토 경계](docs/CLOUD_RESPONSE_WORKSPACE.md) · [로컬 HTTPS/D1 검증과 소유자 배포 절차](docs/CLOUD_RESPONSE_RUNBOOK.md) · [로컬 클라우드 검증 결과](docs/CLOUD_RESPONSE_VERIFICATION.md)
 
 [화면·API·인증·저장 사용법](docs/RESPONSE_WORKFLOW.ko.md) · [합성 API 입력](samples/response-workflow.synthetic.json) · [합성 보안 JSONL](samples/security-events.synthetic.jsonl)
 
