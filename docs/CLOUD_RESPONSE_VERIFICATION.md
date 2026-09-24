@@ -1,5 +1,7 @@
 # Local cloud response verification
 
+Historical record. The owner-authorized 2026-09-24 release decision, TLS repair and real remote proof are recorded in [the release evidence](CLOUD_RESPONSE_RELEASE_2026-09-24.md). The open gates below describe the state on 2026-09-16, not the current release status.
+
 Verified on 2026-09-16 against implementation commit `60f3070f7709a03de5207bd3e07a65237a940cf3`. This record covers local behavior only. It does not establish remote Free-plan CPU fit, Cloudflare quota entitlement, deployment, or production readiness.
 
 ## Results

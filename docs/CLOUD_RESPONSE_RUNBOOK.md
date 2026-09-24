@@ -1,6 +1,6 @@
 # Verify the response adapter and prepare an owner release
 
-Use synthetic data only. Do not copy personal credentials or existing runtime records into this procedure. The commands below run local tools. Remote creation, settings, secrets, migration, reset, and deployment require the owner.
+Use synthetic data only. Do not copy personal credentials or existing runtime records into this procedure. Local proof and remote proof are separate commands. Remote creation, settings, secrets, migration and deployment require an owner-authorized operator; the 2026-09-24 release was explicitly authorized.
 
 ## Run the local proof
 
@@ -69,17 +69,25 @@ npm run cloud:dev -- --persist-to .wrangler/my-response-demo
 ## Prepare separate remote environments as the owner
 
 1. Freeze and review the exact source commit, patch ID, bundle, asset hashes, and local results.
-2. Create one D1 database for preview and another for production. Replace the two clearly marked UUID placeholders in `wrangler.toml` with their different non-secret IDs. Never point both environments at one database.
+2. Verify the two different D1 IDs in `wrangler.toml` against the intended account. For a new installation, create separate databases and replace those IDs. Never point both environments at one database.
 3. Apply the reviewed migration to the explicitly named preview database. Record environment, database ID, source commit, and migration result before proceeding.
 4. Set independent high-entropy token and stable signing-secret bindings in each environment through the owner's secret management path. Do not put secrets in source, browser configuration, URLs, reports, or logs.
 5. Configure Pages critical Functions to fail closed on runtime/quota failure. Verify an API failure cannot fall back to an apparently successful HTML asset.
 6. Deploy only the reviewed preview with the pinned local Wrangler. Inspect route MIME/security headers, binding selection, source commit, and asset hashes at the deployed URL.
 7. Repeat authenticated lifecycle, exact exports, restart/reopen, Origin/cookie tests, independent CAS/cap races, and safe failure checks on synthetic preview fixtures.
-8. Record actual Worker CPU and quota outcomes for ordinary and maximum create/read/review/export requests. Use the maximum fixture produced by local proof. Do not substitute local wall-clock timing for Cloudflare CPU. Check the account's current Free-plan quotas and shared usage.
+8. Record actual HTTP/runtime and quota outcomes for ordinary and maximum create/read/review/export requests. The owner-delegated release criterion is documented in [the release evidence](CLOUD_RESPONSE_RELEASE_2026-09-24.md). Do not label wall-clock duration as CPU time or claim exact request-level CPU measurements from Pages' sampled metrics. Successful bounded requests do not establish account-wide capacity under load.
 9. If any bound exceeds Free resources, stop promotion. Propose a smaller cloud-only schema/UI limit. Do not drop integrity validation or enable billing.
 10. Apply the reviewed production migration and promote only after preview evidence passes. Repeat a small production synthetic check and record deployment ID, URL, commit, UTC timestamp, statuses, revision, and export hashes. Do not retain cookies or credentials.
 
-The repository's own CI uses Node22 and the pinned CLI. A successful static build or a workflow that skipped missing Cloudflare credentials does not prove deployment. The local placeholder configuration is not a release-ready remote binding.
+The repository's own CI uses Node22 and the pinned CLI. A successful build or a workflow that skipped missing Cloudflare credentials does not prove deployment. Verify the actual deployment ID, binding configuration and live response capability.
+
+## Explicit remote preview proof
+
+`npm run cloud:remote-proof -- <owned-output>` performs real network requests and writes synthetic preview fixtures. It is not run by ordinary CI or `cloud:proof`. Supply the account/API token, `AEGISOPS_PREVIEW_DATABASE_ID`, and the preview `AEGISOPS_OPERATOR_TOKEN` / `AEGISOPS_OPERATOR_SESSION_SECRET` through a private environment, never command-line arguments or committed files.
+
+The command only targets `https://pr-50-proof.aegisops-ai-incident-doctor.pages.dev`. It checks the Pages preview binding, a different production binding, both fail-closed settings and the exact preview database name. It refuses an existing nonempty workspace before writing. Use a dedicated, unused preview environment; this suite modifies preview quota rows and installs a temporary write-failure trigger.
+
+The suite covers remote authentication, exact exports, both review outcomes, CAS and capacity races, rate limits, actual D1 failure, and the retained 256KiB multibyte boundary. It records status codes, Cloudflare request IDs and explicitly labelled wall durations. It removes only case fixtures tagged with its unique run ID, drops its test trigger and clears test quota state on exit. Unexpected unrelated records are reported rather than deleted. Inspect `result` and `fixturesRemoved` in `results.json`; both must indicate success before promotion.
 
 ## Reset a full workspace only with fresh authorization
 

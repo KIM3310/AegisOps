@@ -98,8 +98,8 @@ Analysis first attempts its same-origin API before browser fallback. Case submis
 
 ## Release boundary
 
-Wrangler4.132.0, Workers types5.20260916.1, and Playwright core1.63.0 are exact development pins selected from available package metadata. Node22.12 or newer is required. Preview and production D1 IDs in `wrangler.toml` are distinct local placeholders, not remote resources.
+Wrangler4.132.0, Workers types5.20260916.1, and Playwright core1.63.0 are exact development pins selected from available package metadata. Node22.12 or newer is required. Preview and production D1 IDs in `wrangler.toml` identify distinct remote resources. Tokens and signing secrets are encrypted Pages bindings and are absent from source.
 
-The owner must prove separate remote bindings, critical-function fail-closed behavior, actual Free CPU/quota outcomes at the retained maximum, and remote lifecycle/races before production promotion. Local elapsed times are not Worker CPU measurements. Integrity checks must not be removed to meet a budget. A tighter cloud-only limit requires an explicit schema/UI decision. A paid plan is not an automatic fallback.
+The 2026-09-24 release uses the owner-delegated acceptance decision recorded in [the release evidence](CLOUD_RESPONSE_RELEASE_2026-09-24.md): real remote lifecycle, retained maximum input, races, quotas and safe error behavior, with separate bindings and fail-closed configuration. Pages exposes sampled CPU quantiles, not the exact request-correlated CPU proof previously requested. Neither local nor remote wall time is reported as CPU time. This bounded synthetic check is not a guarantee of Free-plan capacity or availability under load. Integrity checks remain intact and no paid upgrade was used as a fallback.
 
 See [the local proof and owner runbook](CLOUD_RESPONSE_RUNBOOK.md).

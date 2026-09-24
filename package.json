@@ -24,7 +24,8 @@
     "benchmark:local": "tsx scripts/benchmark-local.ts",
     "cloud:build": "wrangler pages functions build --outdir .wrangler/compiled --output-routes-path .wrangler/compiled-routes.json --metafile .wrangler/bundle-meta.json --compatibility-date 2026-07-23 --compatibility-flags nodejs_compat && node scripts/check-cloud-build.mjs",
     "cloud:dev": "wrangler pages dev dist --ip 127.0.0.1 --port 8788 --local-protocol https",
-    "cloud:proof": "node --import tsx scripts/cloud-response-proof.ts"
+    "cloud:proof": "node --import tsx scripts/cloud-response-proof.ts",
+    "cloud:remote-proof": "node --import tsx scripts/cloud-remote-proof.ts"
   },
   "dependencies": {
     "@google/genai": "^1.52.0",
