@@ -2,23 +2,30 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { chromium, type Page } from 'playwright-core';
+import { createServer } from 'node:https';
+import type { AddressInfo } from 'node:net';
 import type { ResponseCase } from '../shared/responseCase';
+import { createLocalProofCertificate, verifiedLocalHttpsRequest, type LocalProofCertificate } from './local-proof-tls';
 
 export async function verifyResponseBrowser(options: {
   origin: string; output: string; mode: 'cloud' | 'static' | 'configuration' | 'native'; token?: string;
+  localTls?: LocalProofCertificate;
   failWrites?: (enabled: boolean) => Promise<void>;
 }): Promise<void> {
-  const { origin, output, mode, token, failWrites } = options;
+  const { origin, output, mode, token, failWrites, localTls } = options;
+  assert(!origin.startsWith('https:') || (new URL(origin).hostname === '127.0.0.1' && localTls),
+    'HTTPS browser proofs require the fresh loopback certificate');
   await mkdir(output, { recursive: true });
   const context = await chromium.launchPersistentContext(path.join(output, 'isolated-profile'), {
     executablePath: process.env.AEGISOPS_TEST_CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    headless: true, ignoreHTTPSErrors: true, acceptDownloads: true, viewport: { width: 1280, height: 1000 },
+    headless: true, ignoreHTTPSErrors: false, acceptDownloads: true, viewport: { width: 1280, height: 1000 },
+    // Chrome has no per-context CA store. Pin only this run's fresh key, never all certificates.
+    args: localTls ? [`--ignore-certificate-errors-spki-list=${localTls.spki}`] : [],
   });
   const errors: string[] = [];
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
   page.on('pageerror', (error) => errors.push(error.message));
-  await context.route('**/*', (route) => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
   const card = page.getByRole('region', { name: '공공 대응 검토', exact: true });
   const status = (revision: number) => card.getByRole('status').filter({ hasText: new RegExp('revision ' + revision) }).waitFor();
   const sample = async () => {
@@ -28,21 +35,42 @@ export async function verifyResponseBrowser(options: {
   };
   const screenshot = (name: string) => page.screenshot({ path: path.join(output, name + '.png'), fullPage: true });
   const read = async (id: string) => {
-    const response = await page.request.get(`${origin}/api/response-workflows/${id}`);
-    assert.equal(response.status(), 200);
-    return await response.json() as ResponseCase;
+    const response = await page.evaluate(async (url) => {
+      const reply = await fetch(url);
+      return { status: reply.status, body: await reply.json() };
+    }, `${origin}/api/response-workflows/${id}`);
+    assert.equal(response.status, 200);
+    return response.body as ResponseCase;
   };
   const beginOutside = async (current: ResponseCase) => {
-    const response = await page.request.post(`${origin}/api/response-workflows/${current.id}/review`, {
-      headers: { Origin: origin }, data: { expectedRevision: current.revision, command: { kind: 'begin' } },
-    });
-    assert.equal(response.status(), 200);
+    const status = await page.evaluate(async ({ url, revision }) => {
+      const reply = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ expectedRevision: revision, command: { kind: 'begin' } }) });
+      return reply.status;
+    }, { url: `${origin}/api/response-workflows/${current.id}/review`, revision: current.revision });
+    assert.equal(status, 200);
   };
   const lastId = async () => {
     const id = await page.evaluate(() => localStorage.getItem('aegisops:last-response-case-id'));
     assert(id); return id;
   };
   try {
+    if (localTls) {
+      const untrusted = await createLocalProofCertificate(path.join(output, 'untrusted-tls'));
+      const other = createServer({ key: await readFile(untrusted.keyPath), cert: untrusted.certificate },
+        (_request, response) => response.end('untrusted certificate must be rejected'));
+      await new Promise<void>((resolve, reject) => { other.once('error', reject); other.listen(0, '127.0.0.1', resolve); });
+      try {
+        await assert.rejects(() => page.goto(`https://127.0.0.1:${(other.address() as AddressInfo).port}`), /ERR_CERT_AUTHORITY_INVALID/);
+      } finally {
+        await new Promise<void>((resolve, reject) => other.close((error) => error ? reject(error) : resolve()));
+      }
+      await writeFile(path.join(output, 'tls-verification.json'), JSON.stringify({
+        browserTrust: 'isolated fresh-key SPKI exception, not normal CA validation',
+        untrustedCertificateRejected: true, trustedSpki: localTls.spki,
+      }, null, 2));
+    }
+    await context.route('**/*', (route) => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
     await page.goto(origin);
     if (mode === 'static' || mode === 'configuration') {
       await card.getByRole('status').filter({ hasText: mode === 'static' ? '정적' : '설정' }).waitFor();
@@ -141,7 +169,16 @@ export async function verifyResponseBrowser(options: {
     let writes = 0;
     await page.route(`**/api/response-workflows/${lostId}/review`, async (route) => {
       writes += 1;
-      const committed = await route.fetch(); assert.equal(committed.status(), 200);
+      assert(localTls);
+      const headers = await route.request().allHeaders();
+      const status = await new Promise<number>((resolve, reject) => {
+        const outgoing = verifiedLocalHttpsRequest(route.request().url(), localTls.certificate,
+          { method: route.request().method(), headers }, (reply) => {
+            reply.resume(); reply.on('end', () => resolve(reply.statusCode || 0)); reply.on('error', reject);
+          });
+        outgoing.on('error', reject); outgoing.end(route.request().postDataBuffer() ?? undefined);
+      });
+      assert.equal(status, 200);
       await route.abort('failed');
     });
     await card.getByRole('button', { name: '검토 시작', exact: true }).click();

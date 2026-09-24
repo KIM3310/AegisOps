@@ -8,11 +8,13 @@ import { createResponseCase, applyReviewCommand, contentHash, renderResponseExpo
 import { cloudSubmission, cloudCompletion, maximumCloudSubmission } from '../__tests__/fixtures/cloudResponse';
 import type { ResponseCase } from '../shared/responseCase';
 import { verifyResponseBrowser } from './cloud-browser-proof';
+import { createLocalProofCertificate, verifiedLocalHttpsRequest } from './local-proof-tls';
 
 const root = process.cwd();
 const output = path.resolve(process.argv[2] || '.wrangler/cloud-proof-results');
 await mkdir(output, { recursive: true });
 const owned = await mkdtemp(path.join(output, 'run-'));
+const localTls = await createLocalProofCertificate(path.join(owned, 'tls'));
 const persist = path.join(owned, 'd1');
 const faultPersist = path.join(owned, 'fault-d1');
 const localHome = path.join(owned, 'home');
@@ -77,7 +79,8 @@ async function stop() {
 async function start(directory = persist) {
   assert.equal(server, undefined);
   const args = ['pages', 'dev', 'dist', '--ip', '127.0.0.1', '--port', '8788', '--inspector-port', '0',
-    '--local-protocol', 'https', '--persist-to', directory];
+    '--local-protocol', 'https', '--https-key-path', localTls.keyPath, '--https-cert-path', localTls.certPath,
+    '--persist-to', directory];
   commands.push(args);
   server = spawn(process.execPath, [wrangler, ...args], { cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'] });
   await new Promise<void>((resolve, reject) => {
@@ -117,7 +120,7 @@ async function http(route: string, options: { method?: string; body?: unknown; r
   if (data !== undefined || options.chunks) headers['content-type'] ??= 'application/json';
   const started = performance.now();
   return new Promise((resolve, reject) => {
-    const outgoing = httpsRequest(origin + route, { method, headers, rejectUnauthorized: false, agent: false }, (incoming) => {
+    const outgoing = verifiedLocalHttpsRequest(origin + route, localTls.certificate, { method, headers }, (incoming) => {
       let text = '';
       incoming.setEncoding('utf8'); incoming.on('data', (chunk: string) => { text += chunk; });
       incoming.on('error', reject);
@@ -165,6 +168,12 @@ try {
   ownsVars = true;
   await cli(['d1', 'migrations', 'apply', 'RESPONSE_DB', '--local', '--persist-to', persist]);
   await start();
+  await assert.rejects(new Promise<void>((resolve, reject) => {
+    const outgoing = httpsRequest(origin, (response) => { response.resume(); resolve(); });
+    outgoing.on('error', reject); outgoing.end();
+  }), (error: unknown) => ['DEPTH_ZERO_SELF_SIGNED_CERT', 'SELF_SIGNED_CERT_IN_CHAIN', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE']
+    .includes((error as NodeJS.ErrnoException).code || ''));
+  record('fresh loopback certificate is not globally trusted; Node clients retain certificate and hostname verification');
   const health = await expected('/api/healthz', 200, { cookie: null });
   assert.deepEqual(JSON.parse(health.text).responseWorkflow, { kind: 'cloud-response', storage: 'd1', authMode: 'token', scope: 'shared-synthetic', configured: true });
   for (const route of ['/api', '/api/analyze', '/api/missing']) {
@@ -336,7 +345,7 @@ try {
 
   await resetBudget();
   if (process.argv.includes('--browser')) {
-    await verifyResponseBrowser({ origin, output: path.join(owned, 'browser-cloud'), mode: 'cloud', token,
+    await verifyResponseBrowser({ origin, output: path.join(owned, 'browser-cloud'), mode: 'cloud', token, localTls,
       failWrites: async (enabled) => { await sql(enabled
         ? "CREATE TRIGGER browser_fail_update BEFORE UPDATE ON response_cases BEGIN SELECT RAISE(ABORT, 'synthetic browser fault'); END;"
         : 'DROP TRIGGER browser_fail_update;'); },
@@ -400,7 +409,7 @@ try {
   await expected(`${base}/${draft.id}`, 503);
   record('missing configuration fails closed and advertises unavailable review');
   if (process.argv.includes('--browser')) {
-    await verifyResponseBrowser({ origin, output: path.join(owned, 'browser-configuration'), mode: 'configuration' });
+    await verifyResponseBrowser({ origin, output: path.join(owned, 'browser-configuration'), mode: 'configuration', localTls });
     record('isolated Chrome missing-configuration mode disables review without disabling synthetic analysis');
     await stop();
     const staticConfig = path.join(owned, 'static-vite.config.mjs');
