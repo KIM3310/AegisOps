@@ -1,4 +1,7 @@
 import { createServer } from "node:http";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import type { AddressInfo } from "node:net";
 import { createSign, generateKeyPairSync } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -53,8 +56,11 @@ function createOidcToken(options: {
 describeIfSocketBinding("service meta endpoints", () => {
   const server = createServer(app);
   let baseUrl = "";
+  let runtimeDirectory = "";
 
   beforeAll(async () => {
+    runtimeDirectory = await mkdtemp(path.join(tmpdir(), "aegisops-meta-events-"));
+    vi.stubEnv("AEGISOPS_RUNTIME_STORE_PATH", path.join(runtimeDirectory, "events.jsonl"));
     await new Promise<void>((resolve) => {
       server.listen(0, "127.0.0.1", () => resolve());
     });
@@ -63,15 +69,14 @@ describeIfSocketBinding("service meta endpoints", () => {
   });
 
   afterAll(async () => {
-    await new Promise<void>((resolve, reject) => {
-      server.close((err) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve();
+    try {
+      await new Promise<void>((resolve, reject) => {
+        server.close((err) => err ? reject(err) : resolve());
       });
-    });
+    } finally {
+      vi.unstubAllEnvs();
+      if (runtimeDirectory) await rm(runtimeDirectory, { recursive: true, force: true });
+    }
   });
 
   it("returns service meta that ties workflow, replay suite, and report contract together", async () => {
@@ -445,7 +450,12 @@ describeIfSocketBinding("service meta endpoints", () => {
 
       expect(allowed.status).toBe(200);
 
-      const scorecard = await fetch(`${baseUrl}/api/runtime/scorecard`);
+      const scorecard = await fetch(`${baseUrl}/api/runtime/scorecard`, {
+        headers: {
+          "x-operator-token": "aegis-secret",
+          "x-operator-role": "incident-commander",
+        },
+      });
       const scorecardBody = await scorecard.json();
 
       expect(scorecard.status).toBe(200);
@@ -533,7 +543,7 @@ describeIfSocketBinding("service meta endpoints", () => {
     }
   });
 
-  it("accepts OIDC bearer tokens with required roles for runtime mutation routes", async () => {
+  it("accepts OIDC roles for API reads and mutations without trusting spoofed role headers", async () => {
     const previousIssuer = process.env.AEGISOPS_OPERATOR_OIDC_ISSUER;
     const previousAudience = process.env.AEGISOPS_OPERATOR_OIDC_AUDIENCE;
     const previousJwks = process.env.AEGISOPS_OPERATOR_OIDC_JWKS_JSON;
@@ -577,15 +587,47 @@ describeIfSocketBinding("service meta endpoints", () => {
       });
 
       expect(denied.status).toBe(403);
+      for (const path of ["/api/runtime/scorecard", "/api/export-bundle", "/api/settings/api-key"]) {
+        const deniedRead = await fetch(`${baseUrl}${path}`, {
+          headers: {
+            authorization: `Bearer ${unprivileged.token}`,
+            "x-operator-role": "incident-commander",
+          },
+        });
+        expect(deniedRead.status).toBe(403);
+        expect((await deniedRead.json()).error.message).toContain("required operator role");
+      }
       process.env.AEGISOPS_OPERATOR_OIDC_JWKS_JSON = jwksJson;
 
-      const scorecard = await fetch(`${baseUrl}/api/runtime/scorecard`);
+      const anonymousRead = await fetch(`${baseUrl}/api/runtime/scorecard`);
+      expect(anonymousRead.status).toBe(403);
+      await anonymousRead.text();
+      const scorecard = await fetch(`${baseUrl}/api/runtime/scorecard`, {
+        headers: { authorization: `Bearer ${token}` },
+      });
       const scorecardBody = await scorecard.json();
 
       expect(scorecard.status).toBe(200);
       expect(scorecardBody.operatorAuth.mode).toBe("oidc");
       expect(scorecardBody.operatorAuth.oidc.enabled).toBe(true);
       expect(scorecardBody.operatorAuth.oidc.issuer).toBe(issuer);
+
+      const login = await fetch(`${baseUrl}/api/auth/session`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ authMode: "oidc", credential: token }),
+      });
+      expect(login.status).toBe(200);
+      expect((await login.json()).active).toBe(true);
+      const cookie = login.headers.get("set-cookie")?.split(";")[0] ?? "";
+      const credentials: Record<string, string>[] = [{ authorization: `Bearer ${token}` }, { cookie }];
+      for (const headers of credentials) {
+        for (const path of ["/api/export-bundle", "/api/settings/api-key"]) {
+          const response = await fetch(`${baseUrl}${path}`, { headers });
+          expect(response.status).toBe(200);
+          expect(await response.json()).toMatchObject({ ok: true });
+        }
+      }
     } finally {
       if (typeof previousIssuer === "string") {
         process.env.AEGISOPS_OPERATOR_OIDC_ISSUER = previousIssuer;

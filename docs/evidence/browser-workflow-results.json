@@ -1,0 +1,31 @@
+{
+  "remoteRequests": [],
+  "errors": [],
+  "checks": [
+    "Korean intro and collapsed optional panels",
+    "real file input, four records, invalid import is atomic",
+    "demo analysis, persisted draft, literal evidence and versioned source",
+    "checks and note gate completion; reviewed is not execution approval",
+    "real Markdown, JSON and Hancom JSON downloads match reviewed server state",
+    "browser reload refetches the same reviewed case",
+    "API failure cannot preserve a trusted-looking completed review"
+  ],
+  "downloads": [
+    {
+      "filename": "handover.md",
+      "suggestedFilename": "response-fdb95450-f290-4fcc-b7d5-a820f167195b-markdown.md"
+    },
+    {
+      "filename": "handover.json",
+      "suggestedFilename": "response-fdb95450-f290-4fcc-b7d5-a820f167195b-json.json"
+    },
+    {
+      "filename": "hancom-payload.json",
+      "suggestedFilename": "response-fdb95450-f290-4fcc-b7d5-a820f167195b-hancom-json.json"
+    }
+  ],
+  "initialHeight": 2261,
+  "caseId": "fdb95450-f290-4fcc-b7d5-a820f167195b",
+  "contentDigest": "9b89b0e344c1c0bd1ffdcd2b3c036dae0f4bacb5046ef6ddacbeed00b5737003",
+  "ok": true
+}

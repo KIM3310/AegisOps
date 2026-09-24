@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "clientIncidentId": "synthetic-api-training-001",
+  "report": {
+    "title": "합성 훈련: 민원 API 지연과 저장소 압력",
+    "summary": "가상 서비스에서 응답 지연과 저장소 사용률 증가를 함께 관측한 훈련용 제출 스냅샷입니다. 실제 기관 또는 장애 기록이 아닙니다.",
+    "severity": "SEV2",
+    "rootCauses": [
+      "대기열 증가 또는 저장소 압력과 지연의 연관성을 추가로 확인해야 합니다. 원인은 확정하지 않았습니다."
+    ],
+    "timeline": [
+      {
+        "time": "2026-01-15T09:00:00+09:00",
+        "description": "합성 로그에서 응답 지연과 대기열 증가 관측",
+        "severity": "warning"
+      }
+    ],
+    "actionItems": [
+      {
+        "task": "원본 진위와 지표 시간 구간을 담당자가 대조할 계획을 검토",
+        "priority": "HIGH",
+        "owner": "가상 훈련 담당자"
+      }
+    ],
+    "mitigationSteps": [
+      "추가 관측과 별도 변경 승인 필요성을 확인한다. 자동 조치를 실행하지 않는다."
+    ],
+    "tags": [
+      "synthetic-demo",
+      "training-only"
+    ]
+  },
+  "evidence": {
+    "logs": "[synthetic-demo] 2026-01-15T09:00:00+09:00 service=demo-api p95_latency=2400ms queue_depth=180\n[synthetic-demo] 2026-01-15T09:01:00+09:00 service=demo-api disk_usage=95%",
+    "declaredImageCount": 0
+  }
+}

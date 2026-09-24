@@ -1,0 +1,13 @@
+{
+  "checks": [
+    "real full-app token mode: private case, all exports and legacy session reads deny anonymous access",
+    "forged authority rejected; transitions, simultaneous writers and stale revisions enforced; completed snapshot reloads",
+    "server exports literal Korean status, review note, severity and exactly matching Hancom template keys",
+    "unmatched text and unretained image evidence block completion without changing state",
+    "corrupt source snapshot fails closed for read, export and review",
+    "chunked whitespace-padded raw requests exceed 256 KiB and leave no new record"
+  ],
+  "statuses": {},
+  "caseId": "2f10a686-37ed-4aa9-8f1f-f7d50981287b",
+  "ok": true
+}
