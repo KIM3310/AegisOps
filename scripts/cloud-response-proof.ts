@@ -9,6 +9,7 @@ import { cloudSubmission, cloudCompletion, maximumCloudSubmission } from '../__t
 import type { ResponseCase } from '../shared/responseCase';
 import { verifyResponseBrowser } from './cloud-browser-proof';
 import { createLocalProofCertificate, verifiedLocalHttpsRequest } from './local-proof-tls';
+import { inSameQuotaMinute } from './proof-quota-window';
 
 const root = process.cwd();
 const output = path.resolve(process.argv[2] || '.wrangler/cloud-proof-results');
@@ -319,15 +320,19 @@ try {
   await sql('DROP TRIGGER test_fail_update;');
   record('real D1 write failure is safe/unconfirmed and preserves previous aggregate');
 
-  await resetBudget();
-  await expected('/api/auth/session', 403, { method: 'POST', body: { authMode: 'token', credential: 'wrong' } });
-  await sql("UPDATE response_rate_budget SET used = 19 WHERE name = 'login-minute';");
-  const lastLogins = await Promise.all([1, 2].map(() => http('/api/auth/session', { method: 'POST', body: { authMode: 'token', credential: token } })));
+  const lastLogins = await inSameQuotaMinute(async () => {
+    await resetBudget();
+    await expected('/api/auth/session', 403, { method: 'POST', body: { authMode: 'token', credential: 'wrong' } });
+    await sql("UPDATE response_rate_budget SET used = 19 WHERE name = 'login-minute';");
+    return Promise.all([1, 2].map(() => http('/api/auth/session', { method: 'POST', body: { authMode: 'token', credential: token } })));
+  });
   assert.deepEqual(lastLogins.map((entry) => entry.status).sort(), [200, 429]);
   assert(Number(lastLogins.find((entry) => entry.status === 429)!.headers['retry-after']) > 0);
-  await resetBudget(); await create();
-  await sql("UPDATE response_rate_budget SET used = 29 WHERE name = 'mutation-minute';");
-  const lastMutations = await Promise.all([1, 2].map(() => http(base, { method: 'POST', body: cloudSubmission })));
+  const lastMutations = await inSameQuotaMinute(async () => {
+    await resetBudget(); await create();
+    await sql("UPDATE response_rate_budget SET used = 29 WHERE name = 'mutation-minute';");
+    return Promise.all([1, 2].map(() => http(base, { method: 'POST', body: cloudSubmission })));
+  });
   assert.deepEqual(lastMutations.map((entry) => entry.status).sort(), [201, 429]);
   for (let index = 0; index < 8; index++) {
     await sql('UPDATE response_rate_budget SET window_start = 0, used = 1;');
