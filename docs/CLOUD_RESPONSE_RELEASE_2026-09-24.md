@@ -22,9 +22,9 @@ At `2026-09-24T04:39:06.550Z`, **10 remote proof groups and 69 HTTP requests pas
 
 Local build inspection SHA-256 identities (Wrangler recompiles the Function during upload, so the inspection Function hash is not claimed as the uploaded runtime hash):
 
-- Locally inspected API Function bundle: `bf85ae2397a880443802f935ee315ca988cbc45a691d4b7e3f1c8a82affcd88c`.
+- Locally inspected Function bundle SHA-256: `bf85ae2397a880443802f935ee315ca988cbc45a691d4b7e3f1c8a82affcd88c`.
 - Browser entry: `52be5908c7db49e0bad0d80447ffce53293cb5ea8ff2f95dd6465cb3247cda4b`.
-- API-only route manifest: `513f89787b83f3e2df460f9a9bcfe265c2356fdb9c2a123eaa6a6218506a06f7`.
+- Routing manifest SHA-256: `513f89787b83f3e2df460f9a9bcfe265c2356fdb9c2a123eaa6a6218506a06f7`.
 
 The TLS repair passed 538 tests in 47 files, 32 replay checks and 19 local HTTPS/Workerd/D1/browser proof groups. Prior local evidence is preserved in [the historical verification record](CLOUD_RESPONSE_VERIFICATION.md); its original open gates are superseded by this release decision and remote evidence.
 
