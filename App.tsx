@@ -34,6 +34,7 @@ export default function App() {
     removeToast,
     isOllamaMode,
     isStaticDemo,
+    responseWorkflowCapability,
     showApiKeyPanel,
     apiHealth,
     showHistory,
@@ -86,19 +87,19 @@ export default function App() {
       <main className="max-w-4xl mx-auto px-4 py-8 relative z-10" role="main">
         {!report && status !== 'COMPLETE' ? (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
-            <PublicSectorIntro onLoadSample={() => {
+            <PublicSectorIntro capability={responseWorkflowCapability} onLoadSample={() => {
               handleStartNew();
               state.setLogs(PUBLIC_SECTOR_SAMPLE_LOGS);
               state.setEnableGrounding(false);
               state.setEnableTmVision(false);
             }} />
-            <DeploymentBanners isStaticDemo={isStaticDemo} isOllamaMode={isOllamaMode} />
-            {!isOllamaMode && !isStaticDemo && (showApiKeyPanel || apiHealth?.mode !== 'live') && (
+            <DeploymentBanners isStaticDemo={isStaticDemo} isOllamaMode={isOllamaMode} responseWorkflow={responseWorkflowCapability} />
+            {apiHealth && !isOllamaMode && !isStaticDemo && (showApiKeyPanel || apiHealth.mode !== 'live') && (
               <ApiKeyPanel state={state} />
             )}
             <IncidentInputPanel state={state} />
             <AnalyzeControls state={state} />
-            <ResponseWorkflowCard />
+            <ResponseWorkflowCard capability={responseWorkflowCapability} />
             <details className="rounded-xl border border-border bg-bg-card p-4">
               <summary className="cursor-pointer font-medium">선택 기능 · 아키텍처, 평가 및 제공자 비교</summary>
               <div className="mt-4 space-y-6">
@@ -144,6 +145,7 @@ export default function App() {
         ) : (
           <ReportView
             report={report!}
+            responseWorkflowCapability={responseWorkflowCapability}
             responseSubmission={reportSnapshot ? {
               schemaVersion: 1,
               clientIncidentId: reportSnapshot.id,

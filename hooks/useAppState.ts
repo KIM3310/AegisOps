@@ -77,6 +77,7 @@ export function useAppState() {
   const tmConfigured = isTeachableMachineConfigured();
   const isOllamaMode = apiHealth?.provider === 'ollama';
   const isStaticDemo = apiHealth?.deployment === 'static-demo';
+  const responseWorkflowCapability = apiHealth ? apiHealth.responseWorkflow : null;
   const ttsAvailable = apiHealth?.mode === 'live' && apiHealth?.provider === 'gemini';
   const [enableTmVision, setEnableTmVision] = useState(
     () => initialReviewUrlState.tm ?? tmConfigured
@@ -118,7 +119,9 @@ export function useAppState() {
     ? Object.entries(summaryPack.links).filter(([, href]) => typeof href === 'string' && href.length > 0)
     : [];
   const runtimePosture = apiHealth
-    ? `${apiHealth.mode === 'live' ? 'Live backend' : 'Demo backend'} \u00b7 ${(apiHealth.provider || 'unknown').toUpperCase()}`
+    ? isStaticDemo
+      ? responseWorkflowCapability?.kind === 'cloud-response' ? 'Browser synthetic analysis · shared D1 review' : 'Browser synthetic analysis'
+      : `${apiHealth.mode === 'live' ? 'Live backend' : 'Demo backend'} \u00b7 ${(apiHealth.provider || 'unknown').toUpperCase()}`
     : 'Loading backend posture';
   const strongestPreset =
     SAMPLE_PRESETS.find((preset) => preset.name === 'LLM Latency Spike') ?? SAMPLE_PRESETS[0] ?? null;
@@ -1067,6 +1070,7 @@ export function useAppState() {
     tmConfigured,
     isOllamaMode,
     isStaticDemo,
+    responseWorkflowCapability,
     ttsAvailable,
     enableTmVision,
     setEnableTmVision,

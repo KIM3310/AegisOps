@@ -4,6 +4,7 @@ import { buildAegisOpsProviderComparison } from "../server/lib/providerCompariso
 import { buildIncidentReplayEvalOverview } from "../server/lib/replayEvals";
 import { buildAegisOpsSummaryPack, buildAegisOpsServiceMeta, buildIncidentReportSchema } from "../server/lib/serviceMeta";
 import { demoAnalyzeIncident, demoFollowUpAnswer } from "../server/lib/demo";
+import { parseResponseWorkflowCapability, type ResponseWorkflowCapability } from "../shared/responseCapability";
 
 export type { ProviderComparisonResponse } from "../server/lib/providerComparison";
 
@@ -14,6 +15,7 @@ export type DeploymentTarget = "backend" | "static-demo";
 
 export interface HealthzResponse {
   ok: boolean;
+  responseWorkflow?: ResponseWorkflowCapability;
   status?: string;
   service?: string;
   deployment?: DeploymentTarget;
@@ -207,6 +209,7 @@ function buildStaticDemoHealthz(): HealthzResponse {
     status: "ok",
     service: "aegisops-static-demo",
     deployment: "static-demo",
+    responseWorkflow: { kind: "unavailable", reason: "static" },
     mode: "demo",
     provider: "demo",
     keySource: "none",
@@ -392,9 +395,13 @@ async function apiFetch<T>(path: string, init?: RequestInit, options: ApiFetchOp
 export async function fetchHealthz(): Promise<HealthzResponse> {
   try {
     const response = await apiFetch<HealthzResponse>("/api/healthz");
+    const responseWorkflow = response.responseWorkflow === undefined
+      ? response.deployment === "static-demo" ? { kind: "unavailable", reason: "static" } as const : undefined
+      : parseResponseWorkflowCapability(response.responseWorkflow);
     return {
       ...response,
       deployment: response.deployment || "backend",
+      responseWorkflow,
     };
   } catch (error) {
     if (isApiUnavailableError(error)) {

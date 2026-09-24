@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install
@@ -45,6 +45,12 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Compile API-only Pages adapter
+        run: npm run cloud:build
+
+      - name: Local HTTPS D1 proof
+        run: npm run cloud:proof -- artifacts/cloud-response
+
       - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -53,6 +59,7 @@ jobs:
           path: |
             artifacts/replay-overview.json
             artifacts/architecture-surface-smoke.json
+            artifacts/cloud-response/results.json
 
   review-gate:
     runs-on: ubuntu-latest

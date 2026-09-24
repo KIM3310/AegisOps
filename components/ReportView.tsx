@@ -4,11 +4,13 @@ import { X, Edit3, RefreshCw } from 'lucide-react';
 import { ReportCard } from './ReportCard';
 import type { IncidentReport } from '../types';
 import type { CaseSubmission } from '../shared/responseCase';
+import type { ResponseWorkflowCapability } from '../shared/responseCapability';
 import { ResponseWorkflowCard } from './ResponseWorkflowCard';
 
 interface ReportViewProps {
   report: IncidentReport;
   responseSubmission: CaseSubmission | null;
+  responseWorkflowCapability?: ResponseWorkflowCapability | null;
   enableGrounding: boolean;
   ttsAvailable: boolean | undefined;
   onStartNew: () => void;
@@ -16,7 +18,7 @@ interface ReportViewProps {
   onReAnalyze: () => void;
 }
 
-export function ReportView({ report, responseSubmission, enableGrounding, ttsAvailable, onStartNew, onEditInputs, onReAnalyze }: ReportViewProps) {
+export function ReportView({ report, responseSubmission, responseWorkflowCapability, enableGrounding, ttsAvailable, onStartNew, onEditInputs, onReAnalyze }: ReportViewProps) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
       <div className="flex items-center gap-2 sticky top-14 z-30 py-2 bg-bg/90 backdrop-blur md:static md:bg-transparent md:backdrop-blur-none">
@@ -25,7 +27,7 @@ export function ReportView({ report, responseSubmission, enableGrounding, ttsAva
         <div className="flex-1" />
         <button onClick={onReAnalyze} className="h-8 px-3 text-xs text-text-muted hover:text-text bg-bg-card hover:bg-bg-hover border border-border rounded-full flex items-center gap-1.5 transition-colors shadow-sm"><RefreshCw className="w-3.5 h-3.5" />Re-analyze</button>
       </div>
-      {responseSubmission ? <ResponseWorkflowCard submission={responseSubmission} /> : (
+      {responseSubmission ? <ResponseWorkflowCard submission={responseSubmission} capability={responseWorkflowCapability} /> : (
         <p role="alert" className="rounded-lg border border-sev2/40 p-4 text-sm">이 보고서에 연결된 입력 스냅샷이 없습니다. 대응 검토를 만들려면 입력을 다시 분석하세요.</p>
       )}
       <ReportCard report={report} enableGrounding={enableGrounding} ttsAvailable={ttsAvailable} />

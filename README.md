@@ -45,8 +45,10 @@ LLM_PROVIDER=demo npm run dev
 
 - 첫 실습은 API 키 없이 규칙 기반 demo 제공자를 사용합니다. 외부 LLM의 품질을 검증하는 과정이 아닙니다.
 - `.env.example`도 `LLM_PROVIDER=demo`를 기본값으로 제공합니다. 승인된 처리 경로를 정한 뒤 다른 제공자를 명시적으로 설정하세요.
-- 정적 공개 페이지에는 검토 상태를 저장할 서버가 없습니다. 로컬 API 없이 검토 완료를 흉내 내지 않습니다.
+- 정적 전용 페이지에서는 검토 저장 기능을 비활성화합니다. 별도 Pages Functions + D1 어댑터는 공유 토큰으로 인증한 합성 검토를 저장합니다. 로컬 검증은 원격 배포나 Free 플랜 준비 완료를 뜻하지 않습니다.
 - 기본 검토 저장 경로는 `.runtime/response-cases`입니다. 실제 기관 자료를 넣거나 서버를 외부에 공개하지 마세요.
+
+[클라우드 검토 경계](docs/CLOUD_RESPONSE_WORKSPACE.md) · [로컬 HTTPS/D1 검증과 소유자 배포 절차](docs/CLOUD_RESPONSE_RUNBOOK.md) · [로컬 클라우드 검증 결과](docs/CLOUD_RESPONSE_VERIFICATION.md)
 
 [화면·API·인증·저장 사용법](docs/RESPONSE_WORKFLOW.ko.md) · [합성 API 입력](samples/response-workflow.synthetic.json) · [합성 보안 JSONL](samples/security-events.synthetic.jsonl)
 
@@ -78,7 +80,7 @@ npm audit
 
 - **기관 자료:** 승인된 매뉴얼 등록·검색·갱신, 실제 로그 수집과 마스킹은 별도 연동 과제입니다. 현재 출처는 규칙으로 연결하는 합성 예시입니다.
 - **권한:** 공유 토큰은 개인 신원이 아닙니다. OIDC 운영 구성과 기관별 권한·테넌트 격리는 별도 검증이 필요합니다.
-- **저장:** 단일 프로세스 파일 저장소입니다. 암호화, 위변조 방지 감사 원장, 다중 서버 동시 쓰기, 보존·용량·백업 정책을 제공하지 않습니다.
+- **저장:** 네이티브 API는 단일 프로세스 파일 저장소입니다. 선택형 클라우드 어댑터는 D1 revision 검사와 100건 한도를 사용합니다. 두 방식 모두 기관별 격리, 위변조 방지 감사 원장, 검증된 백업·복구를 제공하지 않습니다.
 - **인증·구매:** CSAP·ISMS 취득, 공공 조달 등록, 실제 고객·매출 실적을 주장하지 않습니다.
 - **사업성:** 가격과 시간 절감 수치는 [소개 문서](docs/PROJECT_INTRODUCTION.ko.md)의 가정·목표이며 실적이 아닙니다.
 
